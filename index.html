@@ -1,390 +1,503 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<title>LIMENWALKER WORKSHOP</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no,interactive-widget=resizes-content">
+<title>LIMENWALKER — Upload + View</title>
 
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="LIMEN">
 <meta name="theme-color" content="#000000">
 
 <style>
-  :root{
-    --vwpx:100vw; --vhpx:100vh;
-    --gap:32px; --line-color:rgba(255,255,255,.9);
-    --line-w:1px; --line-r:2px;
-    --ff:"Courier New", Courier, monospace;
-  }
-  html,body{
-    margin:0;height:100%;background:#000;color:#fff;
-    font-family:var(--ff); overflow:hidden;
-    -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent;
-  }
-  *,*::before,*::after{ box-sizing:border-box; font-family:var(--ff); }
-  button,input,select,textarea{ font:inherit; color:inherit; }
+:root{
+  /* Upload UI look */
+  --frame: clamp(16px, 4vmin, 40px);
+  --ui-gap: 10px;
+  --fs-strong: clamp(14px, 2.8vmin, 18px);
+  --fs-small: clamp(11px, 1.8vmin, 13px);
+  --pad-btn-y: clamp(10px, 1.2vmin, 14px);
+  --pad-btn-x: clamp(14px, 2.0vmin, 22px);
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --paper: #e7e2c9;
+  --paper-dim: rgba(231,226,201,.72);
 
-  /* 레이어: (0) 배경 ← (4) 레졸룸 ← (10) UI */
-  #ninjaOverlay{
-    position:fixed; left:50%; top:50%;
-    width:var(--vwpx); height:var(--vhpx);
-    transform:translate(-50%,-50%) scale(1); transform-origin:50% 50%;
-    border:0; background:transparent; image-rendering:auto;
-    z-index:4; pointer-events:none; opacity:0; transition:opacity .25s ease;
-    mix-blend-mode: screen;
-    will-change:opacity, transform;
-  }
+  /* Ninja overlay control */
+  --vwpx:100vw; --vhpx:100vh;
+}
 
-  .proscenium{
-    position:fixed;
-    left:calc(var(--gap) + env(safe-area-inset-left));
-    right:calc(var(--gap) + env(safe-area-inset-right));
-    top:calc(var(--gap) + env(safe-area-inset-top));
-    bottom:calc(var(--gap) + env(safe-area-inset-bottom));
-    border:var(--line-w) solid var(--line-color);
-    border-radius:var(--line-r);
-    pointer-events:none; z-index:5;
-  }
+html,body{
+  margin:0; padding:0; width:100%; height:100%;
+  background:#000; overflow:hidden;
+  touch-action:manipulation;
+}
+body{
+  font-family: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino, "Times New Roman", Times, serif;
+  color:var(--paper);
+  -webkit-user-select:none; user-select:none;
+  -webkit-touch-callout:none;
+}
+*{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+textarea, input, button {
+  -webkit-user-select: text; user-select: text;
+  -webkit-touch-callout: default;
+  pointer-events: auto;
+}
+textarea{ touch-action:auto; -webkit-user-modify: read-write-plaintext-only; }
 
-  #infoText, #overlay{
-    position:fixed; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; text-align:center;
-  }
-  #infoText{
-    font-size:clamp(12px,1.8vmin,16px); opacity:.9; z-index:8; pointer-events:none;
-  }
-  #overlay{
-    background:rgba(0,0,0,.65);
-    z-index:10; line-height:1.55; transition:opacity .25s ease;
-  }
-  #overlay.hidden{ opacity:0; pointer-events:none; }
-  .centerText{ text-align:center; white-space:pre-line; font-size:clamp(13px,1.9vmin,17px); }
-  .stageText{ text-align:left; white-space:pre-line; max-width:90vw; font-size:clamp(12px,1.7vmin,16px); }
-  .stageBtn{
-    border:1px solid #fff; background:transparent; color:#fff;
-    padding:.5em 1.1em; text-transform:uppercase; margin-top:14px;
-    font-size:clamp(12px,1.7vmin,16px); cursor:pointer;
-  }
-  #countdown{ font-size:clamp(11px,1.6vmin,15px); opacity:.8; margin-top:12px; display:none; }
+/* Background canvas */
+#bg{ position:fixed; inset:0; width:100vw; height:100vh; display:block; z-index:0; background:#000; }
 
-  #cornerTimer{
-    position:fixed;
-    right:calc(12px + env(safe-area-inset-right));
-    bottom:calc(10px + env(safe-area-inset-bottom));
-    z-index:20;
-    font-size:clamp(12px,1.8vmin,16px);
-    opacity:.95;
-    background:rgba(0,0,0,.35);
-    padding:6px 10px;
-    border:1px solid rgba(255,255,255,.6);
-    border-radius:6px;
-    pointer-events:none;
-    display:none;
-  }
+/* VDO.Ninja overlay (Resolume) */
+#ninjaOverlay{
+  position:fixed; left:50%; top:50%;
+  width:var(--vwpx); height:var(--vhpx);
+  transform:translate(-50%,-50%) scale(1);
+  transform-origin:50% 50%;
+  border:0; background:transparent;
+  z-index:20;
+  pointer-events:none;
 
-  #theEnd{
-    position:fixed; inset:0; z-index:30;
-    display:none; align-items:center; justify-content:center;
-    color:#fff; background:transparent; text-align:center;
-    font-weight:700; letter-spacing:.12em;
-    font-size:min(18vmin, 12rem);
-    text-shadow:0 0 18px rgba(255,255,255,.22);
-    pointer-events:none;
-    transition:opacity .6s ease;
-    opacity:0;
-  }
-  #theEnd.show{ display:flex; opacity:1; }
+  /* ✅ 기본: 보이게. 원하면 JS에서 단계별로 조절 가능 */
+  opacity:1;
+  transition:opacity .25s ease;
+
+  /* ✅ 합성: 필요없으면 normal 로 바꿔도 됨 */
+  mix-blend-mode: screen;
+  will-change:opacity, transform;
+}
+
+/* Frame + panels */
+.frameBox{
+  position:fixed;
+  left:calc(var(--frame) + var(--safe-l));
+  top:calc(var(--frame) + var(--safe-t));
+  right:calc(var(--frame) + var(--safe-r));
+  bottom:calc(var(--frame) + var(--safe-b));
+  border:1.5px solid rgba(231,226,201,.68);
+  pointer-events:none;
+  z-index:50;
+}
+.panel{
+  position:fixed;
+  left:calc(var(--frame) + var(--ui-gap) + var(--safe-l));
+  right:calc(var(--frame) + var(--ui-gap) + var(--safe-r));
+  top:calc(var(--frame) + var(--ui-gap) + var(--safe-t));
+  bottom:calc(var(--frame) + var(--ui-gap) + var(--safe-b));
+  z-index:200;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  justify-content:flex-end;
+}
+.card{
+  background:rgba(0,0,0,.42);
+  border:1px solid rgba(231,226,201,.12);
+  border-radius:18px;
+  padding:14px;
+  backdrop-filter: blur(10px);
+}
+.row{ display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+.uiBtn{
+  background:rgba(255,255,255,.06);
+  color:var(--paper);
+  border:1px solid rgba(231,226,201,.16);
+  font-size:var(--fs-strong);
+  padding:var(--pad-btn-y) var(--pad-btn-x);
+  font-family: inherit;
+  letter-spacing: .10em;
+  white-space:nowrap;
+  cursor:pointer;
+  opacity:.95;
+  border-radius:14px;
+}
+.uiBtn:active{opacity:.78; transform:translateY(1px);}
+.small{ font-size:var(--fs-small); letter-spacing:.08em; opacity:.9; color:var(--paper-dim); }
+
+#previewWrap{ display:flex; gap:12px; align-items:stretch; }
+#preview{
+  width:min(42vw, 360px);
+  aspect-ratio: 4 / 3;
+  border-radius:14px;
+  border:1px solid rgba(231,226,201,.12);
+  background:rgba(255,255,255,.03);
+  object-fit:cover;
+}
+#rightPane{
+  flex:1; min-width:220px;
+  display:flex; flex-direction:column; gap:10px;
+}
+#status{
+  white-space:pre-wrap;
+  line-height:1.4;
+  font-size:var(--fs-small);
+  color:rgba(231,226,201,.78);
+}
+#textBox{
+  border-radius:14px;
+  border:1px solid rgba(231,226,201,.16);
+  background:rgba(0,0,0,.25);
+  padding:10px;
+}
+#textBox .hint{
+  font-size:var(--fs-small);
+  color:rgba(231,226,201,.55);
+  letter-spacing:.06em;
+  margin-bottom:8px;
+}
+#textPreviewInput{
+  width:100%;
+  min-height:92px;
+  max-height:220px;
+  resize:vertical;
+  border-radius:12px;
+  border:1px solid rgba(231,226,201,.14);
+  background:rgba(0,0,0,.35);
+  color:rgba(231,226,201,.92);
+  padding:10px;
+  outline:none;
+  font-size:clamp(13px, 2.0vmin, 16px);
+  line-height:1.5;
+}
+#textPreviewInput::placeholder{ color: rgba(231,226,201,.45); }
+
+/* Optional tiny top hint */
+#topHint{
+  position:fixed;
+  left:calc(var(--frame) + var(--ui-gap) + var(--safe-l));
+  top:calc(var(--frame) + var(--ui-gap) + var(--safe-t));
+  z-index:210;
+  font-size:var(--fs-small);
+  color:rgba(231,226,201,.62);
+  letter-spacing:.10em;
+  pointer-events:none;
+  user-select:none;
+}
 </style>
 </head>
+
 <body>
+  <!-- Background -->
+  <canvas id="bg"></canvas>
 
-<iframe id="ninjaOverlay"
-  allow="autoplay; fullscreen; clipboard-read; clipboard-write"
-  allowtransparency="true" referrerpolicy="no-referrer" src="about:blank">
-</iframe>
+  <!-- VDO.Ninja Resolume overlay -->
+  <iframe id="ninjaOverlay"
+    allow="autoplay; fullscreen; clipboard-read; clipboard-write"
+    allowtransparency="true"
+    referrerpolicy="no-referrer"
+    src="about:blank"></iframe>
 
-<div class="proscenium" aria-hidden="true"></div>
+  <div class="frameBox" aria-hidden="true"></div>
+  <div id="topHint">VIEW + UPLOAD</div>
 
-<div id="infoText">
-  화면을 터치하면 워크숍이 시작됩니다.
-</div>
+  <!-- Upload UI -->
+  <div class="panel">
+    <div class="card">
+      <div class="row">
+        <div>
+          <div style="letter-spacing:.12em; font-weight:700;">UPLOAD</div>
+          <div class="small">Image 업로드 / Text 입력 후 Enter로 전송</div>
+        </div>
+        <div class="row">
+          <button id="pickImage" class="uiBtn">Image</button>
+          <button id="focusText" class="uiBtn">Text</button>
+          <button id="sendText" class="uiBtn">Enter</button>
+        </div>
+      </div>
+    </div>
 
-<div id="overlay" class="hidden">
-  <div id="msg" class="centerText"></div>
-  <button id="startBtn" class="stageBtn" style="display:none;">PRESS HERE TO START</button>
-  <div id="countdown"></div>
-</div>
-
-<div id="cornerTimer">03:00</div>
-<div id="theEnd">THE END</div>
+    <div class="card">
+      <div id="previewWrap">
+        <img id="preview" alt="preview"/>
+        <div id="rightPane">
+          <div id="status">Ready.</div>
+          <div id="textBox">
+            <div class="hint">텍스트를 입력하세요</div>
+            <textarea id="textPreviewInput" placeholder="여기에 입력..."></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
 <script>
-(()=> {
-/* ===== Config ===== */
-const CONFIG = {
-  ROOM_ID: "YOURROOMID",      // ★ VDO.Ninja view 키
-  REZ_SCALE: 0.65,
-  MAX_OVERLAY_OPACITY: 0.55,
-  LAYERS: {
-    WELCOME: { NINJA: 0.45 },
-    GUIDE:   { NINJA: 0.45 },
-    WALK:    { NINJA: 0.50 },
-    STOP:    { NINJA: 0.45 },
+(() => {
+  /* =========================================================
+     CONFIG
+  ========================================================= */
+  const CONFIG = {
+    // ✅ Upload server: 현재 페이지가 열린 서버를 자동 사용 (file://이면 localhost fallback)
+    SERVER: (location.origin && location.origin.startsWith('http')) ? location.origin : 'http://127.0.0.1:4000',
+    UPLOAD_TIMEOUT_MS: 20000,
+    UPLOAD_RETRY: 1,
+
+    // ✅ VDO.Ninja (view) settings
+    ROOM_ID: "YOURROOMID",
+    REZ_SCALE: 0.65,
+    NINJA_OPACITY: 1.0,       // ✅ 1.0 = 완전 불투명
+    BLEND_MODE: "screen",     // "normal" 추천(원본), "screen"(밝게 합성)
+    CODEC: "vp8",
+    AUTO_REFRESH_MS: 60000
+  };
+
+  /* =========================================================
+     ELEMENTS
+  ========================================================= */
+  const bg = document.querySelector('#bg');
+  const bctx = bg.getContext('2d', { alpha:false });
+
+  const ninja = document.querySelector('#ninjaOverlay');
+
+  const pickImageBtn = document.querySelector('#pickImage');
+  const focusTextBtn = document.querySelector('#focusText');
+  const sendTextBtn  = document.querySelector('#sendText');
+
+  const preview = document.querySelector('#preview');
+  const statusEl = document.querySelector('#status');
+  const textPreviewInput = document.querySelector('#textPreviewInput');
+
+  function setStatus(msg){ statusEl.textContent = msg || ''; }
+
+  /* =========================================================
+     VIEWPORT VARS (for ninja sizing)
+  ========================================================= */
+  function setViewportVars(){
+    const vv = window.visualViewport;
+    const w = Math.round((vv?.width || innerWidth));
+    const h = Math.round((vv?.height || innerHeight));
+    document.documentElement.style.setProperty('--vwpx', w + 'px');
+    document.documentElement.style.setProperty('--vhpx', h + 'px');
   }
-};
+  setViewportVars();
+  addEventListener('resize', setViewportVars);
+  if (visualViewport){
+    visualViewport.addEventListener('resize', setViewportVars);
+    visualViewport.addEventListener('scroll', setViewportVars);
+  }
+  addEventListener('orientationchange', ()=> setTimeout(setViewportVars,120));
 
-/* ===== Elements ===== */
-const ninja     = document.getElementById('ninjaOverlay');
-const overlay   = document.getElementById('overlay');
-const msg       = document.getElementById('msg');
-const startBtn  = document.getElementById('startBtn');
-const infoText  = document.getElementById('infoText');
-const countdown = document.getElementById('countdown');
-const cornerTimer = document.getElementById('cornerTimer');
-const theEndEl = document.getElementById('theEnd');
+  /* =========================================================
+     BG (light particles)
+  ========================================================= */
+  function resizeCanvas(){
+    const dpr = window.devicePixelRatio || 1;
+    bg.width = Math.round(innerWidth * dpr);
+    bg.height = Math.round(innerHeight * dpr);
+    bctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  window.addEventListener('resize', resizeCanvas, {passive:true});
+  resizeCanvas();
 
-/* ===== iOS Safari blend fallback ===== */
-const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-if (isiOS) ninja.style.mixBlendMode = 'lighten';
-
-/* ===== Viewport fix ===== */
-function setViewportVars(){
-  const vv = window.visualViewport;
-  const w = Math.round((vv?.width || innerWidth));
-  const h = Math.round((vv?.height || innerHeight));
-  document.documentElement.style.setProperty('--vwpx', w + 'px');
-  document.documentElement.style.setProperty('--vhpx', h + 'px');
-}
-setViewportVars();
-addEventListener('resize', setViewportVars);
-if (visualViewport){
-  visualViewport.addEventListener('resize', setViewportVars);
-  visualViewport.addEventListener('scroll', setViewportVars);
-}
-addEventListener('orientationchange', ()=> setTimeout(setViewportVars,120));
-addEventListener('pageshow', ()=>{ setTimeout(()=>{ setViewportVars(); applyRezScale(); }, 60); });
-
-/* ===== Audio ===== */
-let audioCtx;
-function initAudioContext(){
-  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  if(audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
-}
-function beep(freq=880, dur=120){
-  try{
-    initAudioContext();
-    const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
-    osc.type='square'; osc.frequency.value=freq; g.gain.value=0.0001;
-    osc.connect(g).connect(audioCtx.destination);
-    const t = audioCtx.currentTime;
-    g.gain.exponentialRampToValueAtTime(0.25,t+0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001,t+dur/1000);
-    osc.start(t); osc.stop(t+dur/1000+0.02);
-  }catch{}
-}
-function playTone(freq=80, duration=10000){
-  try{
-    initAudioContext();
-    const osc=audioCtx.createOscillator();
-    const g=audioCtx.createGain();
-    osc.type='sine';
-    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    g.gain.value=0.0001;
-    osc.connect(g).connect(audioCtx.destination);
-    const t=audioCtx.currentTime;
-    g.gain.exponentialRampToValueAtTime(0.3, t+0.15);
-    g.gain.setTargetAtTime(0.28, t+0.5, 0.5);
-    g.gain.setTargetAtTime(0.0001, t + duration/1000 - 0.2, 0.15);
-    osc.start(t);
-    osc.stop(t + duration/1000 + 0.02);
-  }catch(e){ console.warn('tone play failed', e); }
-}
-
-/* ===== Wake Lock ===== */
-let wakeLock = null;
-async function keepScreenOn(){
-  try{
-    if('wakeLock' in navigator){
-      wakeLock = await navigator.wakeLock.request('screen');
-      document.addEventListener('visibilitychange', async ()=>{
-        if(document.visibilityState==='visible' && !wakeLock){
-          try{ wakeLock = await navigator.wakeLock.request('screen'); }catch{}
-        }
-      });
+  const pts=[];
+  for(let i=0;i<90;i++){
+    pts.push({
+      x:Math.random()*innerWidth,
+      y:Math.random()*innerHeight,
+      vx:(Math.random()-0.5)*0.18,
+      vy:(Math.random()-0.5)*0.18
+    });
+  }
+  (function loop(){
+    bctx.fillStyle='#000';
+    bctx.fillRect(0,0,innerWidth,innerHeight);
+    bctx.globalCompositeOperation='lighter';
+    for(const p of pts){
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x<-20)p.x=innerWidth+20; if(p.x>innerWidth+20)p.x=-20;
+      if(p.y<-20)p.y=innerHeight+20; if(p.y>innerHeight+20)p.y=-20;
+      bctx.fillStyle='rgba(231,226,201,0.09)';
+      bctx.beginPath(); bctx.arc(p.x,p.y,1.2,0,Math.PI*2); bctx.fill();
     }
-  }catch{}
-}
+    bctx.globalCompositeOperation='source-over';
+    requestAnimationFrame(loop);
+  })();
 
-/* ===== Overlay helpers ===== */
-function showOverlayText(text, center=true){
-  msg.className = center ? 'centerText' : 'stageText';
-  msg.textContent = text;
-  overlay.classList.remove('hidden');
-}
-function hideOverlay(){ overlay.classList.add('hidden'); }
+  /* =========================================================
+     VDO.NINJA VIEW (iframe overlay)
+  ========================================================= */
+  // iOS Safari blend fallback
+  const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-/* ===== VDO.Ninja (선로딩 + 스케일 + 불투명도 상한) ===== */
-const injectedCss = encodeURIComponent(`
-  html,body{background:transparent!important;margin:0!important;overflow:hidden!important;}
-  #container,.container{background:transparent!important;}
-  video,canvas{position:fixed!important; inset:0!important; width:100vw!important; height:100vh!important; object-fit:cover!important; background:transparent!important;}
-`);
-const ninjaBase = `https://vdo.ninja/?view=${encodeURIComponent(CONFIG.ROOM_ID)}&clean&autostart&noaudio&codec=vp8&solo&transparent=1&css=${injectedCss}`;
-const ninjaUrl  = () => `${ninjaBase}&ts=${Date.now()}`;
-
-function applyRezScale(){
-  const s = Math.max(0.2, Math.min(1, Number(CONFIG.REZ_SCALE)||1));
-  ninja.style.width  = `calc(var(--vwpx) * ${s})`;
-  ninja.style.height = `calc(var(--vhpx) * ${s})`;
-  ninja.style.left = '50%'; ninja.style.top = '50%';
-  ninja.style.transform = `translate(-50%,-50%) scale(${1/s})`;
-}
-applyRezScale();
-
-/* 선로딩 */
-(function preloadOverlay(){
-  if(!ninja.src || ninja.src === 'about:blank'){ ninja.src = ninjaUrl(); }
-})();
-
-/* 60초마다 새로고침(연결/투명깨짐 대비) */
-setInterval(()=>{
-  if(parseFloat(ninja.style.opacity)||0){
-    ninja.src = ninjaUrl();
+  function applyNinjaStyle(){
+    ninja.style.opacity = String(Math.max(0, Math.min(1, CONFIG.NINJA_OPACITY)));
+    ninja.style.mixBlendMode = (isiOS && CONFIG.BLEND_MODE === "screen") ? "lighten" : CONFIG.BLEND_MODE;
   }
-}, 60000);
 
-/* ===== Layer ratio control ===== */
-let state = 'WELCOME';
-function applyLayerMix(){
-  const M = CONFIG.LAYERS[state] || CONFIG.LAYERS.WELCOME;
-  ninja.style.opacity = String(Math.min(M.NINJA ?? 0.45, CONFIG.MAX_OVERLAY_OPACITY));
-}
+  function applyRezScale(){
+    const s = Math.max(0.2, Math.min(1, Number(CONFIG.REZ_SCALE)||1));
+    ninja.style.width  = `calc(var(--vwpx) * ${s})`;
+    ninja.style.height = `calc(var(--vhpx) * ${s})`;
+    ninja.style.left = '50%';
+    ninja.style.top  = '50%';
+    ninja.style.transform = `translate(-50%,-50%) scale(${1/s})`;
+  }
 
-/* ===== Input binder ===== */
-function onPress(el, handler){
-  let fired=false;
-  const wrap=(e)=>{ if(fired) return; fired=true; e.preventDefault(); e.stopPropagation(); handler(); };
-  el.addEventListener('touchend', wrap, { once:true, passive:false });
-  el.addEventListener('click', wrap, { once:true });
-}
+  const injectedCss = encodeURIComponent(`
+    html,body{background:transparent!important;margin:0!important;overflow:hidden!important;}
+    #container,.container{background:transparent!important;}
+    video,canvas{position:fixed!important; inset:0!important; width:100vw!important; height:100vh!important; object-fit:cover!important; background:transparent!important;}
+  `);
 
-/* ===== 180초 타이머 + 엔딩 ===== */
-let exploreTimerId=null, exploreRemain=0;
-function fmt(t){ const m=String(Math.floor(t/60)).padStart(2,'0'); const s=String(t%60).padStart(2,'0'); return `${m}:${s}`; }
-function startExploreTimer(seconds=180){
-  exploreRemain=seconds;
-  cornerTimer.textContent=fmt(exploreRemain);
-  cornerTimer.style.display='block';
-  if(exploreTimerId) clearInterval(exploreTimerId);
-  exploreTimerId=setInterval(()=>{
-    exploreRemain--;
-    if(exploreRemain<=0){
-      cornerTimer.textContent='00:00';
-      clearInterval(exploreTimerId); exploreTimerId=null;
-      playTone(80, 10000);
-      setTimeout(()=>{
-        cornerTimer.style.display='none';
-        theEndEl.classList.add('show');
-      }, 10000);
+  const ninjaBase = () => (
+    `https://vdo.ninja/?view=${encodeURIComponent(CONFIG.ROOM_ID)}`
+    + `&clean&autostart&noaudio`
+    + `&codec=${encodeURIComponent(CONFIG.CODEC)}`
+    + `&solo&transparent=1`
+    + `&css=${injectedCss}`
+  );
+
+  const ninjaUrl = () => `${ninjaBase()}&ts=${Date.now()}`;
+
+  function loadNinja(){
+    applyNinjaStyle();
+    applyRezScale();
+    if(!ninja.src || ninja.src === 'about:blank'){
+      ninja.src = ninjaUrl();
+    }
+  }
+
+  loadNinja();
+
+  setInterval(()=>{
+    // 연결/투명 깨짐 대비 재로딩
+    if (parseFloat(getComputedStyle(ninja).opacity) > 0.001){
+      ninja.src = ninjaUrl();
+    }
+  }, CONFIG.AUTO_REFRESH_MS);
+
+  addEventListener('pageshow', ()=> setTimeout(()=>{ setViewportVars(); applyRezScale(); }, 60));
+
+  /* =========================================================
+     UPLOAD HELPERS
+  ========================================================= */
+  async function fetchWithTimeout(url, options={}, timeoutMs=CONFIG.UPLOAD_TIMEOUT_MS){
+    const controller = new AbortController();
+    const id = setTimeout(()=>controller.abort(new Error("timeout")), timeoutMs);
+    try{
+      return await fetch(url, { ...options, signal: controller.signal });
+    } finally {
+      clearTimeout(id);
+    }
+  }
+
+  async function postForm(url, formData){
+    let res = await fetchWithTimeout(url, { method:'POST', body: formData });
+    if((!res.ok && res.status >= 500) && CONFIG.UPLOAD_RETRY > 0){
+      await new Promise(r=>setTimeout(r, 400));
+      res = await fetchWithTimeout(url, { method:'POST', body: formData });
+    }
+    return res;
+  }
+
+  /* =========================================================
+     IMAGE UPLOAD
+  ========================================================= */
+  const imgInput = document.createElement('input');
+  imgInput.type='file';
+  imgInput.accept='image/*';
+  imgInput.style.position='fixed';
+  imgInput.style.left='-9999px';
+  document.body.appendChild(imgInput);
+
+  function showPreview(file){
+    const url = URL.createObjectURL(file);
+    preview.onload=()=>URL.revokeObjectURL(url);
+    preview.onerror=()=>URL.revokeObjectURL(url);
+    preview.src=url;
+  }
+
+  async function uploadImage(file){
+    const form = new FormData();
+    form.append('image', file, `image_${Date.now()}.jpg`);
+    setStatus('Image: uploading...');
+    const res = await postForm(CONFIG.SERVER + '/upload', form);
+    if(!res.ok){
+      const txt = await res.text().catch(()=> '');
+      setStatus(`Image: upload failed (${res.status}) ${txt ? '\n'+txt.slice(0,120) : ''}`);
       return;
     }
-    cornerTimer.textContent=fmt(exploreRemain);
-  },1000);
-}
-
-/* ===== Flow ===== */
-onPress(window, async ()=>{
-  initAudioContext();
-  keepScreenOn();
-
-  /* 오버레이 준비 */
-  applyRezScale();
-  if(!ninja.contentWindow || ninja.src==='about:blank') ninja.src = ninjaUrl();
-
-  infoText.style.display='none';
-  state='WELCOME'; applyLayerMix();
-  stepWelcome();
-});
-
-function stepWelcome(){
-  showOverlayText('WELCOME TO LIMENWALKER WORKSHOP', true);
-  setTimeout(()=>{
-    beep(880,120);
-    msg.textContent='';
-    countdown.style.display='none';
-    startBtn.style.display='inline-block';
-    state='WELCOME'; applyLayerMix();
-  },3000);
-}
-
-let guideTimer=null;
-onPress(startBtn, async ()=>{
-  if(guideTimer) return;
-  beep(660,150);
-  startBtn.style.display='none';
-  showOverlayText(formatGuide(), false);
-
-  state='GUIDE'; applyLayerMix();
-
-  let sec=60;
-  countdown.style.display='block';
-  countdown.textContent=`${sec}초 후 탐사가 시작됩니다.`;
-  guideTimer=setInterval(()=>{
-    sec--;
-    countdown.textContent=`${sec}초 후 탐사가 시작됩니다.`;
-    if(sec<=0){
-      clearInterval(guideTimer); guideTimer=null;
-      countdown.style.display='none';
-      stepWalkStop();
-    }
-  },1000);
-});
-
-/* WALK/STOP 문구 교체 후 자유 탐사 */
-function stepWalkStop(){
-  state='WALK'; applyLayerMix();
-  showOverlayText('당신은 문지방을 밟으며 걸을 수 있다.', true);
-
-  setTimeout(()=>{
-    state='STOP'; applyLayerMix();
-    showOverlayText('당신은 문지방의 끝에서 멈춰 설 수 있다.', true);
-
-    setTimeout(()=>{
-      showOverlayText('자유롭게 거닐어라', true);
-      setTimeout(()=>{ hideOverlay(); startExploreTimer(180); }, 3000);
-    }, 3000);
-  }, 3000);
-}
-
-/* 안내문 */
-function formatGuide(){
-  const lines = [
-    "안녕하세요. 리멘워커 워크숍의 첫 번째 워크숍 발표를 찾아와주신 여러분에게 감사의 인사를 올립니다.",
-    "이곳은 무작위로 수집된 시간이 이성적으로 분류되어 예측가능한 현실로 구성된 공간입니다.",
-    "어느 날, 이곳에 존재하던 ‘무작위로 수집된 시간’은 예측가능한 현실로부터 탈출하게 됩니다.",
-    "잠시후, 당신의 핸드폰 스크린 위로는 ‘당신이 바라보는 현실 공간’과 ‘이 공간을 탈출한 ‘시간’이 바라보는 공간’이 동시에 투사될 것입니다.",
-    "3분 간의 시간 동안 당신은 공간을 자유롭게 거닐며, 이 공간을 탈출한 ‘시간’이 바라보는 공간’이 함께 포착해 나가시면 됩니다."
-  ];
-  return lines.map((l,i)=>`${i+1}. ${l}`).join("\n\n");
-}
-
-/* 복귀/회전 시 회복 루틴 */
-document.addEventListener('visibilitychange', ()=>{
-  if(document.visibilityState==='visible'){
-    setViewportVars(); applyRezScale();
-    applyLayerMix();
-    if(audioCtx && audioCtx.state==='suspended'){ audioCtx.resume().catch(()=>{}); }
-    if(!ninja.contentWindow || ninja.src==='about:blank'){ ninja.src = ninjaUrl(); }
-    if(cornerTimer.style.display==='block'){
-      cornerTimer.textContent = fmt(Math.max(0, exploreRemain|0));
-    }
+    const data = await res.json().catch(()=> ({}));
+    setStatus(`Image: uploaded ✅\n${data.savedAs ? 'savedAs: ' + data.savedAs : ''}`);
   }
-});
-window.addEventListener('orientationchange', ()=>{
-  setTimeout(()=>{
-    setViewportVars(); applyRezScale();
-    applyLayerMix();
-  },120);
-});
+
+  imgInput.addEventListener('change', async ()=>{
+    const file = imgInput.files && imgInput.files[0];
+    if(!file) return;
+    showPreview(file);
+    await uploadImage(file);
+    imgInput.value='';
+  });
+
+  pickImageBtn.addEventListener('click', (e)=>{
+    e.preventDefault();
+    setStatus('Select an image...');
+    imgInput.click();
+  });
+
+  /* =========================================================
+     TEXT UPLOAD
+  ========================================================= */
+  function focusPreviewText(){
+    setTimeout(()=>textPreviewInput.focus({preventScroll:false}), 20);
+  }
+  focusTextBtn.addEventListener('click', (e)=>{
+    e.preventDefault();
+    setStatus('Text: 입력하세요');
+    focusPreviewText();
+  });
+
+  async function uploadText(){
+    const clean = (textPreviewInput.value ?? '').trim();
+    if(!clean){
+      setStatus('Text: 비어있음');
+      focusPreviewText();
+      return;
+    }
+
+    setStatus('Text: uploading...');
+    const payload = { text: clean, clientTime: new Date().toISOString() };
+
+    let res;
+    try{
+      res = await fetchWithTimeout(CONFIG.SERVER + '/upload-text', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify(payload)
+      });
+    }catch(err){
+      setStatus(`Text: upload error\n(${String(err && err.message ? err.message : err)})\nURL: ${CONFIG.SERVER}/upload-text`);
+      return;
+    }
+
+    if(!res.ok){
+      const txt = await res.text().catch(()=> '');
+      setStatus(`Text: upload failed (${res.status}) ${txt ? '\n'+txt.slice(0,120) : ''}`);
+      return;
+    }
+
+    const data = await res.json().catch(()=> ({}));
+    setStatus(`Text: uploaded ✅\n${data.savedAs ? 'savedAs: ' + data.savedAs : ''}`);
+  }
+
+  sendTextBtn.addEventListener('click', async (e)=>{
+    e.preventDefault();
+    await uploadText();
+  });
+
+  // Optional: textarea에서 Cmd/Ctrl+Enter로 전송
+  textPreviewInput.addEventListener('keydown', (e)=>{
+    const isEnter = (e.key === 'Enter');
+    const isCmd = e.metaKey || e.ctrlKey;
+    if(isEnter && isCmd){
+      e.preventDefault();
+      uploadText();
+    }
+  });
+
 })();
 </script>
 </body>
