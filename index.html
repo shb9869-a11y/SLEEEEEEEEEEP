@@ -1,504 +1,900 @@
 <!doctype html>
-<html lang="ko">
+<html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no,interactive-widget=resizes-content">
-<title>LIMENWALKER — Upload + View</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"/>
+  <title>Private Affect — Web App</title>
 
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="LIMEN">
-<meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="theme-color" content="#000000"/>
 
-<style>
-:root{
-  /* Upload UI look */
-  --frame: clamp(16px, 4vmin, 40px);
-  --ui-gap: 10px;
-  --fs-strong: clamp(14px, 2.8vmin, 18px);
-  --fs-small: clamp(11px, 1.8vmin, 13px);
-  --pad-btn-y: clamp(10px, 1.2vmin, 14px);
-  --pad-btn-x: clamp(14px, 2.0vmin, 22px);
-  --safe-t: env(safe-area-inset-top, 0px);
-  --safe-b: env(safe-area-inset-bottom, 0px);
-  --safe-l: env(safe-area-inset-left, 0px);
-  --safe-r: env(safe-area-inset-right, 0px);
-  --paper: #e7e2c9;
-  --paper-dim: rgba(231,226,201,.72);
+  <style>
+    :root{
+      --bg:#000;
+      --fg:#fff;
+      --muted:rgba(255,255,255,.78);
+      --line:rgba(255,255,255,.9);
+      --panel:rgba(0,0,0,.72);
+      --panel2:rgba(0,0,0,.86);
+      --btn:rgba(255,255,255,.12);
+      --btn2:rgba(255,255,255,.18);
+      --danger:#ff2a2a;
+      --radius:16px;
+      --safeT: env(safe-area-inset-top);
+      --safeB: env(safe-area-inset-bottom);
+      --safeL: env(safe-area-inset-left);
+      --safeR: env(safe-area-inset-right);
+      --ff: ui-sans-serif, system-ui, -apple-system, "SF Pro Display", "SF Pro Text", Helvetica, Arial, sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --fadeMs: 2000ms;
+    }
 
-  /* Ninja overlay control */
-  --vwpx:100vw; --vhpx:100vh;
-}
+    html, body{
+      margin:0;
+      height:100%;
+      background:var(--bg);
+      color:var(--fg);
+      font-family:var(--ff);
+      overflow:hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-html,body{
-  margin:0; padding:0; width:100%; height:100%;
-  background:#000; overflow:hidden;
-  touch-action:manipulation;
-}
-body{
-  font-family: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino, "Times New Roman", Times, serif;
-  color:var(--paper);
-  -webkit-user-select:none; user-select:none;
-  -webkit-touch-callout:none;
-}
-*{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
-textarea, input, button {
-  -webkit-user-select: text; user-select: text;
-  -webkit-touch-callout: default;
-  pointer-events: auto;
-}
-textarea{ touch-action:auto; -webkit-user-modify: read-write-plaintext-only; }
+    /* ===== App Root ===== */
+    #app{
+      position:fixed;
+      inset:0;
+      background:var(--bg);
+    }
 
-/* Background canvas */
-#bg{ position:fixed; inset:0; width:100vw; height:100vh; display:block; z-index:0; background:#000; }
+    /* ===== Top-left Menu ===== */
+    .topbar{
+      position:fixed;
+      top: calc(10px + var(--safeT));
+      left: calc(10px + var(--safeL));
+      z-index:1000;
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      pointer-events:auto;
+    }
 
-/* VDO.Ninja overlay (Resolume) */
-#ninjaOverlay{
-  position:fixed; left:50%; top:50%;
-  width:var(--vwpx); height:var(--vhpx);
-  transform:translate(-50%,-50%) scale(1);
-  transform-origin:50% 50%;
-  border:0; background:transparent;
-  z-index:20;
-  pointer-events:none;
+    .menuBtn{
+      width:44px;height:44px;
+      border:1px solid rgba(255,255,255,.25);
+      background:rgba(0,0,0,.35);
+      border-radius:12px;
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+      user-select:none;
+      backdrop-filter: blur(8px);
+    }
+    .menuBtn:active{ transform:scale(.98); }
 
-  /* ✅ 기본: 보이게. 원하면 JS에서 단계별로 조절 가능 */
-  opacity:1;
-  transition:opacity .25s ease;
+    .burger{
+      width:18px;height:12px; position:relative;
+    }
+    .burger::before,.burger::after,.burger span{
+      content:"";
+      position:absolute; left:0; right:0;
+      height:2px; border-radius:2px;
+      background:rgba(255,255,255,.9);
+    }
+    .burger::before{ top:0; }
+    .burger span{ top:5px; }
+    .burger::after{ bottom:0; }
 
-  /* ✅ 합성: 필요없으면 normal 로 바꿔도 됨 */
-  mix-blend-mode: screen;
-  will-change:opacity, transform;
-}
+    .menuPanel{
+      min-width:220px;
+      padding:12px;
+      border:1px solid rgba(255,255,255,.2);
+      background:rgba(0,0,0,.55);
+      border-radius:14px;
+      backdrop-filter: blur(10px);
+      display:none;
+    }
+    .menuPanel.open{ display:block; }
 
-/* Frame + panels */
-.frameBox{
-  position:fixed;
-  left:calc(var(--frame) + var(--safe-l));
-  top:calc(var(--frame) + var(--safe-t));
-  right:calc(var(--frame) + var(--safe-r));
-  bottom:calc(var(--frame) + var(--safe-b));
-  border:1.5px solid rgba(231,226,201,.68);
-  pointer-events:none;
-  z-index:50;
-}
-.panel{
-  position:fixed;
-  left:calc(var(--frame) + var(--ui-gap) + var(--safe-l));
-  right:calc(var(--frame) + var(--ui-gap) + var(--safe-r));
-  top:calc(var(--frame) + var(--ui-gap) + var(--safe-t));
-  bottom:calc(var(--frame) + var(--ui-gap) + var(--safe-b));
-  z-index:200;
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-  justify-content:flex-end;
-}
-.card{
-  background:rgba(0,0,0,.42);
-  border:1px solid rgba(231,226,201,.12);
-  border-radius:18px;
-  padding:14px;
-  backdrop-filter: blur(10px);
-}
-.row{ display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
-.uiBtn{
-  background:rgba(255,255,255,.06);
-  color:var(--paper);
-  border:1px solid rgba(231,226,201,.16);
-  font-size:var(--fs-strong);
-  padding:var(--pad-btn-y) var(--pad-btn-x);
-  font-family: inherit;
-  letter-spacing: .10em;
-  white-space:nowrap;
-  cursor:pointer;
-  opacity:.95;
-  border-radius:14px;
-}
-.uiBtn:active{opacity:.78; transform:translateY(1px);}
-.small{ font-size:var(--fs-small); letter-spacing:.08em; opacity:.9; color:var(--paper-dim); }
+    .menuTitle{
+      font-size:12px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:rgba(255,255,255,.7);
+      margin-bottom:10px;
+    }
 
-#previewWrap{ display:flex; gap:12px; align-items:stretch; }
-#preview{
-  width:min(42vw, 360px);
-  aspect-ratio: 4 / 3;
-  border-radius:14px;
-  border:1px solid rgba(231,226,201,.12);
-  background:rgba(255,255,255,.03);
-  object-fit:cover;
-}
-#rightPane{
-  flex:1; min-width:220px;
-  display:flex; flex-direction:column; gap:10px;
-}
-#status{
-  white-space:pre-wrap;
-  line-height:1.4;
-  font-size:var(--fs-small);
-  color:rgba(231,226,201,.78);
-}
-#textBox{
-  border-radius:14px;
-  border:1px solid rgba(231,226,201,.16);
-  background:rgba(0,0,0,.25);
-  padding:10px;
-}
-#textBox .hint{
-  font-size:var(--fs-small);
-  color:rgba(231,226,201,.55);
-  letter-spacing:.06em;
-  margin-bottom:8px;
-}
-#textPreviewInput{
-  width:100%;
-  min-height:92px;
-  max-height:220px;
-  resize:vertical;
-  border-radius:12px;
-  border:1px solid rgba(231,226,201,.14);
-  background:rgba(0,0,0,.35);
-  color:rgba(231,226,201,.92);
-  padding:10px;
-  outline:none;
-  font-size:clamp(13px, 2.0vmin, 16px);
-  line-height:1.5;
-}
-#textPreviewInput::placeholder{ color: rgba(231,226,201,.45); }
+    .homeBtn{
+      width:100%;
+      padding:12px 12px;
+      border:none;
+      border-radius:12px;
+      background:var(--danger);
+      color:#fff;
+      font-weight:700;
+      cursor:pointer;
+    }
+    .homeBtn:active{ transform:scale(.99); }
 
-/* Optional tiny top hint */
-#topHint{
-  position:fixed;
-  left:calc(var(--frame) + var(--ui-gap) + var(--safe-l));
-  top:calc(var(--frame) + var(--ui-gap) + var(--safe-t));
-  z-index:210;
-  font-size:var(--fs-small);
-  color:rgba(231,226,201,.62);
-  letter-spacing:.10em;
-  pointer-events:none;
-  user-select:none;
-}
-</style>
+    /* ===== Scene Container ===== */
+    .scene{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:
+        calc(26px + var(--safeT))
+        calc(20px + var(--safeR))
+        calc(26px + var(--safeB))
+        calc(20px + var(--safeL));
+      opacity:0;
+      pointer-events:none;
+      transition: opacity var(--fadeMs) ease;
+    }
+    .scene.active{
+      opacity:1;
+      pointer-events:auto;
+    }
+
+    .centerText{
+      max-width:min(920px, 92vw);
+      text-align:center;
+      line-height:1.55;
+      font-size:clamp(16px, 2.2vw, 22px);
+      color:rgba(255,255,255,.92);
+    }
+    .centerText .muted{ color:var(--muted); }
+    .centerText strong{ font-weight:800; }
+
+    .hintTap{
+      margin-top:22px;
+      font-size:14px;
+      color:rgba(255,255,255,.72);
+    }
+
+    /* ===== Bottom-right Arrow ===== */
+    .arrowWrap{
+      position:fixed;
+      right: calc(18px + var(--safeR));
+      bottom: calc(18px + var(--safeB));
+      z-index:900;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      align-items:flex-end;
+      pointer-events:none;
+    }
+    .tapLabel{
+      font-size:12px;
+      letter-spacing:.02em;
+      color:rgba(255,255,255,.75);
+      background:rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.15);
+      border-radius:999px;
+      padding:8px 10px;
+      backdrop-filter: blur(8px);
+    }
+    .arrow{
+      width:56px;height:56px;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.2);
+      background:rgba(0,0,0,.35);
+      display:grid;
+      place-items:center;
+      backdrop-filter: blur(8px);
+      transform: translateZ(0);
+      animation: nudge 1.1s ease-in-out infinite;
+    }
+    .arrow svg{ opacity:.92; }
+    @keyframes nudge{
+      0%,100%{ transform: translate(0,0); }
+      50%{ transform: translate(0,-6px); }
+    }
+
+    /* ===== Scene 6 (Live view) ===== */
+    #liveScene{
+      padding:0;
+      align-items:stretch;
+      justify-content:stretch;
+    }
+
+    .liveStage{
+      position:absolute;
+      inset:0;
+      overflow:hidden;
+      background:#000;
+    }
+
+    /* Replace this with your Rezolume/Ninja incoming layer:
+       - you can use <video> with a stream, or draw to canvas, etc.
+       For now this is a placeholder image layer. */
+    .rezLayer{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      filter: contrast(1.02) saturate(1.02);
+      opacity:1;
+      background:#000;
+    }
+
+    .liveHUD{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      z-index:20;
+    }
+
+    .cornerBtns{
+      position:absolute;
+      left: calc(16px + var(--safeL));
+      right: calc(16px + var(--safeR));
+      bottom: calc(16px + var(--safeB));
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-end;
+      pointer-events:auto;
+      z-index:30;
+    }
+
+    .actionBtn{
+      border:1px solid rgba(255,255,255,.22);
+      background:rgba(0,0,0,.45);
+      color:rgba(255,255,255,.92);
+      padding:14px 14px;
+      border-radius:16px;
+      font-size:14px;
+      font-weight:700;
+      letter-spacing:.01em;
+      backdrop-filter: blur(10px);
+      cursor:pointer;
+      user-select:none;
+      min-width: 170px;
+      text-align:center;
+    }
+    .actionBtn:active{ transform:scale(.99); }
+    .actionBtn.secondary{ background:rgba(255,255,255,.10); }
+
+    /* ===== Modal ===== */
+    .modalBackdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.62);
+      backdrop-filter: blur(10px);
+      display:none;
+      z-index:2000;
+      padding:
+        calc(14px + var(--safeT))
+        calc(14px + var(--safeR))
+        calc(14px + var(--safeB))
+        calc(14px + var(--safeL));
+    }
+    .modalBackdrop.open{ display:flex; }
+
+    .modal{
+      width:min(980px, 100%);
+      margin:auto;
+      border-radius:22px;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(0,0,0,.80);
+      overflow:hidden;
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+    }
+
+    .modalHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:14px 14px 10px 14px;
+      border-bottom:1px solid rgba(255,255,255,.12);
+    }
+    .modalHeader .title{
+      font-weight:800;
+      letter-spacing:.01em;
+      font-size:14px;
+      color:rgba(255,255,255,.92);
+    }
+    .exitBtn{
+      border:1px solid rgba(255,255,255,.22);
+      background:rgba(255,255,255,.10);
+      color:rgba(255,255,255,.92);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      user-select:none;
+      font-weight:700;
+      font-size:13px;
+    }
+    .exitBtn:active{ transform:scale(.99); }
+
+    .modalBody{
+      padding:14px;
+      display:grid;
+      gap:12px;
+    }
+
+    .row{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .uploadBtn{
+      border:1px solid rgba(255,255,255,.22);
+      background:rgba(255,255,255,.10);
+      color:rgba(255,255,255,.92);
+      padding:12px 14px;
+      border-radius:14px;
+      cursor:pointer;
+      user-select:none;
+      font-weight:800;
+      font-size:13px;
+    }
+    .uploadBtn:active{ transform:scale(.99); }
+
+    .previewThumb{
+      width:88px;height:88px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.18);
+      overflow:hidden;
+      background:rgba(255,255,255,.06);
+      display:none;
+    }
+    .previewThumb img{
+      width:100%; height:100%;
+      object-fit:cover;
+      display:block;
+    }
+    .previewThumb.show{ display:block; }
+
+    .textBox{
+      width:min(920px, 100%);
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(0,0,0,.55);
+      padding:14px 14px;
+      color:rgba(255,255,255,.92);
+      font-family:var(--ff);
+      font-size:16px;
+      line-height:1.4;
+      min-height:56px;
+      outline:none;
+      user-select:text;
+    }
+    .textBox::placeholder{ color:rgba(255,255,255,.45); }
+
+    /* ===== On-screen Keyboard ===== */
+    .kbd{
+      width:min(980px, 100%);
+      border-radius:20px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(0,0,0,.72);
+      padding:12px;
+      user-select:none;
+    }
+
+    .kbdRow{
+      display:flex;
+      gap:8px;
+      justify-content:center;
+      margin-bottom:8px;
+      flex-wrap:nowrap;
+    }
+
+    .key{
+      flex:0 0 auto;
+      min-width: 30px;
+      padding:12px 10px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.08);
+      color:rgba(255,255,255,.94);
+      font-weight:800;
+      font-size:14px;
+      text-align:center;
+      cursor:pointer;
+    }
+    .key:active{ transform:scale(.98); background:rgba(255,255,255,.14); }
+    .key.wide{ min-width: 86px; }
+    .key.space{ min-width: 240px; }
+    .key.send{
+      background:rgba(255,255,255,.16);
+      border-color: rgba(255,255,255,.22);
+      min-width: 110px;
+    }
+    .key.del{
+      background:rgba(255,255,255,.12);
+      min-width: 96px;
+    }
+
+    /* ===== Helper: landscape hint (optional visual only) ===== */
+    .landscapeHint{
+      margin-top:14px;
+      font-size:13px;
+      color:rgba(255,255,255,.65);
+    }
+
+    /* Make tap-to-advance feel consistent */
+    .tapLayer{
+      position:absolute;
+      inset:0;
+      cursor:pointer;
+    }
+
+    /* Hide arrow on live scene, show only on intro scenes */
+    body.liveMode .arrowWrap{ display:none; }
+
+  </style>
 </head>
 
 <body>
-  <!-- Background -->
-  <canvas id="bg"></canvas>
+  <div id="app">
 
-  <!-- VDO.Ninja Resolume overlay -->
-  <iframe id="ninjaOverlay"
-    allow="autoplay; fullscreen; clipboard-read; clipboard-write"
-    allowtransparency="true"
-    referrerpolicy="no-referrer"
-    src="about:blank"></iframe>
+    <!-- Top-left menu -->
+    <div class="topbar">
+      <div class="menuBtn" id="menuBtn" aria-label="Menu" title="Menu">
+        <div class="burger"><span></span></div>
+      </div>
+      <div class="menuPanel" id="menuPanel">
+        <div class="menuTitle">Menu</div>
+        <button class="homeBtn" id="homeBtn">Go back to start</button>
+      </div>
+    </div>
 
-  <div class="frameBox" aria-hidden="true"></div>
-  <div id="topHint">VIEW + UPLOAD</div>
+    <!-- Bottom-right arrow + label (for scenes 1-5) -->
+    <div class="arrowWrap" id="arrowWrap">
+      <div class="tapLabel" id="tapLabel">Tap here to continue</div>
+      <div class="arrow" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+          <path d="M8 5l8 7-8 7" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
 
-  <!-- Upload UI -->
-  <div class="panel">
-    <div class="card">
-      <div class="row">
+    <!-- ===== Scenes 1~5 (tap to advance) ===== -->
+    <section class="scene" id="scene1" data-scene="1">
+      <div class="tapLayer" data-advance="true"></div>
+      <div class="centerText">
         <div>
-          <div style="letter-spacing:.12em; font-weight:700;">UPLOAD</div>
-          <div class="small">Image 업로드 / Text 입력 후 Enter로 전송</div>
+          To experience this web app like a full-screen application, please use <strong>Share → Add to Home Screen</strong>.
+          <br/>
+          When added, you can open it in <strong>full-screen</strong> for a more immersive view.
         </div>
-        <div class="row">
-          <button id="pickImage" class="uiBtn">Image</button>
-          <button id="focusText" class="uiBtn">Text</button>
-          <button id="sendText" class="uiBtn">Enter</button>
+        <div class="landscapeHint">
+          We recommend using <strong>landscape mode</strong> (rotate your phone sideways).
+        </div>
+        <div class="hintTap">Tap anywhere to go to the next page.</div>
+      </div>
+    </section>
+
+    <section class="scene" id="scene2" data-scene="2">
+      <div class="tapLayer" data-advance="true"></div>
+      <div class="centerText">
+        <div class="muted">Thank you for finding</div>
+        <div style="margin-top:10px; font-weight:900;">
+          An Experiment on the Possibility of Sharing Private Affect through Cooking Gestures
+          <br/>
+          — A Body Fidgeting Between Emptiness (空) and Togetherness (共)
+        </div>
+        <div class="hintTap">Tap anywhere to go to the next page.</div>
+      </div>
+    </section>
+
+    <section class="scene" id="scene3" data-scene="3">
+      <div class="tapLayer" data-advance="true"></div>
+      <div class="centerText">
+        Our beginning came from a curiosity about empathy.
+        <br/><br/>
+        That curiosity led us to ask: if artists in New York and Korea—who have never met—share their own <strong>soul recipes</strong>,
+        and each person cooks the other’s recipe, could we sense who the other is, and what memories live inside that food?
+        <br/><br/>
+        This is our experiment.
+        <div class="hintTap">Tap anywhere to go to the next page.</div>
+      </div>
+    </section>
+
+    <section class="scene" id="scene4" data-scene="4">
+      <div class="tapLayer" data-advance="true"></div>
+      <div class="centerText">
+        In this web app, you can watch the <strong>live stage video</strong> used during the performance.
+        <br/><br/>
+        If you want, you can tap <strong>“Share My Memory”</strong> (bottom-right) to upload a photo of your soul food
+        and write a short memory connected to it.
+        <br/><br/>
+        You can also tap <strong>“Share My Feeling”</strong> (bottom-left) to write and share thoughts or emotions
+        you experience while watching.
+        <div class="hintTap">Tap anywhere to go to the next page.</div>
+      </div>
+    </section>
+
+    <section class="scene" id="scene5" data-scene="5">
+      <div class="tapLayer" data-advance="true"></div>
+      <div class="centerText">
+        The performance will begin shortly.
+        <br/><br/>
+        Please place your phone on the table with the screen on, and wait for the performance to start.
+        <br/><br/>
+        When it begins, tap the bottom-right arrow to enter the system.
+        <div class="hintTap">Tap anywhere to start.</div>
+      </div>
+    </section>
+
+    <!-- ===== Scene 6 (Live System) ===== -->
+    <section class="scene" id="liveScene" data-scene="6">
+      <div class="liveStage">
+        <!-- Placeholder background layer (replace with your incoming video/canvas) -->
+        <img class="rezLayer" id="rezLayer"
+             src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='50%25' r='75%25'%3E%3Cstop offset='0%25' stop-color='%23111111'/%3E%3Cstop offset='100%25' stop-color='%23000000'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23g)'/%3E%3Cpath d='M0 620 C 300 540, 520 720, 900 640 S 1400 560, 1600 690' stroke='%23ffffff' stroke-opacity='0.10' stroke-width='2' fill='none'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23ffffff' fill-opacity='0.35' font-family='system-ui, -apple-system' font-size='28'%3ERezolume / Ninja Incoming Layer (Placeholder)%3C/text%3E%3C/svg%3E"
+             alt="Live background placeholder"/>
+      </div>
+
+      <!-- Buttons -->
+      <div class="cornerBtns">
+        <button class="actionBtn secondary" id="btnFeeling">Share My Feeling</button>
+        <button class="actionBtn" id="btnMemory">Share My Memory</button>
+      </div>
+    </section>
+
+    <!-- ===== Modals ===== -->
+
+    <!-- Memory Modal (photo + text + keyboard) -->
+    <div class="modalBackdrop" id="memoryModal">
+      <div class="modal" role="dialog" aria-modal="true" aria-label="Share My Memory">
+        <div class="modalHeader">
+          <div class="title">Share My Memory</div>
+          <button class="exitBtn" data-close="memoryModal">Exit</button>
+        </div>
+
+        <div class="modalBody">
+          <div class="row" id="memoryUploadRow">
+            <input type="file" id="memoryPhoto" accept="image/*" style="display:none"/>
+            <button class="uploadBtn" id="uploadBtn">Upload a Photo</button>
+            <div class="previewThumb" id="thumb">
+              <img id="thumbImg" alt="Uploaded preview"/>
+            </div>
+          </div>
+
+          <input class="textBox" id="memoryText" type="text"
+                 placeholder="Type your memory here (English)…"
+                 autocomplete="off" autocapitalize="sentences" spellcheck="true"/>
+
+          <div class="kbd" id="kbdMemory"></div>
         </div>
       </div>
     </div>
 
-    <div class="card">
-      <div id="previewWrap">
-        <img id="preview" alt="preview"/>
-        <div id="rightPane">
-          <div id="status">Ready.</div>
-          <div id="textBox">
-            <div class="hint">텍스트를 입력하세요</div>
-            <textarea id="textPreviewInput" placeholder="여기에 입력..."></textarea>
-          </div>
+    <!-- Feeling Modal (text + keyboard only) -->
+    <div class="modalBackdrop" id="feelingModal">
+      <div class="modal" role="dialog" aria-modal="true" aria-label="Share My Feeling">
+        <div class="modalHeader">
+          <div class="title">Share My Feeling</div>
+          <button class="exitBtn" data-close="feelingModal">Exit</button>
+        </div>
+
+        <div class="modalBody">
+          <input class="textBox" id="feelingText" type="text"
+                 placeholder="Type your feeling here (English)…"
+                 autocomplete="off" autocapitalize="sentences" spellcheck="true"/>
+
+          <div class="kbd" id="kbdFeeling"></div>
         </div>
       </div>
     </div>
+
   </div>
 
-<script>
-(() => {
-  /* =========================================================
-     CONFIG
-  ========================================================= */
-  const CONFIG = {
-    // ✅ Upload server: 현재 페이지가 열린 서버를 자동 사용 (file://이면 localhost fallback)
-    SERVER: (location.origin && location.origin.startsWith('http')) ? location.origin : 'http://127.0.0.1:4000',
-    UPLOAD_TIMEOUT_MS: 20000,
-    UPLOAD_RETRY: 1,
+  <script>
+    /* =========================
+       Scene System (1..6)
+       - Fade in/out: 2000ms
+       - Scenes 1..5: tap anywhere to advance
+       - Scene 6: live view with buttons + modals
+    ========================= */
+    const FADE_MS = 2000;
 
-    // ✅ VDO.Ninja (view) settings
-    ROOM_ID: "YOURROOMID",
-    REZ_SCALE: 0.65,
-    NINJA_OPACITY: 1.0,       // ✅ 1.0 = 완전 불투명
-    BLEND_MODE: "screen",     // "normal" 추천(원본), "screen"(밝게 합성)
-    CODEC: "vp8",
-    AUTO_REFRESH_MS: 60000
-  };
+    const scenes = [
+      document.getElementById('scene1'),
+      document.getElementById('scene2'),
+      document.getElementById('scene3'),
+      document.getElementById('scene4'),
+      document.getElementById('scene5'),
+      document.getElementById('liveScene'),
+    ];
 
-  /* =========================================================
-     ELEMENTS
-  ========================================================= */
-  const bg = document.querySelector('#bg');
-  const bctx = bg.getContext('2d', { alpha:false });
+    const arrowWrap = document.getElementById('arrowWrap');
+    const tapLabel  = document.getElementById('tapLabel');
 
-  const ninja = document.querySelector('#ninjaOverlay');
+    let current = 0; // index 0..5
 
-  const pickImageBtn = document.querySelector('#pickImage');
-  const focusTextBtn = document.querySelector('#focusText');
-  const sendTextBtn  = document.querySelector('#sendText');
+    function setScene(index){
+      index = Math.max(0, Math.min(scenes.length - 1, index));
 
-  const preview = document.querySelector('#preview');
-  const statusEl = document.querySelector('#status');
-  const textPreviewInput = document.querySelector('#textPreviewInput');
+      // toggle body mode
+      if(index === 5) document.body.classList.add('liveMode');
+      else document.body.classList.remove('liveMode');
 
-  function setStatus(msg){ statusEl.textContent = msg || ''; }
+      // arrow label for start vs continue (Scene 5 says "start")
+      if(index === 4){
+        tapLabel.textContent = "Tap here to start";
+      }else{
+        tapLabel.textContent = "Tap here to continue";
+      }
 
-  /* =========================================================
-     VIEWPORT VARS (for ninja sizing)
-  ========================================================= */
-  function setViewportVars(){
-    const vv = window.visualViewport;
-    const w = Math.round((vv?.width || innerWidth));
-    const h = Math.round((vv?.height || innerHeight));
-    document.documentElement.style.setProperty('--vwpx', w + 'px');
-    document.documentElement.style.setProperty('--vhpx', h + 'px');
-  }
-  setViewportVars();
-  addEventListener('resize', setViewportVars);
-  if (visualViewport){
-    visualViewport.addEventListener('resize', setViewportVars);
-    visualViewport.addEventListener('scroll', setViewportVars);
-  }
-  addEventListener('orientationchange', ()=> setTimeout(setViewportVars,120));
+      // Show arrow only on scenes 1..5
+      arrowWrap.style.display = (index < 5) ? 'flex' : 'none';
 
-  /* =========================================================
-     BG (light particles)
-  ========================================================= */
-  function resizeCanvas(){
-    const dpr = window.devicePixelRatio || 1;
-    bg.width = Math.round(innerWidth * dpr);
-    bg.height = Math.round(innerHeight * dpr);
-    bctx.setTransform(dpr,0,0,dpr,0,0);
-  }
-  window.addEventListener('resize', resizeCanvas, {passive:true});
-  resizeCanvas();
+      // fade swap
+      scenes.forEach((s, i) => s.classList.toggle('active', i === index));
+      current = index;
+    }
 
-  const pts=[];
-  for(let i=0;i<90;i++){
-    pts.push({
-      x:Math.random()*innerWidth,
-      y:Math.random()*innerHeight,
-      vx:(Math.random()-0.5)*0.18,
-      vy:(Math.random()-0.5)*0.18
+    // Initialize fade duration to exactly 2s
+    document.documentElement.style.setProperty('--fadeMs', FADE_MS + 'ms');
+    setScene(0);
+
+    // Tap-to-advance on scenes 1..5
+    document.querySelectorAll('[data-advance="true"]').forEach(layer=>{
+      layer.addEventListener('click', () => {
+        if(current < 5) setScene(current + 1);
+      }, {passive:true});
     });
-  }
-  (function loop(){
-    bctx.fillStyle='#000';
-    bctx.fillRect(0,0,innerWidth,innerHeight);
-    bctx.globalCompositeOperation='lighter';
-    for(const p of pts){
-      p.x+=p.vx; p.y+=p.vy;
-      if(p.x<-20)p.x=innerWidth+20; if(p.x>innerWidth+20)p.x=-20;
-      if(p.y<-20)p.y=innerHeight+20; if(p.y>innerHeight+20)p.y=-20;
-      bctx.fillStyle='rgba(231,226,201,0.09)';
-      bctx.beginPath(); bctx.arc(p.x,p.y,1.2,0,Math.PI*2); bctx.fill();
-    }
-    bctx.globalCompositeOperation='source-over';
-    requestAnimationFrame(loop);
-  })();
 
-  /* =========================================================
-     VDO.NINJA VIEW (iframe overlay)
-  ========================================================= */
-  // iOS Safari blend fallback
-  const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    /* =========================
+       Top-left Menu
+       - burger toggles
+       - red button returns to start (scene 1)
+    ========================= */
+    const menuBtn   = document.getElementById('menuBtn');
+    const menuPanel = document.getElementById('menuPanel');
+    const homeBtn   = document.getElementById('homeBtn');
 
-  function applyNinjaStyle(){
-    ninja.style.opacity = String(Math.max(0, Math.min(1, CONFIG.NINJA_OPACITY)));
-    ninja.style.mixBlendMode = (isiOS && CONFIG.BLEND_MODE === "screen") ? "lighten" : CONFIG.BLEND_MODE;
-  }
-
-  function applyRezScale(){
-    const s = Math.max(0.2, Math.min(1, Number(CONFIG.REZ_SCALE)||1));
-    ninja.style.width  = `calc(var(--vwpx) * ${s})`;
-    ninja.style.height = `calc(var(--vhpx) * ${s})`;
-    ninja.style.left = '50%';
-    ninja.style.top  = '50%';
-    ninja.style.transform = `translate(-50%,-50%) scale(${1/s})`;
-  }
-
-  const injectedCss = encodeURIComponent(`
-    html,body{background:transparent!important;margin:0!important;overflow:hidden!important;}
-    #container,.container{background:transparent!important;}
-    video,canvas{position:fixed!important; inset:0!important; width:100vw!important; height:100vh!important; object-fit:cover!important; background:transparent!important;}
-  `);
-
-  const ninjaBase = () => (
-    `https://vdo.ninja/?view=${encodeURIComponent(CONFIG.ROOM_ID)}`
-    + `&clean&autostart&noaudio`
-    + `&codec=${encodeURIComponent(CONFIG.CODEC)}`
-    + `&solo&transparent=1`
-    + `&css=${injectedCss}`
-  );
-
-  const ninjaUrl = () => `${ninjaBase()}&ts=${Date.now()}`;
-
-  function loadNinja(){
-    applyNinjaStyle();
-    applyRezScale();
-    if(!ninja.src || ninja.src === 'about:blank'){
-      ninja.src = ninjaUrl();
-    }
-  }
-
-  loadNinja();
-
-  setInterval(()=>{
-    // 연결/투명 깨짐 대비 재로딩
-    if (parseFloat(getComputedStyle(ninja).opacity) > 0.001){
-      ninja.src = ninjaUrl();
-    }
-  }, CONFIG.AUTO_REFRESH_MS);
-
-  addEventListener('pageshow', ()=> setTimeout(()=>{ setViewportVars(); applyRezScale(); }, 60));
-
-  /* =========================================================
-     UPLOAD HELPERS
-  ========================================================= */
-  async function fetchWithTimeout(url, options={}, timeoutMs=CONFIG.UPLOAD_TIMEOUT_MS){
-    const controller = new AbortController();
-    const id = setTimeout(()=>controller.abort(new Error("timeout")), timeoutMs);
-    try{
-      return await fetch(url, { ...options, signal: controller.signal });
-    } finally {
-      clearTimeout(id);
-    }
-  }
-
-  async function postForm(url, formData){
-    let res = await fetchWithTimeout(url, { method:'POST', body: formData });
-    if((!res.ok && res.status >= 500) && CONFIG.UPLOAD_RETRY > 0){
-      await new Promise(r=>setTimeout(r, 400));
-      res = await fetchWithTimeout(url, { method:'POST', body: formData });
-    }
-    return res;
-  }
-
-  /* =========================================================
-     IMAGE UPLOAD
-  ========================================================= */
-  const imgInput = document.createElement('input');
-  imgInput.type='file';
-  imgInput.accept='image/*';
-  imgInput.style.position='fixed';
-  imgInput.style.left='-9999px';
-  document.body.appendChild(imgInput);
-
-  function showPreview(file){
-    const url = URL.createObjectURL(file);
-    preview.onload=()=>URL.revokeObjectURL(url);
-    preview.onerror=()=>URL.revokeObjectURL(url);
-    preview.src=url;
-  }
-
-  async function uploadImage(file){
-    const form = new FormData();
-    form.append('image', file, `image_${Date.now()}.jpg`);
-    setStatus('Image: uploading...');
-    const res = await postForm(CONFIG.SERVER + '/upload', form);
-    if(!res.ok){
-      const txt = await res.text().catch(()=> '');
-      setStatus(`Image: upload failed (${res.status}) ${txt ? '\n'+txt.slice(0,120) : ''}`);
-      return;
-    }
-    const data = await res.json().catch(()=> ({}));
-    setStatus(`Image: uploaded ✅\n${data.savedAs ? 'savedAs: ' + data.savedAs : ''}`);
-  }
-
-  imgInput.addEventListener('change', async ()=>{
-    const file = imgInput.files && imgInput.files[0];
-    if(!file) return;
-    showPreview(file);
-    await uploadImage(file);
-    imgInput.value='';
-  });
-
-  pickImageBtn.addEventListener('click', (e)=>{
-    e.preventDefault();
-    setStatus('Select an image...');
-    imgInput.click();
-  });
-
-  /* =========================================================
-     TEXT UPLOAD
-  ========================================================= */
-  function focusPreviewText(){
-    setTimeout(()=>textPreviewInput.focus({preventScroll:false}), 20);
-  }
-  focusTextBtn.addEventListener('click', (e)=>{
-    e.preventDefault();
-    setStatus('Text: 입력하세요');
-    focusPreviewText();
-  });
-
-  async function uploadText(){
-    const clean = (textPreviewInput.value ?? '').trim();
-    if(!clean){
-      setStatus('Text: 비어있음');
-      focusPreviewText();
-      return;
+    function toggleMenu(force){
+      const open = (typeof force === 'boolean') ? force : !menuPanel.classList.contains('open');
+      menuPanel.classList.toggle('open', open);
     }
 
-    setStatus('Text: uploading...');
-    const payload = { text: clean, clientTime: new Date().toISOString() };
+    menuBtn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      toggleMenu();
+    });
 
-    let res;
-    try{
-      res = await fetchWithTimeout(CONFIG.SERVER + '/upload-text', {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify(payload)
+    homeBtn.addEventListener('click', ()=>{
+      toggleMenu(false);
+      closeAllModals();
+      setScene(0);
+    });
+
+    // Close menu when tapping outside
+    document.addEventListener('click', ()=>{
+      toggleMenu(false);
+    }, {passive:true});
+
+    /* =========================
+       Modals
+    ========================= */
+    const memoryModal  = document.getElementById('memoryModal');
+    const feelingModal = document.getElementById('feelingModal');
+
+    function openModal(el){
+      el.classList.add('open');
+    }
+    function closeModal(el){
+      el.classList.remove('open');
+    }
+    function closeAllModals(){
+      closeModal(memoryModal);
+      closeModal(feelingModal);
+    }
+
+    // Exit buttons
+    document.querySelectorAll('[data-close]').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const id = btn.getAttribute('data-close');
+        const el = document.getElementById(id);
+        if(el) closeModal(el);
       });
-    }catch(err){
-      setStatus(`Text: upload error\n(${String(err && err.message ? err.message : err)})\nURL: ${CONFIG.SERVER}/upload-text`);
-      return;
+    });
+
+    // Backdrop click closes
+    [memoryModal, feelingModal].forEach(modal=>{
+      modal.addEventListener('click', (e)=>{
+        if(e.target === modal) closeModal(modal);
+      });
+    });
+
+    // Scene 6 buttons
+    document.getElementById('btnMemory').addEventListener('click', (e)=>{
+      e.stopPropagation();
+      openModal(memoryModal);
+      focusInput(memoryText);
+    });
+
+    document.getElementById('btnFeeling').addEventListener('click', (e)=>{
+      e.stopPropagation();
+      openModal(feelingModal);
+      focusInput(feelingText);
+    });
+
+    /* =========================
+       Photo Upload Preview (Memory)
+    ========================= */
+    const memoryPhoto = document.getElementById('memoryPhoto');
+    const uploadBtn   = document.getElementById('uploadBtn');
+    const thumb       = document.getElementById('thumb');
+    const thumbImg    = document.getElementById('thumbImg');
+
+    uploadBtn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      memoryPhoto.click();
+    });
+
+    memoryPhoto.addEventListener('change', ()=>{
+      const file = memoryPhoto.files && memoryPhoto.files[0];
+      if(!file) return;
+      const url = URL.createObjectURL(file);
+      thumbImg.src = url;
+      thumb.classList.add('show');
+    });
+
+    /* =========================
+       On-screen QWERTY Keyboard
+       - English keys only
+       - ENTER key shows "Send"
+       - Delete key exists
+       - Works for both modals
+    ========================= */
+    const memoryText  = document.getElementById('memoryText');
+    const feelingText = document.getElementById('feelingText');
+
+    function focusInput(inp){
+      // Prevent iOS scrolling weirdness by focusing after a tick
+      setTimeout(()=>{ try{ inp.focus(); }catch(_){} }, 50);
     }
 
-    if(!res.ok){
-      const txt = await res.text().catch(()=> '');
-      setStatus(`Text: upload failed (${res.status}) ${txt ? '\n'+txt.slice(0,120) : ''}`);
-      return;
+    const LAYOUT = [
+      ["Q","W","E","R","T","Y","U","I","O","P"],
+      ["A","S","D","F","G","H","J","K","L"],
+      ["Z","X","C","V","B","N","M"]
+    ];
+
+    function buildKeyboard(container, getActiveInput, onSend){
+      container.innerHTML = "";
+
+      // Row 1
+      container.appendChild(makeRow(LAYOUT[0], getActiveInput));
+
+      // Row 2
+      container.appendChild(makeRow(LAYOUT[1], getActiveInput));
+
+      // Row 3 with Delete
+      const row3 = document.createElement('div');
+      row3.className = 'kbdRow';
+
+      const del = makeKey("Delete", () => keyDelete(getActiveInput()), "del wide");
+      row3.appendChild(del);
+
+      LAYOUT[2].forEach(k => row3.appendChild(makeKey(k, () => keyChar(getActiveInput(), k))));
+
+      const send = makeKey("Send", () => onSend(getActiveInput()), "send wide");
+      row3.appendChild(send);
+
+      container.appendChild(row3);
+
+      // Row 4: space + punctuation
+      const row4 = document.createElement('div');
+      row4.className = 'kbdRow';
+
+      row4.appendChild(makeKey(".", () => keyChar(getActiveInput(), ".")));
+      row4.appendChild(makeKey(",", () => keyChar(getActiveInput(), ",")));
+      row4.appendChild(makeKey("?", () => keyChar(getActiveInput(), "?")));
+      row4.appendChild(makeKey("!", () => keyChar(getActiveInput(), "!")));
+      row4.appendChild(makeKey("Space", () => keyChar(getActiveInput(), " "), "space"));
+      row4.appendChild(makeKey("'", () => keyChar(getActiveInput(), "'")));
+      row4.appendChild(makeKey("-", () => keyChar(getActiveInput(), "-")));
+
+      container.appendChild(row4);
     }
 
-    const data = await res.json().catch(()=> ({}));
-    setStatus(`Text: uploaded ✅\n${data.savedAs ? 'savedAs: ' + data.savedAs : ''}`);
-  }
-
-  sendTextBtn.addEventListener('click', async (e)=>{
-    e.preventDefault();
-    await uploadText();
-  });
-
-  // Optional: textarea에서 Cmd/Ctrl+Enter로 전송
-  textPreviewInput.addEventListener('keydown', (e)=>{
-    const isEnter = (e.key === 'Enter');
-    const isCmd = e.metaKey || e.ctrlKey;
-    if(isEnter && isCmd){
-      e.preventDefault();
-      uploadText();
+    function makeRow(keys, getActiveInput){
+      const row = document.createElement('div');
+      row.className = 'kbdRow';
+      keys.forEach(k => row.appendChild(makeKey(k, () => keyChar(getActiveInput(), k))));
+      return row;
     }
-  });
 
-})();
-</script>
+    function makeKey(label, onPress, extraClass=""){
+      const b = document.createElement('div');
+      b.className = 'key ' + extraClass;
+      b.textContent = label;
+
+      // Use pointer events for better mobile feel
+      b.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        onPress();
+      });
+
+      return b;
+    }
+
+    function keyChar(input, ch){
+      if(!input) return;
+      const start = input.selectionStart ?? input.value.length;
+      const end   = input.selectionEnd ?? input.value.length;
+      const before = input.value.slice(0, start);
+      const after  = input.value.slice(end);
+      input.value = before + ch + after;
+
+      const pos = start + ch.length;
+      input.setSelectionRange(pos, pos);
+      focusInput(input);
+    }
+
+    function keyDelete(input){
+      if(!input) return;
+      const start = input.selectionStart ?? input.value.length;
+      const end   = input.selectionEnd ?? input.value.length;
+
+      if(start !== end){
+        // delete selection
+        const before = input.value.slice(0, start);
+        const after  = input.value.slice(end);
+        input.value = before + after;
+        input.setSelectionRange(start, start);
+      }else if(start > 0){
+        // delete one char
+        const before = input.value.slice(0, start - 1);
+        const after  = input.value.slice(end);
+        input.value = before + after;
+        input.setSelectionRange(start - 1, start - 1);
+      }
+      focusInput(input);
+    }
+
+    // Hook keyboards
+    const kbdMemory  = document.getElementById('kbdMemory');
+    const kbdFeeling = document.getElementById('kbdFeeling');
+
+    function sendMemory(input){
+      const text = (input.value || "").trim();
+      // TODO: replace with your real send logic (WebSocket/HTTP/OSC etc.)
+      console.log("[SEND MEMORY]", { text, photo: (memoryPhoto.files && memoryPhoto.files[0]) ? memoryPhoto.files[0].name : null });
+
+      // simple UX: clear text after send
+      if(text.length){
+        input.value = "";
+        // keep thumbnail as-is; remove if you want:
+        // thumb.classList.remove('show'); memoryPhoto.value = "";
+      }
+      focusInput(input);
+    }
+
+    function sendFeeling(input){
+      const text = (input.value || "").trim();
+      console.log("[SEND FEELING]", { text });
+
+      if(text.length) input.value = "";
+      focusInput(input);
+    }
+
+    buildKeyboard(kbdMemory,  () => memoryText,  sendMemory);
+    buildKeyboard(kbdFeeling, () => feelingText, sendFeeling);
+
+    /* =========================
+       Small QoL: prevent menu button click from being swallowed
+    ========================= */
+    document.getElementById('app').addEventListener('click', (e)=>{
+      // stop clicks inside modals from closing menu
+      if(e.target.closest('.modal') || e.target.closest('.topbar')) return;
+    }, {passive:true});
+
+    /* =========================
+       Optional: keep screen awake hint (iOS safari can't truly lock, but you can later add Wake Lock API for supported browsers)
+    ========================= */
+  </script>
 </body>
 </html>
