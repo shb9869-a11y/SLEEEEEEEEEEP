@@ -17,22 +17,24 @@
   --safe-l: env(safe-area-inset-left, 0px);
   --safe-r: env(safe-area-inset-right, 0px);
 
-  --frame: clamp(16px, 4vmin, 40px);
-  --gap: 12px;
+  /* ✅ tighter frame so everything fits (iPhone 15 Pro Max, portrait/landscape) */
+  --frame: clamp(10px, 2.6vmin, 28px);
+  --gap: 10px;
 
   --bg: #000;
   --fg: #fff;
 
-  --fs-title: clamp(16px, 3.2vmin, 22px);
-  --fs-body: clamp(13px, 2.4vmin, 17px);
-  --fs-small: clamp(12px, 2.0vmin, 15px);
+  --fs-title: clamp(15px, 3.0vmin, 21px);
+  --fs-body:  clamp(13px, 2.3vmin, 17px);
+  --fs-small: clamp(12px, 1.9vmin, 15px);
 
-  --btn-pad-y: clamp(10px, 1.2vmin, 14px);
-  --btn-pad-x: clamp(14px, 2.0vmin, 22px);
+  --btn-pad-y: clamp(9px, 1.0vmin, 12px);
+  --btn-pad-x: clamp(12px, 1.8vmin, 18px);
 
   --radius: 14px;
 
-  --fade-ms: 2000;
+  /* ✅ 1.5s fade */
+  --fade-ms: 1500;
 
   --vwpx:100vw;
   --vhpx:100vh;
@@ -55,7 +57,7 @@ button, textarea, input{
   color:inherit;
   background:transparent;
   border:1px solid rgba(255,255,255,.85);
-  border-radius: 0;            /* ✅ 수직/직각 룩 */
+  border-radius: 0;            /* ✅ rectilinear */
   outline:none;
 }
 
@@ -70,9 +72,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
 .hidden{ display:none !important; }
 
 /* ===== Layers ===== */
-#root{
-  position:fixed; inset:0;
-}
+#root{ position:fixed; inset:0; }
 
 /* VDO.Ninja overlay (scene #6 background) */
 #ninjaOverlay{
@@ -101,6 +101,33 @@ button:active{ opacity:.75; transform: translateY(1px); }
   z-index:50;
 }
 
+/* ✅ Slow wobbling circle (scenes 1-5 only) */
+#slowOrb{
+  position:fixed;
+  left:50%;
+  top:50%;
+  width:min(62vmin, 520px);
+  height:min(62vmin, 520px);
+  transform:translate(-50%,-50%);
+  border:1px solid rgba(255,255,255,.75);
+  border-radius:999px;
+  pointer-events:none;
+  z-index:70;
+  opacity:.95;
+  filter: none;
+  will-change: transform;
+}
+@keyframes orbWobble{
+  0%   { transform: translate(-50%,-50%) scaleX(1.00) scaleY(1.00) rotate(0deg); }
+  20%  { transform: translate(-50%,-50%) translateX(0.6vmin) translateY(-0.4vmin) scaleX(1.012) scaleY(0.992) rotate(0.15deg); }
+  45%  { transform: translate(-50%,-50%) translateX(-0.4vmin) translateY(0.7vmin)  scaleX(0.995) scaleY(1.015) rotate(-0.12deg); }
+  70%  { transform: translate(-50%,-50%) translateX(0.3vmin) translateY(0.3vmin)  scaleX(1.008) scaleY(0.998) rotate(0.10deg); }
+  100% { transform: translate(-50%,-50%) scaleX(1.00) scaleY(1.00) rotate(0deg); }
+}
+#slowOrb.wobble{
+  animation: orbWobble 42s ease-in-out infinite;
+}
+
 /* ===== Menu (top-left) ===== */
 #menuWrap{
   position:fixed;
@@ -110,9 +137,11 @@ button:active{ opacity:.75; transform: translateY(1px); }
 }
 
 #menuBtn{
-  width:46px; height:46px;
+  width:42px; height:42px;      /* ✅ slightly smaller */
   padding:0;
   display:grid; place-items:center;
+  border:0 !important;          /* ✅ remove white border */
+  background:transparent;
 }
 
 #menuIcon{
@@ -130,15 +159,16 @@ button:active{ opacity:.75; transform: translateY(1px); }
 #menuPanel{
   position:fixed;
   left:calc(var(--frame) + var(--safe-l));
-  top:calc(var(--frame) + 56px + var(--safe-t));
+  top:calc(var(--frame) + 52px + var(--safe-t));
   z-index:210;
   background:rgba(0,0,0,.92);
-  border:1px solid rgba(255,255,255,.85);
+  border:0;                     /* ✅ no white border */
   padding:12px;
   display:flex;
   flex-direction:column;
   gap:10px;
-  min-width: 220px;
+  min-width: 200px;             /* ✅ slightly smaller */
+  max-width: calc(100vw - (2*(var(--frame) + var(--safe-l) + var(--safe-r))));
 }
 
 #homeBtn{
@@ -153,11 +183,13 @@ button:active{ opacity:.75; transform: translateY(1px); }
   align-items:center;
   justify-content:center;
   text-align:center;
+
   padding:
     calc(var(--frame) + var(--gap) + var(--safe-t))
     calc(var(--frame) + var(--gap) + var(--safe-r))
     calc(var(--frame) + var(--gap) + var(--safe-b))
     calc(var(--frame) + var(--gap) + var(--safe-l));
+
   z-index:100;
   opacity:0;
   pointer-events:none;
@@ -172,10 +204,17 @@ button:active{ opacity:.75; transform: translateY(1px); }
 .sceneInner{
   max-width: 920px;
   width:100%;
+
   display:flex;
   flex-direction:column;
   gap:14px;
   align-items:center;
+
+  /* ✅ never spill out of viewport; allow internal scroll if needed */
+  max-height: calc(var(--vhpx) - (2*(var(--frame) + var(--gap))) - (var(--safe-t) + var(--safe-b)));
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+  padding: 2px;
 }
 
 .h1{
@@ -195,6 +234,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
   letter-spacing:.06em;
 }
 
+/* Tap hint (kept as arrow only) */
 .tapHint{
   position:fixed;
   right:calc(var(--frame) + var(--safe-r));
@@ -207,7 +247,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
 }
 
 .arrow{
-  width:22px; height:22px;
+  width:20px; height:20px;
   border-right:2px solid var(--fg);
   border-bottom:2px solid var(--fg);
   transform: rotate(-45deg); /* → */
@@ -220,21 +260,29 @@ button:active{ opacity:.75; transform: translateY(1px); }
   right:calc(var(--frame) + var(--safe-r));
   bottom:calc(var(--frame) + var(--safe-b));
   z-index:300;
+
   display:flex;
   justify-content:space-between;
-  gap:12px;
+  gap:10px;
+
   pointer-events:none;
   opacity:0;
   transition: opacity var(--fade-ms) ease;
+
+  /* ✅ keep inside in landscape */
+  flex-wrap:wrap;
 }
+
 #bottomBar.show{
   opacity:1;
   pointer-events:auto;
 }
+
 .barBtn{
-  min-width: 220px;
+  flex:1 1 160px;               /* ✅ shrink safely */
+  min-width: 0;
   background:rgba(0,0,0,.75);
-  border:1px solid rgba(255,255,255,.85);
+  border:0 !important;          /* ✅ remove white border */
 }
 
 /* ===== Modal (Share Memory / Share Feeling) ===== */
@@ -262,29 +310,35 @@ button:active{ opacity:.75; transform: translateY(1px); }
 
   display:flex;
   flex-direction:column;
+
+  /* ✅ never exceed viewport */
+  max-height: calc(var(--vhpx) - 2*(var(--frame) + var(--safe-t) + var(--safe-b)));
 }
 
 #modalHeader{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:12px;
+  padding:10px 12px;
   border-bottom:1px solid rgba(255,255,255,.45);
+  flex:0 0 auto;
 }
 #modalTitle{
   font-size:var(--fs-small);
   letter-spacing:.12em;
   text-transform:uppercase;
 }
-#closeModalBtn{
-  padding:10px 14px;
-}
+#closeModalBtn{ padding:10px 14px; }
 
 #modalBody{
   padding:12px;
   display:flex;
   flex-direction:column;
   gap:12px;
+
+  overflow:auto;                 /* ✅ scroll inside modal if needed */
+  -webkit-overflow-scrolling:touch;
+  flex:1 1 auto;
 }
 
 /* Upload preview */
@@ -296,19 +350,17 @@ button:active{ opacity:.75; transform: translateY(1px); }
   flex-wrap:wrap;
 }
 #imgPreview{
-  width:120px; height:90px;
+  width:110px; height:82px;
   border:1px solid rgba(255,255,255,.65);
   object-fit:cover;
   display:none;
 }
-#uploadImgBtn{
-  min-width: 260px;
-}
+#uploadImgBtn{ min-width: 220px; }
 
 /* Text input */
 #textArea{
   width:100%;
-  min-height:120px;
+  min-height:110px;
   max-height:220px;
   resize:vertical;
   padding:12px;
@@ -320,26 +372,26 @@ button:active{ opacity:.75; transform: translateY(1px); }
   line-height:1.6;
 }
 
-/* “Custom vertical keyboard” (simple QWERTY) */
+/* “Custom vertical keyboard” */
 #kbd{
   width:100%;
   border-top:1px solid rgba(255,255,255,.45);
-  padding:12px;
+  padding:12px 8px;
   display:flex;
   flex-direction:column;
-  gap:10px;
+  gap:8px;
 }
 
 .krow{
   display:flex;
-  gap:8px;
+  gap:7px;
   justify-content:center;
   flex-wrap:nowrap;
 }
 
 .key{
-  min-width: 34px;
-  height: 44px;
+  min-width: 32px;
+  height: 40px;                 /* ✅ smaller so it fits */
   padding:0 10px;
   display:flex;
   align-items:center;
@@ -353,11 +405,8 @@ button:active{ opacity:.75; transform: translateY(1px); }
   text-transform:uppercase;
 }
 
-.key.wide{ min-width: 120px; }
-.key.space{ min-width: 240px; }
-.key.red{
-  border-color: rgba(255,255,255,.85);
-}
+.key.wide{ min-width: 110px; }
+.key.space{ min-width: 200px; }
 
 #statusLine{
   font-size:var(--fs-small);
@@ -366,8 +415,18 @@ button:active{ opacity:.75; transform: translateY(1px); }
   white-space:pre-wrap;
 }
 
-/* Make everything strictly rectilinear */
+/* strictly rectilinear */
 .frameBox, #menuPanel, #modal { border-radius:0 !important; }
+
+/* ✅ extra safety: avoid accidental overflow in tiny landscape heights */
+@media (max-height: 520px){
+  :root{ --frame: clamp(8px, 2.0vmin, 18px); --gap: 8px; }
+  #menuPanel{ top: calc(var(--frame) + 46px + var(--safe-t)); }
+  #uploadImgBtn{ min-width: 180px; }
+  .key{ height: 38px; min-width: 30px; }
+  .key.space{ min-width: 180px; }
+  #slowOrb{ width:min(54vmin, 420px); height:min(54vmin, 420px); }
+}
 </style>
 </head>
 
@@ -382,6 +441,9 @@ button:active{ opacity:.75; transform: translateY(1px); }
     src="about:blank"></iframe>
 
   <div class="frameBox" aria-hidden="true"></div>
+
+  <!-- ✅ slow wobble circle (scenes 1-5) -->
+  <div id="slowOrb" class="wobble" aria-hidden="true"></div>
 
   <!-- Menu -->
   <div id="menuWrap">
@@ -411,10 +473,8 @@ button:active{ opacity:.75; transform: translateY(1px); }
       <div class="p">
         We recommend using <strong>LANDSCAPE</strong> mode.
       </div>
-      <div class="note">Tap anywhere to continue.</div>
     </div>
     <div class="tapHint" aria-hidden="true">
-      <div class="note">TAP TO CONTINUE</div>
       <div class="arrow"></div>
     </div>
   </section>
@@ -428,10 +488,8 @@ button:active{ opacity:.75; transform: translateY(1px); }
         An Experiment on the Possibility of Sharing Private Affect through Cooking Gestures<br/>
         — A Body Fidgeting Between Emptiness (空) and Togetherness (共)
       </div>
-      <div class="note">Tap anywhere to continue.</div>
     </div>
     <div class="tapHint" aria-hidden="true">
-      <div class="note">TAP TO CONTINUE</div>
       <div class="arrow"></div>
     </div>
   </section>
@@ -445,10 +503,8 @@ button:active{ opacity:.75; transform: translateY(1px); }
         and each person cooks the other’s recipe, could we sense who the other is,
         and what kinds of memories are held inside the food?
       </div>
-      <div class="note">Tap anywhere to continue.</div>
     </div>
     <div class="tapHint" aria-hidden="true">
-      <div class="note">TAP TO CONTINUE</div>
       <div class="arrow"></div>
     </div>
   </section>
@@ -464,10 +520,8 @@ button:active{ opacity:.75; transform: translateY(1px); }
         <br/><br/>
         Or tap <strong>SHARE MY FEELING</strong> to write and share any thoughts or feelings that arise while watching.
       </div>
-      <div class="note">Tap anywhere to continue.</div>
     </div>
     <div class="tapHint" aria-hidden="true">
-      <div class="note">TAP TO CONTINUE</div>
       <div class="arrow"></div>
     </div>
   </section>
@@ -481,10 +535,8 @@ button:active{ opacity:.75; transform: translateY(1px); }
         <br/><br/>
         When the performance starts, tap the button at the bottom-right to enter the system.
       </div>
-      <div class="note">Tap anywhere to start.</div>
     </div>
     <div class="tapHint" aria-hidden="true">
-      <div class="note">TAP TO START</div>
       <div class="arrow"></div>
     </div>
   </section>
@@ -492,8 +544,9 @@ button:active{ opacity:.75; transform: translateY(1px); }
   <!-- Scene #6: Ninja view + buttons -->
   <section id="scene6" class="scene" data-scene="6">
     <div class="sceneInner">
-      <div class="note">THE STAGE VIDEO IS PLAYING BELOW.</div>
-      <div class="note">USE THE BUTTONS AT THE BOTTOM TO SHARE.</div>
+      <!-- ✅ removed the two lines:
+           THE STAGE VIDEO IS PLAYING BELOW.
+           USE THE BUTTONS AT THE BOTTOM TO SHARE. -->
     </div>
   </section>
 
@@ -547,20 +600,27 @@ button:active{ opacity:.75; transform: translateY(1px); }
    CONFIG
 ========================= */
 const CONFIG = {
-  // Upload server: same origin by default (good for Node server on same Wi-Fi)
   SERVER: (location.origin && location.origin.startsWith('http')) ? location.origin : 'http://127.0.0.1:4000',
   UPLOAD_TIMEOUT_MS: 20000,
   UPLOAD_RETRY: 1,
 
-  // VDO.Ninja view
   ROOM_ID: "YOURROOMID",
-  REZ_SCALE: 1.0,            // scene #6: fill (1.0)
-  NINJA_OPACITY: 1.0,        // fully opaque
-  BLEND_MODE: "normal",      // ✅ “불투명 원본” 추천. 밝게 합성이 필요하면 "screen"
+  REZ_SCALE: 1.0,
+  NINJA_OPACITY: 1.0,
+  BLEND_MODE: "normal",
   CODEC: "vp8",
   AUTO_REFRESH_MS: 60000,
 
-  FADE_MS: 2000
+  /* ✅ fade 1.5s */
+  FADE_MS: 1500,
+
+  /* ✅ click sound */
+  CLICK_HZ: 85,
+  CLICK_MS: 70,
+  CLICK_GAIN: 0.05,
+
+  /* ✅ haptics */
+  VIBRATE_MS: 12
 };
 
 // Optional: allow ?room=xxxx
@@ -598,6 +658,8 @@ const textArea = document.getElementById('textArea');
 const kbd = document.getElementById('kbd');
 const statusLine = document.getElementById('statusLine');
 
+const slowOrb = document.getElementById('slowOrb');
+
 // hidden file input
 const imgInput = document.createElement('input');
 imgInput.type = 'file';
@@ -629,24 +691,88 @@ if (visualViewport){
 addEventListener('orientationchange', ()=> setTimeout(setViewportVars,120));
 
 /* =========================
+   FADE
+========================= */
+document.documentElement.style.setProperty('--fade-ms', CONFIG.FADE_MS + 'ms');
+
+/* =========================
+   CLICK SOUND + HAPTIC
+========================= */
+let audioCtx = null;
+
+function ensureAudio(){
+  if(audioCtx) return audioCtx;
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if(!AC) return null;
+  audioCtx = new AC();
+  return audioCtx;
+}
+
+function clickBeep(){
+  try{
+    const ctx = ensureAudio();
+    if(!ctx) return;
+
+    // resume if suspended (iOS)
+    if(ctx.state === 'suspended'){
+      ctx.resume().catch(()=>{});
+    }
+
+    const now = ctx.currentTime;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+
+    o.type = 'sine';
+    o.frequency.setValueAtTime(CONFIG.CLICK_HZ, now);
+
+    const peak = Math.max(0.001, Math.min(0.15, CONFIG.CLICK_GAIN));
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(peak, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + (CONFIG.CLICK_MS/1000));
+
+    o.connect(g);
+    g.connect(ctx.destination);
+
+    o.start(now);
+    o.stop(now + (CONFIG.CLICK_MS/1000) + 0.02);
+  }catch{}
+}
+
+function haptic(){
+  try{
+    if(navigator.vibrate){
+      navigator.vibrate(CONFIG.VIBRATE_MS);
+    }
+  }catch{}
+}
+
+function feedback(){
+  clickBeep();
+  haptic();
+}
+
+/* =========================
    MENU
 ========================= */
-function openMenu(){
-  menuPanel.classList.remove('hidden');
-}
-function closeMenu(){
-  menuPanel.classList.add('hidden');
-}
+function openMenu(){ menuPanel.classList.remove('hidden'); }
+function closeMenu(){ menuPanel.classList.add('hidden'); }
+
 menuBtn.addEventListener('click', (e)=>{
   e.preventDefault();
+  feedback();
   if(menuPanel.classList.contains('hidden')) openMenu();
   else closeMenu();
 });
+
 closeMenuBtn.addEventListener('click', (e)=>{
-  e.preventDefault(); closeMenu();
+  e.preventDefault();
+  feedback();
+  closeMenu();
 });
+
 homeBtn.addEventListener('click', (e)=>{
   e.preventDefault();
+  feedback();
   closeMenu();
   goToScene(1, true);
 });
@@ -654,8 +780,6 @@ homeBtn.addEventListener('click', (e)=>{
 /* =========================
    SCENES + FADE
 ========================= */
-document.documentElement.style.setProperty('--fade-ms', CONFIG.FADE_MS + 'ms');
-
 function setSceneActive(n){
   for(const s of scenes){
     const sn = Number(s.dataset.scene || 0);
@@ -670,6 +794,11 @@ function setSceneActive(n){
   }else{
     bottomBar.classList.remove('show');
   }
+
+  // ✅ wobble circle only in scenes 1-5
+  if(slowOrb){
+    slowOrb.style.display = (n >= 1 && n <= 5) ? 'block' : 'none';
+  }
 }
 
 let sceneLock = false;
@@ -677,7 +806,6 @@ function goToScene(n, immediate=false){
   if(sceneLock) return;
   sceneLock = true;
 
-  // Fade out current
   const old = currentScene;
   if(immediate){
     setSceneActive(n);
@@ -685,8 +813,6 @@ function goToScene(n, immediate=false){
     return;
   }
 
-  // simple: toggle classes; CSS transitions handle fade
-  // To ensure a “2-step” fade (out then in), we briefly remove active then add next
   const oldEl = scenes.find(x => Number(x.dataset.scene) === old);
   if(oldEl) oldEl.classList.remove('active');
 
@@ -706,14 +832,14 @@ for(const s of scenes){
   const sn = Number(s.dataset.scene || 0);
   if(sn >= 1 && sn <= 5){
     s.addEventListener('click', (e)=>{
-      // menu open? ignore
       if(!menuPanel.classList.contains('hidden')) return;
+      feedback();
       nextScene();
     });
   }
 }
 
-// Scene 5: “tap to start” -> scene 6
+// Scene 5: tap -> scene 6
 document.getElementById('scene5').addEventListener('click', ()=>{
   if(currentScene === 5) goToScene(6);
 });
@@ -726,7 +852,6 @@ const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platfor
 function applyNinjaStyle(){
   ninja.style.opacity = String(Math.max(0, Math.min(1, CONFIG.NINJA_OPACITY)));
   const blend = CONFIG.BLEND_MODE;
-  // if screen on iOS, lighten fallback
   ninja.style.mixBlendMode = (isiOS && blend === 'screen') ? 'lighten' : blend;
 }
 
@@ -762,6 +887,7 @@ function loadNinja(){
     ninja.src = ninjaUrl();
   }
 }
+
 setInterval(()=>{
   if(currentScene === 6){
     ninja.src = ninjaUrl();
@@ -786,7 +912,6 @@ function openModal(which){
     document.getElementById('imgPreviewRow').classList.remove('hidden');
   }else{
     modalTitle.textContent = 'SHARE MY FEELING';
-    // hide photo upload row in feeling mode
     document.getElementById('imgPreviewRow').classList.add('hidden');
   }
 
@@ -794,26 +919,27 @@ function openModal(which){
   modal.classList.remove('hidden');
   modalBackdrop.classList.add('show');
 
-  // focus (so user can still use real keyboard if they want)
   setTimeout(()=>{ try{ textArea.focus(); }catch{} }, 50);
 }
+
 function closeModal(){
   modal.classList.add('hidden');
   modalBackdrop.classList.remove('show');
   mode = null;
 }
 
-memBtn.addEventListener('click', (e)=>{ e.preventDefault(); openModal('memory'); });
-feelBtn.addEventListener('click', (e)=>{ e.preventDefault(); openModal('feeling'); });
+memBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); openModal('memory'); });
+feelBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); openModal('feeling'); });
 
-closeModalBtn.addEventListener('click', (e)=>{ e.preventDefault(); closeModal(); });
-modalBackdrop.addEventListener('click', ()=> closeModal());
+closeModalBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); closeModal(); });
+modalBackdrop.addEventListener('click', ()=>{ feedback(); closeModal(); });
 
 /* =========================
    IMAGE PICK + PREVIEW
 ========================= */
 uploadImgBtn.addEventListener('click', (e)=>{
   e.preventDefault();
+  feedback();
   imgInput.click();
 });
 
@@ -864,7 +990,8 @@ async function sendNow(){
     return;
   }
 
-  // Feeling: send text only
+  feedback();
+
   if(mode === 'feeling'){
     statusLine.textContent = 'SENDING...';
     const payload = { text, clientTime: new Date().toISOString(), type:'feeling' };
@@ -888,11 +1015,9 @@ async function sendNow(){
     }
   }
 
-  // Memory: photo optional + text
   if(mode === 'memory'){
     statusLine.textContent = 'SENDING...';
 
-    // 1) if photo selected, upload photo
     if(selectedImageFile){
       const form = new FormData();
       form.append('image', selectedImageFile, `image_${Date.now()}.jpg`);
@@ -909,7 +1034,6 @@ async function sendNow(){
       }
     }
 
-    // 2) send text (include info that it’s “memory”)
     const payload = { text, clientTime: new Date().toISOString(), type:'memory' };
     try{
       const res2 = await fetchWithTimeout(CONFIG.SERVER + '/upload-text', {
@@ -963,7 +1087,6 @@ kbd.addEventListener('click', (e)=>{
   const k = key.dataset.k;
   if(!k) return;
 
-  // keep focus
   try{ textArea.focus(); }catch{}
 
   if(k === 'SPACE'){ insertText(' '); return; }
@@ -973,7 +1096,6 @@ kbd.addEventListener('click', (e)=>{
   insertText(k);
 });
 
-/* Also allow physical keyboard Enter to send (if user uses it) */
 textArea.addEventListener('keydown', (e)=>{
   if(e.key === 'Enter'){
     e.preventDefault();
