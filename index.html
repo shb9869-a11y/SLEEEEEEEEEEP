@@ -17,21 +17,20 @@
   --safe-l: env(safe-area-inset-left, 0px);
   --safe-r: env(safe-area-inset-right, 0px);
 
-  /* ✅ tighter frame so everything fits (iPhone 15 Pro Max, portrait/landscape) */
-  --frame: clamp(10px, 2.6vmin, 28px);
-  --gap: 10px;
+  /* ✅ tighter frame so everything fits */
+  --frame: clamp(9px, 2.2vmin, 24px);
+  --gap: 9px;
 
-  --bg: #000;
-  --fg: #fff;
+  --bg:#000;
+  --fg:#fff;
 
-  --fs-title: clamp(15px, 3.0vmin, 21px);
-  --fs-body:  clamp(13px, 2.3vmin, 17px);
-  --fs-small: clamp(12px, 1.9vmin, 15px);
+  /* ✅ slightly smaller overall typography (avoid scroll in landscape) */
+  --fs-title: clamp(13px, 2.55vmin, 19px);
+  --fs-body:  clamp(11.5px, 2.0vmin, 15.5px);
+  --fs-small: clamp(10.5px, 1.7vmin, 13.5px);
 
-  --btn-pad-y: clamp(9px, 1.0vmin, 12px);
-  --btn-pad-x: clamp(12px, 1.8vmin, 18px);
-
-  --radius: 14px;
+  --btn-pad-y: clamp(8px, 0.9vmin, 11px);
+  --btn-pad-x: clamp(11px, 1.6vmin, 17px);
 
   /* ✅ 1.5s fade */
   --fade-ms: 1500;
@@ -57,7 +56,7 @@ button, textarea, input{
   color:inherit;
   background:transparent;
   border:1px solid rgba(255,255,255,.85);
-  border-radius: 0;            /* ✅ rectilinear */
+  border-radius:0; /* rectilinear */
   outline:none;
 }
 
@@ -66,7 +65,6 @@ button{
   letter-spacing:.12em;
   text-transform:uppercase;
 }
-
 button:active{ opacity:.75; transform: translateY(1px); }
 
 .hidden{ display:none !important; }
@@ -101,31 +99,29 @@ button:active{ opacity:.75; transform: translateY(1px); }
   z-index:50;
 }
 
-/* ✅ Slow wobbling circle (scenes 1-5 only) */
-#slowOrb{
+/* ✅ “꿀렁이는 원” (irregular blob outline) scenes 1-5 */
+#orbWrap{
   position:fixed;
-  left:50%;
-  top:50%;
-  width:min(62vmin, 520px);
-  height:min(62vmin, 520px);
+  left:50%; top:50%;
+  width:min(66vmin, 580px);
+  height:min(66vmin, 580px);
   transform:translate(-50%,-50%);
-  border:1px solid rgba(255,255,255,.75);
-  border-radius:999px;
   pointer-events:none;
   z-index:70;
   opacity:.95;
-  filter: none;
   will-change: transform;
 }
-@keyframes orbWobble{
-  0%   { transform: translate(-50%,-50%) scaleX(1.00) scaleY(1.00) rotate(0deg); }
-  20%  { transform: translate(-50%,-50%) translateX(0.6vmin) translateY(-0.4vmin) scaleX(1.012) scaleY(0.992) rotate(0.15deg); }
-  45%  { transform: translate(-50%,-50%) translateX(-0.4vmin) translateY(0.7vmin)  scaleX(0.995) scaleY(1.015) rotate(-0.12deg); }
-  70%  { transform: translate(-50%,-50%) translateX(0.3vmin) translateY(0.3vmin)  scaleX(1.008) scaleY(0.998) rotate(0.10deg); }
-  100% { transform: translate(-50%,-50%) scaleX(1.00) scaleY(1.00) rotate(0deg); }
+#orbSvg{
+  width:100%; height:100%;
+  display:block;
 }
-#slowOrb.wobble{
-  animation: orbWobble 42s ease-in-out infinite;
+#orbPath{
+  fill:none;
+  stroke:rgba(255,255,255,.80);
+  stroke-width:1.5;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap:round;
+  stroke-linejoin:round;
 }
 
 /* ===== Menu (top-left) ===== */
@@ -137,10 +133,10 @@ button:active{ opacity:.75; transform: translateY(1px); }
 }
 
 #menuBtn{
-  width:42px; height:42px;      /* ✅ slightly smaller */
+  width:38px; height:38px;
   padding:0;
   display:grid; place-items:center;
-  border:0 !important;          /* ✅ remove white border */
+  border:0 !important;     /* ✅ no border */
   background:transparent;
 }
 
@@ -159,24 +155,24 @@ button:active{ opacity:.75; transform: translateY(1px); }
 #menuPanel{
   position:fixed;
   left:calc(var(--frame) + var(--safe-l));
-  top:calc(var(--frame) + 52px + var(--safe-t));
+  top:calc(var(--frame) + 48px + var(--safe-t));
   z-index:210;
   background:rgba(0,0,0,.92);
-  border:0;                     /* ✅ no white border */
+  border:0;               /* ✅ no border */
   padding:12px;
   display:flex;
   flex-direction:column;
   gap:10px;
-  min-width: 200px;             /* ✅ slightly smaller */
+  min-width: 200px;
   max-width: calc(100vw - (2*(var(--frame) + var(--safe-l) + var(--safe-r))));
 }
 
 #homeBtn{
-  border:1px solid #ff2b2b;   /* ✅ user requested red only here */
+  border:1px solid #ff2b2b; /* red only here */
   color:#ff2b2b;
 }
 
-/* ===== Scenes (center text) ===== */
+/* ===== Scenes ===== */
 .scene{
   position:fixed; inset:0;
   display:flex;
@@ -195,7 +191,6 @@ button:active{ opacity:.75; transform: translateY(1px); }
   pointer-events:none;
   transition: opacity var(--fade-ms) ease;
 }
-
 .scene.active{
   opacity:1;
   pointer-events:auto;
@@ -204,28 +199,25 @@ button:active{ opacity:.75; transform: translateY(1px); }
 .sceneInner{
   max-width: 920px;
   width:100%;
-
   display:flex;
   flex-direction:column;
-  gap:14px;
+  gap:11px;
   align-items:center;
 
-  /* ✅ never spill out of viewport; allow internal scroll if needed */
+  /* ✅ avoid scroll (shrink typography instead) */
   max-height: calc(var(--vhpx) - (2*(var(--frame) + var(--gap))) - (var(--safe-t) + var(--safe-b)));
-  overflow:auto;
-  -webkit-overflow-scrolling:touch;
-  padding: 2px;
+  overflow:hidden;
 }
 
 .h1{
   font-size:var(--fs-title);
   letter-spacing:.10em;
-  line-height:1.35;
+  line-height:1.28;
 }
 .p{
   font-size:var(--fs-body);
   letter-spacing:.02em;
-  line-height:1.65;
+  line-height:1.52;
   opacity:.95;
 }
 .note{
@@ -234,7 +226,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
   letter-spacing:.06em;
 }
 
-/* Tap hint (kept as arrow only) */
+/* ✅ bottom-right instruction (red) + smaller arrow */
 .tapHint{
   position:fixed;
   right:calc(var(--frame) + var(--safe-r));
@@ -242,18 +234,27 @@ button:active{ opacity:.75; transform: translateY(1px); }
   z-index:150;
   display:flex;
   align-items:center;
-  gap:10px;
+  gap:8px;
   pointer-events:none;
 }
 
-.arrow{
-  width:20px; height:20px;
-  border-right:2px solid var(--fg);
-  border-bottom:2px solid var(--fg);
-  transform: rotate(-45deg); /* → */
+.tapHintText{
+  font-size:var(--fs-small);
+  letter-spacing:.01em;
+  color:#ff2b2b;
+  opacity:1;
+  text-transform:none;
+  white-space:nowrap;
 }
 
-/* ===== Scene #6 UI Buttons ===== */
+.arrow{
+  width:12px; height:12px;      /* ✅ smaller */
+  border-right:2px solid var(--fg);
+  border-bottom:2px solid var(--fg);
+  transform: rotate(-45deg);
+}
+
+/* ===== Scene #6 Bottom Buttons ===== */
 #bottomBar{
   position:fixed;
   left:calc(var(--frame) + var(--safe-l));
@@ -264,28 +265,24 @@ button:active{ opacity:.75; transform: translateY(1px); }
   display:flex;
   justify-content:space-between;
   gap:10px;
+  flex-wrap:wrap;
 
   pointer-events:none;
   opacity:0;
   transition: opacity var(--fade-ms) ease;
-
-  /* ✅ keep inside in landscape */
-  flex-wrap:wrap;
 }
-
 #bottomBar.show{
   opacity:1;
   pointer-events:auto;
 }
-
 .barBtn{
-  flex:1 1 160px;               /* ✅ shrink safely */
+  flex:1 1 160px;
   min-width: 0;
-  background:rgba(0,0,0,.75);
-  border:0 !important;          /* ✅ remove white border */
+  background:#000;          /* ✅ perfect black */
+  border:0 !important;      /* ✅ no border */
 }
 
-/* ===== Modal (Share Memory / Share Feeling) ===== */
+/* ===== Modal ===== */
 #modalBackdrop{
   position:fixed; inset:0;
   background:rgba(0,0,0,.78);
@@ -310,8 +307,6 @@ button:active{ opacity:.75; transform: translateY(1px); }
 
   display:flex;
   flex-direction:column;
-
-  /* ✅ never exceed viewport */
   max-height: calc(var(--vhpx) - 2*(var(--frame) + var(--safe-t) + var(--safe-b)));
 }
 
@@ -331,101 +326,100 @@ button:active{ opacity:.75; transform: translateY(1px); }
 #closeModalBtn{ padding:10px 14px; }
 
 #modalBody{
-  padding:12px;
+  padding:10px 12px 12px;
   display:flex;
   flex-direction:column;
-  gap:12px;
-
-  overflow:auto;                 /* ✅ scroll inside modal if needed */
-  -webkit-overflow-scrolling:touch;
+  gap:10px;
+  overflow:hidden;  /* ✅ no scroll */
   flex:1 1 auto;
 }
 
 /* Upload preview */
 #imgPreviewRow{
   display:flex;
-  gap:12px;
+  gap:10px;
   align-items:center;
   justify-content:space-between;
   flex-wrap:wrap;
 }
 #imgPreview{
-  width:110px; height:82px;
+  width:100px; height:74px;
   border:1px solid rgba(255,255,255,.65);
   object-fit:cover;
   display:none;
 }
-#uploadImgBtn{ min-width: 220px; }
+#uploadImgBtn{ min-width: 190px; }
 
-/* Text input */
+/* ✅ Text input (half height) + prevent system keyboard */
 #textArea{
   width:100%;
-  min-height:110px;
-  max-height:220px;
-  resize:vertical;
-  padding:12px;
+  min-height:56px;     /* ✅ reduced */
+  max-height:96px;     /* ✅ reduced */
+  resize:none;
+  padding:10px 12px;
   background:rgba(0,0,0,.35);
   border:1px solid rgba(255,255,255,.85);
   color:var(--fg);
   border-radius:0;
   letter-spacing:.02em;
-  line-height:1.6;
+  line-height:1.45;
+  caret-color: rgba(255,255,255,.75);
 }
 
-/* “Custom vertical keyboard” */
+/* Custom keyboard */
 #kbd{
   width:100%;
   border-top:1px solid rgba(255,255,255,.45);
-  padding:12px 8px;
+  padding:10px 6px 8px;
   display:flex;
   flex-direction:column;
-  gap:8px;
+  gap:7px;
+  flex:0 0 auto;
 }
 
 .krow{
   display:flex;
-  gap:7px;
+  gap:6px;
   justify-content:center;
   flex-wrap:nowrap;
 }
 
 .key{
-  min-width: 32px;
-  height: 40px;                 /* ✅ smaller so it fits */
-  padding:0 10px;
+  min-width: 29px;
+  height: 35px;
+  padding:0 9px;
   display:flex;
   align-items:center;
   justify-content:center;
   border:1px solid rgba(255,255,255,.75);
-  background:rgba(0,0,0,.65);
+  background:#000;              /* ✅ perfect black */
   border-radius:0;
   user-select:none;
   -webkit-user-select:none;
   letter-spacing:.10em;
   text-transform:uppercase;
 }
-
-.key.wide{ min-width: 110px; }
-.key.space{ min-width: 200px; }
+.key.wide{ min-width: 100px; }
+.key.space{ min-width: 170px; }
 
 #statusLine{
   font-size:var(--fs-small);
   opacity:.85;
-  min-height: 22px;
+  min-height: 18px;
   white-space:pre-wrap;
 }
 
 /* strictly rectilinear */
 .frameBox, #menuPanel, #modal { border-radius:0 !important; }
 
-/* ✅ extra safety: avoid accidental overflow in tiny landscape heights */
 @media (max-height: 520px){
   :root{ --frame: clamp(8px, 2.0vmin, 18px); --gap: 8px; }
-  #menuPanel{ top: calc(var(--frame) + 46px + var(--safe-t)); }
-  #uploadImgBtn{ min-width: 180px; }
-  .key{ height: 38px; min-width: 30px; }
-  .key.space{ min-width: 180px; }
-  #slowOrb{ width:min(54vmin, 420px); height:min(54vmin, 420px); }
+  #menuPanel{ top: calc(var(--frame) + 44px + var(--safe-t)); }
+  #uploadImgBtn{ min-width: 160px; }
+  .key{ height: 33px; min-width: 27px; }
+  .key.space{ min-width: 155px; }
+  #orbWrap{ width:min(60vmin, 480px); height:min(60vmin, 480px); }
+  #textArea{ min-height:52px; max-height:90px; }
 }
 </style>
 </head>
@@ -433,7 +427,6 @@ button:active{ opacity:.75; transform: translateY(1px); }
 <body>
 <div id="root">
 
-  <!-- Ninja background (only meaningful in scene #6) -->
   <iframe id="ninjaOverlay"
     allow="autoplay; fullscreen; clipboard-read; clipboard-write"
     allowtransparency="true"
@@ -442,8 +435,12 @@ button:active{ opacity:.75; transform: translateY(1px); }
 
   <div class="frameBox" aria-hidden="true"></div>
 
-  <!-- ✅ slow wobble circle (scenes 1-5) -->
-  <div id="slowOrb" class="wobble" aria-hidden="true"></div>
+  <!-- ✅ Irregular wobbling “circle” (scenes 1-5) -->
+  <div id="orbWrap" aria-hidden="true">
+    <svg id="orbSvg" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet">
+      <path id="orbPath" d=""></path>
+    </svg>
+  </div>
 
   <!-- Menu -->
   <div id="menuWrap">
@@ -470,26 +467,24 @@ button:active{ opacity:.75; transform: translateY(1px); }
         <br/>
         When added, it can run in full screen.
       </div>
-      <div class="p">
-        We recommend using <strong>LANDSCAPE</strong> mode.
-      </div>
+      <div class="p">We recommend using <strong>LANDSCAPE</strong> mode.</div>
     </div>
     <div class="tapHint" aria-hidden="true">
+      <div class="tapHintText">여기를 탭해 다음 페이지로 넘어가세요</div>
       <div class="arrow"></div>
     </div>
   </section>
 
   <section id="scene2" class="scene" data-scene="2">
     <div class="sceneInner">
-      <div class="p">
-        Thank you for coming to
-      </div>
+      <div class="p">Thank you for coming to</div>
       <div class="h1">
         An Experiment on the Possibility of Sharing Private Affect through Cooking Gestures<br/>
         — A Body Fidgeting Between Emptiness (空) and Togetherness (共)
       </div>
     </div>
     <div class="tapHint" aria-hidden="true">
+      <div class="tapHintText">여기를 탭해 다음 페이지로 넘어가세요</div>
       <div class="arrow"></div>
     </div>
   </section>
@@ -505,6 +500,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
       </div>
     </div>
     <div class="tapHint" aria-hidden="true">
+      <div class="tapHintText">여기를 탭해 다음 페이지로 넘어가세요</div>
       <div class="arrow"></div>
     </div>
   </section>
@@ -522,6 +518,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
       </div>
     </div>
     <div class="tapHint" aria-hidden="true">
+      <div class="tapHintText">여기를 탭해 다음 페이지로 넘어가세요</div>
       <div class="arrow"></div>
     </div>
   </section>
@@ -537,17 +534,14 @@ button:active{ opacity:.75; transform: translateY(1px); }
       </div>
     </div>
     <div class="tapHint" aria-hidden="true">
+      <div class="tapHintText">여기를 탭해 다음 페이지로 넘어가세요</div>
       <div class="arrow"></div>
     </div>
   </section>
 
-  <!-- Scene #6: Ninja view + buttons -->
+  <!-- Scene #6 -->
   <section id="scene6" class="scene" data-scene="6">
-    <div class="sceneInner">
-      <!-- ✅ removed the two lines:
-           THE STAGE VIDEO IS PLAYING BELOW.
-           USE THE BUTTONS AT THE BOTTOM TO SHARE. -->
-    </div>
+    <div class="sceneInner"></div>
   </section>
 
   <div id="bottomBar">
@@ -562,13 +556,15 @@ button:active{ opacity:.75; transform: translateY(1px); }
       <div id="modalTitle">SHARE</div>
       <button id="closeModalBtn">EXIT</button>
     </div>
+
     <div id="modalBody">
       <div id="imgPreviewRow">
         <button id="uploadImgBtn">UPLOAD A PHOTO</button>
         <img id="imgPreview" alt="preview"/>
       </div>
 
-      <textarea id="textArea" placeholder="TYPE HERE..."></textarea>
+      <!-- ✅ readonly + inputmode none (no system keyboard) -->
+      <textarea id="textArea" placeholder="TYPE HERE..." readonly inputmode="none" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
 
       <div id="statusLine"></div>
 
@@ -611,16 +607,19 @@ const CONFIG = {
   CODEC: "vp8",
   AUTO_REFRESH_MS: 60000,
 
-  /* ✅ fade 1.5s */
   FADE_MS: 1500,
 
-  /* ✅ click sound */
   CLICK_HZ: 85,
   CLICK_MS: 70,
   CLICK_GAIN: 0.05,
 
-  /* ✅ haptics */
-  VIBRATE_MS: 12
+  VIBRATE_MS: 12,
+
+  /* ✅ Orb motion: very slow */
+  ORB_POINTS: 64,
+  ORB_BASE_R: 430,
+  ORB_NOISE_A: 26,
+  ORB_SPEED: 0.00055
 };
 
 // Optional: allow ?room=xxxx
@@ -658,7 +657,8 @@ const textArea = document.getElementById('textArea');
 const kbd = document.getElementById('kbd');
 const statusLine = document.getElementById('statusLine');
 
-const slowOrb = document.getElementById('slowOrb');
+const orbWrap = document.getElementById('orbWrap');
+const orbPath = document.getElementById('orbPath');
 
 // hidden file input
 const imgInput = document.createElement('input');
@@ -673,7 +673,7 @@ let mode = null; // 'memory' | 'feeling'
 let selectedImageFile = null;
 
 /* =========================
-   VIEWPORT VARS (for ninja sizing)
+   VIEWPORT VARS
 ========================= */
 function setViewportVars(){
   const vv = window.visualViewport;
@@ -712,11 +712,7 @@ function clickBeep(){
   try{
     const ctx = ensureAudio();
     if(!ctx) return;
-
-    // resume if suspended (iOS)
-    if(ctx.state === 'suspended'){
-      ctx.resume().catch(()=>{});
-    }
+    if(ctx.state === 'suspended'){ ctx.resume().catch(()=>{}); }
 
     const now = ctx.currentTime;
     const o = ctx.createOscillator();
@@ -763,13 +759,11 @@ menuBtn.addEventListener('click', (e)=>{
   if(menuPanel.classList.contains('hidden')) openMenu();
   else closeMenu();
 });
-
 closeMenuBtn.addEventListener('click', (e)=>{
   e.preventDefault();
   feedback();
   closeMenu();
 });
-
 homeBtn.addEventListener('click', (e)=>{
   e.preventDefault();
   feedback();
@@ -778,7 +772,7 @@ homeBtn.addEventListener('click', (e)=>{
 });
 
 /* =========================
-   SCENES + FADE
+   SCENES
 ========================= */
 function setSceneActive(n){
   for(const s of scenes){
@@ -787,7 +781,6 @@ function setSceneActive(n){
   }
   currentScene = n;
 
-  // Ninja + bottom bar only in scene #6
   if(n === 6){
     bottomBar.classList.add('show');
     loadNinja();
@@ -795,9 +788,8 @@ function setSceneActive(n){
     bottomBar.classList.remove('show');
   }
 
-  // ✅ wobble circle only in scenes 1-5
-  if(slowOrb){
-    slowOrb.style.display = (n >= 1 && n <= 5) ? 'block' : 'none';
+  if(orbWrap){
+    orbWrap.style.display = (n >= 1 && n <= 5) ? 'block' : 'none';
   }
 }
 
@@ -845,7 +837,7 @@ document.getElementById('scene5').addEventListener('click', ()=>{
 });
 
 /* =========================
-   VDO.NINJA LOADING
+   VDO.NINJA
 ========================= */
 const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
@@ -897,10 +889,10 @@ setInterval(()=>{
 addEventListener('pageshow', ()=> setTimeout(()=>{ setViewportVars(); applyRezScale(); }, 60));
 
 /* =========================
-   MODAL OPEN/CLOSE
+   MODAL
 ========================= */
 function openModal(which){
-  mode = which; // 'memory' or 'feeling'
+  mode = which;
   selectedImageFile = null;
   imgPreview.style.display = 'none';
   imgPreview.src = '';
@@ -908,7 +900,6 @@ function openModal(which){
 
   if(which === 'memory'){
     modalTitle.textContent = 'SHARE MY MEMORY';
-    uploadImgBtn.classList.remove('hidden');
     document.getElementById('imgPreviewRow').classList.remove('hidden');
   }else{
     modalTitle.textContent = 'SHARE MY FEELING';
@@ -918,8 +909,6 @@ function openModal(which){
   textArea.value = '';
   modal.classList.remove('hidden');
   modalBackdrop.classList.add('show');
-
-  setTimeout(()=>{ try{ textArea.focus(); }catch{} }, 50);
 }
 
 function closeModal(){
@@ -981,7 +970,7 @@ async function postForm(url, formData){
 }
 
 /* =========================
-   SEND (ENTER KEY)
+   SEND
 ========================= */
 async function sendNow(){
   const text = (textArea.value || '').trim();
@@ -1004,7 +993,7 @@ async function sendNow(){
       });
       if(!res.ok){
         const t = await res.text().catch(()=> '');
-        statusLine.textContent = `FAILED (${res.status}) ${t ? '\n'+t.slice(0,120) : ''}`;
+        statusLine.textContent = `FAILED (${res.status}) ${t ? '\\n'+t.slice(0,120) : ''}`;
         return;
       }
       statusLine.textContent = 'SENT ✓';
@@ -1025,7 +1014,7 @@ async function sendNow(){
         const res = await postForm(CONFIG.SERVER + '/upload', form);
         if(!res.ok){
           const t = await res.text().catch(()=> '');
-          statusLine.textContent = `PHOTO FAILED (${res.status}) ${t ? '\n'+t.slice(0,120) : ''}`;
+          statusLine.textContent = `PHOTO FAILED (${res.status}) ${t ? '\\n'+t.slice(0,120) : ''}`;
           return;
         }
       }catch(err){
@@ -1043,7 +1032,7 @@ async function sendNow(){
       });
       if(!res2.ok){
         const t = await res2.text().catch(()=> '');
-        statusLine.textContent = `TEXT FAILED (${res2.status}) ${t ? '\n'+t.slice(0,120) : ''}`;
+        statusLine.textContent = `TEXT FAILED (${res2.status}) ${t ? '\\n'+t.slice(0,120) : ''}`;
         return;
       }
       statusLine.textContent = 'SENT ✓';
@@ -1056,29 +1045,46 @@ async function sendNow(){
 }
 
 /* =========================
-   CUSTOM KEYBOARD (rectilinear)
+   CUSTOM KEYBOARD ONLY
+   - keep textarea readonly
+   - prevent focus (stops iOS/Android keyboard)
 ========================= */
+function preventSystemKeyboard(){
+  const blurIt = ()=>{ try{ textArea.blur(); }catch{} };
+
+  // hard block focus + touch/click on textarea
+  const stop = (e)=>{ try{ e.preventDefault(); }catch{} blurIt(); };
+  textArea.addEventListener('focus', stop, {passive:false});
+  textArea.addEventListener('pointerdown', stop, {passive:false});
+  textArea.addEventListener('touchstart', stop, {passive:false});
+  textArea.addEventListener('mousedown', stop, {passive:false});
+
+  // also block on modal open click sequences
+  blurIt();
+}
+preventSystemKeyboard();
+
 function insertText(s){
-  const start = textArea.selectionStart ?? textArea.value.length;
-  const end   = textArea.selectionEnd ?? textArea.value.length;
+  const start = (typeof textArea.selectionStart === 'number') ? textArea.selectionStart : (textArea.value.length);
+  const end   = (typeof textArea.selectionEnd === 'number') ? textArea.selectionEnd : (textArea.value.length);
   const v = textArea.value || '';
   textArea.value = v.slice(0,start) + s + v.slice(end);
   const pos = start + s.length;
-  textArea.setSelectionRange(pos,pos);
+  try{ textArea.setSelectionRange(pos,pos); }catch{}
 }
 
 function backspace(){
-  const start = textArea.selectionStart ?? 0;
-  const end   = textArea.selectionEnd ?? 0;
+  const start = (typeof textArea.selectionStart === 'number') ? textArea.selectionStart : 0;
+  const end   = (typeof textArea.selectionEnd === 'number') ? textArea.selectionEnd : 0;
   const v = textArea.value || '';
   if(end > start){
     textArea.value = v.slice(0,start) + v.slice(end);
-    textArea.setSelectionRange(start,start);
+    try{ textArea.setSelectionRange(start,start); }catch{}
     return;
   }
   if(start <= 0) return;
   textArea.value = v.slice(0,start-1) + v.slice(start);
-  textArea.setSelectionRange(start-1,start-1);
+  try{ textArea.setSelectionRange(start-1,start-1); }catch{}
 }
 
 kbd.addEventListener('click', (e)=>{
@@ -1087,26 +1093,121 @@ kbd.addEventListener('click', (e)=>{
   const k = key.dataset.k;
   if(!k) return;
 
-  try{ textArea.focus(); }catch{}
-
-  if(k === 'SPACE'){ insertText(' '); return; }
-  if(k === 'BACKSPACE'){ backspace(); return; }
+  // never focus textarea
+  if(k === 'SPACE'){ insertText(' '); feedback(); return; }
+  if(k === 'BACKSPACE'){ backspace(); feedback(); return; }
   if(k === 'ENTER'){ sendNow(); return; }
 
   insertText(k);
+  feedback();
 });
 
-textArea.addEventListener('keydown', (e)=>{
-  if(e.key === 'Enter'){
-    e.preventDefault();
-    sendNow();
+/* =========================
+   IRREGULAR “WOBBLING ORB”
+   - thin white irregular outline with a subtle dent
+   - keeps moving very slowly forever
+========================= */
+function wrapAngle(a){
+  while(a > Math.PI) a -= Math.PI*2;
+  while(a < -Math.PI) a += Math.PI*2;
+  return a;
+}
+
+// Catmull-Rom to Bezier (closed)
+function catmullRom2bezier(points){
+  const beziers = [];
+  for(let i=0;i<points.length;i++){
+    const p0 = points[(i - 1 + points.length) % points.length];
+    const p1 = points[i];
+    const p2 = points[(i + 1) % points.length];
+    const p3 = points[(i + 2) % points.length];
+
+    const c1x = p1.x + (p2.x - p0.x) / 6;
+    const c1y = p1.y + (p2.y - p0.y) / 6;
+    const c2x = p2.x - (p3.x - p1.x) / 6;
+    const c2y = p2.y - (p3.y - p1.y) / 6;
+
+    beziers.push({ c1x,c1y,c2x,c2y, x:p2.x, y:p2.y });
   }
-});
+  return beziers;
+}
+
+function buildPath(points){
+  if(!points || points.length < 4) return '';
+  const start = points[0];
+  const beziers = catmullRom2bezier(points);
+  let d = `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} `;
+  for(const b of beziers){
+    d += `C ${b.c1x.toFixed(2)} ${b.c1y.toFixed(2)}, ${b.c2x.toFixed(2)} ${b.c2y.toFixed(2)}, ${b.x.toFixed(2)} ${b.y.toFixed(2)} `;
+  }
+  return d + 'Z';
+}
+
+const N = CONFIG.ORB_POINTS;
+const base = [];
+const phases = [];
+const weights = [];
+
+for(let i=0;i<N;i++){
+  const t = (i / N) * Math.PI * 2;
+
+  // oval-ish base
+  const oval = 1.0 + 0.12*Math.cos(t - 0.7) - 0.10*Math.cos(2*t + 1.2);
+
+  // dent around ~ 1 o’clock (photo-like)
+  const dentCenter = 0.25;
+  const dent = -0.10 * Math.exp(-Math.pow((wrapAngle(t - dentCenter))/0.35, 2));
+
+  const r = CONFIG.ORB_BASE_R * (oval + dent);
+
+  base.push({ t, r });
+  phases.push(Math.random()*Math.PI*2);
+  weights.push(0.55 + Math.random()*0.45);
+}
+
+let orbT0 = performance.now();
+
+function updateOrb(){
+  if(!orbPath) return;
+
+  const now = performance.now();
+  const tt = (now - orbT0) * CONFIG.ORB_SPEED;
+
+  const cx = 500, cy = 500;
+  const pts = [];
+
+  for(let i=0;i<N;i++){
+    const t = base[i].t;
+
+    const wave1 = Math.sin(tt + phases[i] + t*2.0);
+    const wave2 = Math.sin(tt*0.72 + phases[i]*0.7 + t*3.0);
+    const wave3 = Math.sin(tt*0.40 + t*1.0);
+
+    const noise = (wave1*0.55 + wave2*0.30 + wave3*0.15) * weights[i];
+    const r = base[i].r + noise * CONFIG.ORB_NOISE_A;
+
+    pts.push({
+      x: cx + r * Math.cos(t),
+      y: cy + r * Math.sin(t)
+    });
+  }
+
+  orbPath.setAttribute('d', buildPath(pts));
+
+  // tiny global drift (super slow)
+  const dx = Math.sin(tt*0.10) * 0.35;
+  const dy = Math.cos(tt*0.08) * 0.35;
+  const rot = Math.sin(tt*0.06) * 0.35;
+  orbWrap.style.transform = `translate(-50%,-50%) translate(${dx}vmin, ${dy}vmin) rotate(${rot}deg)`;
+
+  requestAnimationFrame(updateOrb);
+}
 
 /* =========================
    INIT
 ========================= */
 setSceneActive(1);
+updateOrb();
 
 })();
 </script>
