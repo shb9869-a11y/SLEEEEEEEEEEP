@@ -94,7 +94,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
   z-index:50;
 }
 
-/* Orb */
+/* ✅ Orb (continuous wobble + subtle shape breathing) */
 #orbWrap{
   position:fixed;
   left:50%; top:50%;
@@ -110,11 +110,25 @@ button:active{ opacity:.75; transform: translateY(1px); }
 #orbSvg{ width:100%; height:100%; display:block; }
 #orbPath{
   fill:none;
-  stroke:rgba(255,255,255,.82);
-  stroke-width:1.0;
+  stroke:rgba(255,255,255,.78);
+  stroke-width:0.85;              /* thinner line */
   vector-effect: non-scaling-stroke;
   stroke-linecap:round;
   stroke-linejoin:round;
+  will-change: d;
+}
+
+/* keep the photo-like contour; just gently “breathe” between 2 close variants */
+@keyframes orbMorph{
+  0%,100%{
+    d: path("M 255 135 C 170 190, 135 330, 150 480 C 170 690, 315 880, 520 900 C 705 918, 850 770, 875 590 C 896 440, 870 320, 825 235 C 780 150, 705 115, 615 105 C 555 98, 510 102, 470 112 C 430 122, 400 138, 360 150 C 315 164, 285 160, 255 135 Z");
+  }
+  50%{
+    d: path("M 260 140 C 175 200, 140 335, 155 485 C 176 690, 320 875, 520 895 C 705 910, 845 770, 868 592 C 888 450, 865 322, 820 242 C 776 160, 706 122, 618 112 C 560 105, 512 108, 472 118 C 432 128, 404 142, 364 155 C 320 170, 292 166, 260 140 Z");
+  }
+}
+#orbPath{
+  animation: orbMorph 18s ease-in-out infinite;
 }
 @keyframes orbWobble{
   0%   { transform:translate(-50%,-50%) rotate(-1.0deg) scale(1.002, 0.998) translate(-0.5vmin, 0.2vmin); }
@@ -314,8 +328,16 @@ button:active{ opacity:.75; transform: translateY(1px); }
   flex:0 0 auto;
 }
 #uploadImgBtn{
-  min-width: 180px;
+  min-width: 160px;
   flex:1 1 auto;
+}
+
+/* ✅ NEW: reset button (same row, black button, no border) */
+#resetBtn{
+  min-width: 140px;
+  flex:0 0 auto;
+  background:#000;
+  border:0 !important;
 }
 
 /* Text area */
@@ -333,9 +355,9 @@ button:active{ opacity:.75; transform: translateY(1px); }
   line-height:1.45;
 }
 
-/* ✅ FINAL: keyboard wider + keys wider */
+/* Keyboard wider + keys wider */
 #kbd{
-  width:calc(100% + 64px);   /* 더 넓게 */
+  width:calc(100% + 64px);
   margin-left:-32px;
   margin-right:-32px;
 
@@ -348,7 +370,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
 }
 .krow{
   display:flex;
-  gap:6px;                  /* ✅ gap 줄여서 키 폭 증가 */
+  gap:6px;
   justify-content:stretch;
   width:100%;
 }
@@ -356,7 +378,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
   flex:1 1 0;
   min-width:0;
   height:40px;
-  padding:0 16px;           /* ✅ 좌우 눌리는 면 증가 */
+  padding:0 16px;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -378,7 +400,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
   white-space:pre-wrap;
 }
 
-/* Landscape: keep it wide */
+/* Landscape tweaks */
 @media (orientation: landscape){
   #modalHeader{ padding:8px 10px; }
   #closeModalBtn{ padding:8px 12px; }
@@ -386,6 +408,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
 
   #imgPreviewRow{ gap:8px; }
   #uploadImgBtn{ min-width: 140px; padding:7px 10px; }
+  #resetBtn{ min-width: 120px; padding:7px 10px; }
   #imgPreview{ width:78px; height:56px; }
 
   #textArea{ min-height:40px; max-height:58px; padding:7px 9px; }
@@ -398,8 +421,6 @@ button:active{ opacity:.75; transform: translateY(1px); }
   }
   .krow{ gap:5px; }
   .key{ height:30px; padding:0 14px; }
-  .key.wide{ flex:3 1 0; }
-  .key.space{ flex:6 1 0; }
 
   #statusLine{ min-height: 14px; }
   #orbWrap{ width:min(58vmin, 480px); height:min(58vmin, 480px); }
@@ -430,6 +451,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
 
   <div class="frameBox" aria-hidden="true"></div>
 
+  <!-- ✅ Orb stays wobbling (scene 1~5) -->
   <div id="orbWrap" aria-hidden="true">
     <svg id="orbSvg" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet">
       <path id="orbPath" d="
@@ -560,6 +582,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
     <div id="modalBody">
       <div id="imgPreviewRow">
         <button id="uploadImgBtn">UPLOAD A PHOTO</button>
+        <button id="resetBtn">NEW UPLOAD</button>
         <img id="imgPreview" alt="preview"/>
       </div>
 
@@ -639,6 +662,7 @@ const modalTitle = document.getElementById('modalTitle');
 const closeModalBtn = document.getElementById('closeModalBtn');
 
 const uploadImgBtn = document.getElementById('uploadImgBtn');
+const resetBtn = document.getElementById('resetBtn');
 const imgPreview = document.getElementById('imgPreview');
 
 const textArea = document.getElementById('textArea');
@@ -674,6 +698,7 @@ if (visualViewport){
 addEventListener('orientationchange', ()=> setTimeout(setViewportVars,120));
 document.documentElement.style.setProperty('--fade-ms', CONFIG.FADE_MS + 'ms');
 
+/* click + haptic */
 let audioCtx = null;
 function ensureAudio(){
   if(audioCtx) return audioCtx;
@@ -704,6 +729,7 @@ function clickBeep(){
 function haptic(){ try{ if(navigator.vibrate) navigator.vibrate(CONFIG.VIBRATE_MS); }catch{} }
 function feedback(){ clickBeep(); haptic(); }
 
+/* Menu */
 function openMenu(){ menuPanel.classList.remove('hidden'); }
 function closeMenu(){ menuPanel.classList.add('hidden'); }
 menuBtn.addEventListener('click', (e)=>{
@@ -714,6 +740,7 @@ menuBtn.addEventListener('click', (e)=>{
 closeMenuBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); closeMenu(); });
 homeBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); closeMenu(); goToScene(1, true); });
 
+/* Scenes */
 function setSceneActive(n){
   for(const s of scenes){
     const sn = Number(s.dataset.scene || 0);
@@ -727,6 +754,8 @@ function setSceneActive(n){
   }else{
     bottomBar.classList.remove('show');
   }
+
+  /* orb only scene 1~5, but it always keeps wobbling via CSS animation */
   if(orbWrap) orbWrap.style.display = (n >= 1 && n <= 5) ? 'block' : 'none';
 }
 
@@ -764,6 +793,7 @@ for(const s of scenes){
 }
 document.getElementById('scene5').addEventListener('click', ()=>{ if(currentScene === 5) goToScene(6); });
 
+/* VDO.Ninja */
 const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 function applyNinjaStyle(){
   ninja.style.opacity = String(Math.max(0, Math.min(1, CONFIG.NINJA_OPACITY)));
@@ -799,22 +829,31 @@ function loadNinja(){
 setInterval(()=>{ if(currentScene === 6) ninja.src = ninjaUrl(); }, CONFIG.AUTO_REFRESH_MS);
 addEventListener('pageshow', ()=> setTimeout(()=>{ setViewportVars(); applyRezScale(); }, 60));
 
-function openModal(which){
-  mode = which;
+/* Modal open/close */
+function resetComposerUI(){
   selectedImageFile = null;
   imgPreview.style.display = 'none';
   imgPreview.src = '';
-  statusLine.textContent = '';
+  textArea.value = '';
+  statusLine.textContent = 'READY.';
+}
+function openModal(which){
+  mode = which;
 
   if(which === 'memory'){
     modalTitle.textContent = 'SHARE MY MEMORY';
     document.getElementById('imgPreviewRow').classList.remove('hidden');
+    uploadImgBtn.classList.remove('hidden');
   }else{
     modalTitle.textContent = 'SHARE MY FEELING';
-    document.getElementById('imgPreviewRow').classList.add('hidden');
+    /* keep row but hide image upload controls; still show NEW UPLOAD to clear text quickly */
+    document.getElementById('imgPreviewRow').classList.remove('hidden');
+    uploadImgBtn.classList.add('hidden');
+    imgPreview.style.display = 'none';
+    selectedImageFile = null;
   }
 
-  textArea.value = '';
+  resetComposerUI();
   modal.classList.remove('hidden');
   modalBackdrop.classList.add('show');
   try{ textArea.blur(); }catch{}
@@ -830,20 +869,31 @@ feelBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); openMod
 closeModalBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); closeModal(); });
 modalBackdrop.addEventListener('click', ()=>{ feedback(); closeModal(); });
 
+/* ✅ NEW UPLOAD button: clears text + photo so user can keep submitting */
+resetBtn.addEventListener('click', (e)=>{
+  e.preventDefault();
+  feedback();
+  resetComposerUI();
+});
+
+/* Image pick */
 uploadImgBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); imgInput.click(); });
 imgInput.addEventListener('change', ()=>{
   const f = imgInput.files && imgInput.files[0];
   if(!f) return;
   selectedImageFile = f;
+
   const url = URL.createObjectURL(f);
   imgPreview.onload = ()=> URL.revokeObjectURL(url);
   imgPreview.onerror = ()=> URL.revokeObjectURL(url);
   imgPreview.src = url;
   imgPreview.style.display = 'block';
+
   statusLine.textContent = 'PHOTO SELECTED.';
   imgInput.value = '';
 });
 
+/* Upload helpers */
 async function fetchWithTimeout(url, options={}, timeoutMs=CONFIG.UPLOAD_TIMEOUT_MS){
   const controller = new AbortController();
   const id = setTimeout(()=>controller.abort(new Error("timeout")), timeoutMs);
@@ -859,11 +909,16 @@ async function postForm(url, formData){
   return res;
 }
 
+/* Send */
 async function sendNow(){
   const text = (textArea.value || '').trim();
-  if(!text){ statusLine.textContent = 'TYPE SOMETHING FIRST.'; return; }
+  if(!text){
+    statusLine.textContent = 'TYPE SOMETHING FIRST.';
+    return;
+  }
   feedback();
 
+  // Feeling: text only
   if(mode === 'feeling'){
     statusLine.textContent = 'SENDING...';
     const payload = { text, clientTime: new Date().toISOString(), type:'feeling' };
@@ -878,7 +933,7 @@ async function sendNow(){
         statusLine.textContent = `FAILED (${res.status}) ${t ? '\\n'+t.slice(0,120) : ''}`;
         return;
       }
-      statusLine.textContent = 'SENT ✓';
+      statusLine.textContent = 'SENT ✓ (PRESS NEW UPLOAD TO SEND AGAIN)';
       return;
     }catch(err){
       statusLine.textContent = `ERROR: ${String(err && err.message ? err.message : err)}`;
@@ -886,6 +941,7 @@ async function sendNow(){
     }
   }
 
+  // Memory: photo optional + text
   if(mode === 'memory'){
     statusLine.textContent = 'SENDING...';
 
@@ -917,7 +973,7 @@ async function sendNow(){
         statusLine.textContent = `TEXT FAILED (${res2.status}) ${t ? '\\n'+t.slice(0,120) : ''}`;
         return;
       }
-      statusLine.textContent = 'SENT ✓';
+      statusLine.textContent = 'SENT ✓ (PRESS NEW UPLOAD TO SEND AGAIN)';
       return;
     }catch(err){
       statusLine.textContent = `TEXT ERROR: ${String(err && err.message ? err.message : err)}`;
@@ -926,6 +982,7 @@ async function sendNow(){
   }
 }
 
+/* Prevent system keyboard */
 function preventSystemKeyboard(){
   const blurIt = ()=>{ try{ textArea.blur(); }catch{} };
   const stop = (e)=>{ try{ e.preventDefault(); }catch{} blurIt(); };
@@ -938,6 +995,7 @@ function preventSystemKeyboard(){
 }
 preventSystemKeyboard();
 
+/* Custom keyboard input */
 function insertText(s){
   const start = (typeof textArea.selectionStart === 'number') ? textArea.selectionStart : (textArea.value.length);
   const end   = (typeof textArea.selectionEnd === 'number') ? textArea.selectionEnd : (textArea.value.length);
@@ -974,6 +1032,7 @@ kbd.addEventListener('click', (e)=>{
   feedback();
 });
 
+/* Init */
 setSceneActive(1);
 
 })();
