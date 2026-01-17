@@ -23,7 +23,7 @@
   --bg:#000;
   --fg:#fff;
 
-  /* a touch smaller to avoid any scroll in landscape */
+  /* slightly smaller to avoid scroll in landscape */
   --fs-title: clamp(12.5px, 2.45vmin, 18.5px);
   --fs-body:  clamp(11px,   1.95vmin, 15px);
   --fs-small: clamp(10.2px, 1.65vmin, 13px);
@@ -97,7 +97,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
   z-index:50;
 }
 
-/* ✅ Wobbling orb (keep the same “photo-like” silhouette; animate only transform) */
+/* ✅ Orb: fixed silhouette (like your image) + very slow transform wobble */
 #orbWrap{
   position:fixed;
   left:50%; top:50%;
@@ -108,24 +108,24 @@ button:active{ opacity:.75; transform: translateY(1px); }
   z-index:70;
   opacity:.95;
   will-change: transform;
-  animation: orbWobble 36s ease-in-out infinite;
+  animation: orbWobble 40s ease-in-out infinite;
 }
 #orbSvg{ width:100%; height:100%; display:block; }
 #orbPath{
   fill:none;
-  stroke:rgba(255,255,255,.80);
-  stroke-width:1.5;
+  stroke:rgba(255,255,255,.82);
+  stroke-width:1.0;              /* ✅ thinner line */
   vector-effect: non-scaling-stroke;
   stroke-linecap:round;
   stroke-linejoin:round;
 }
 
 @keyframes orbWobble{
-  0%   { transform:translate(-50%,-50%) rotate(-1.2deg) scale(1.002, 0.998) translate(-0.6vmin, 0.2vmin); }
-  25%  { transform:translate(-50%,-50%) rotate( 0.6deg) scale(0.996, 1.004) translate( 0.3vmin,-0.4vmin); }
-  50%  { transform:translate(-50%,-50%) rotate(-0.4deg) scale(1.004, 0.996) translate( 0.5vmin, 0.3vmin); }
-  75%  { transform:translate(-50%,-50%) rotate( 1.0deg) scale(0.998, 1.002) translate(-0.2vmin, 0.5vmin); }
-  100% { transform:translate(-50%,-50%) rotate(-1.2deg) scale(1.002, 0.998) translate(-0.6vmin, 0.2vmin); }
+  0%   { transform:translate(-50%,-50%) rotate(-1.0deg) scale(1.002, 0.998) translate(-0.5vmin, 0.2vmin); }
+  25%  { transform:translate(-50%,-50%) rotate( 0.5deg) scale(0.997, 1.003) translate( 0.3vmin,-0.3vmin); }
+  50%  { transform:translate(-50%,-50%) rotate(-0.3deg) scale(1.003, 0.997) translate( 0.4vmin, 0.2vmin); }
+  75%  { transform:translate(-50%,-50%) rotate( 0.9deg) scale(0.999, 1.001) translate(-0.2vmin, 0.4vmin); }
+  100% { transform:translate(-50%,-50%) rotate(-1.0deg) scale(1.002, 0.998) translate(-0.5vmin, 0.2vmin); }
 }
 
 /* ===== Menu (top-left) ===== */
@@ -135,15 +135,13 @@ button:active{ opacity:.75; transform: translateY(1px); }
   top:calc(var(--frame) + var(--safe-t));
   z-index:200;
 }
-
 #menuBtn{
   width:38px; height:38px;
   padding:0;
   display:grid; place-items:center;
-  border:0 !important;     /* no border */
+  border:0 !important;
   background:transparent;
 }
-
 #menuIcon{
   width:18px; height:18px;
   display:grid;
@@ -159,7 +157,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
   top:calc(var(--frame) + 48px + var(--safe-t));
   z-index:210;
   background:rgba(0,0,0,.92);
-  border:0;               /* no border */
+  border:0;
   padding:12px;
   display:flex;
   flex-direction:column;
@@ -167,7 +165,6 @@ button:active{ opacity:.75; transform: translateY(1px); }
   min-width: 200px;
   max-width: calc(100vw - (2*(var(--frame) + var(--safe-l) + var(--safe-r))));
 }
-
 #homeBtn{
   border:1px solid #ff2b2b;
   color:#ff2b2b;
@@ -180,13 +177,11 @@ button:active{ opacity:.75; transform: translateY(1px); }
   align-items:center;
   justify-content:center;
   text-align:center;
-
   padding:
     calc(var(--frame) + var(--gap) + var(--safe-t))
     calc(var(--frame) + var(--gap) + var(--safe-r))
     calc(var(--frame) + var(--gap) + var(--safe-b))
     calc(var(--frame) + var(--gap) + var(--safe-l));
-
   z-index:100;
   opacity:0;
   pointer-events:none;
@@ -212,15 +207,14 @@ button:active{ opacity:.75; transform: translateY(1px); }
 /* ✅ bottom-right instruction: English, moved left + up */
 .tapHint{
   position:fixed;
-  right:calc(var(--frame) + var(--safe-r) + 32px); /* move left */
-  bottom:calc(var(--frame) + var(--safe-b) + 20px); /* move up */
+  right:calc(var(--frame) + var(--safe-r) + 32px);
+  bottom:calc(var(--frame) + var(--safe-b) + 20px);
   z-index:150;
   display:flex;
   align-items:center;
   gap:8px;
   pointer-events:none;
 }
-
 .tapHintText{
   font-size:var(--fs-small);
   letter-spacing:.01em;
@@ -256,8 +250,8 @@ button:active{ opacity:.75; transform: translateY(1px); }
 .barBtn{
   flex:1 1 160px;
   min-width: 0;
-  background:#000;          /* perfect black */
-  border:0 !important;      /* no border */
+  background:#000;
+  border:0 !important;
 }
 
 /* ===== Modal ===== */
@@ -305,7 +299,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
   display:flex;
   flex-direction:column;
   gap:10px;
-  overflow:hidden;  /* no scroll */
+  overflow:hidden; /* ✅ never scroll */
   flex:1 1 auto;
 }
 
@@ -315,17 +309,21 @@ button:active{ opacity:.75; transform: translateY(1px); }
   gap:10px;
   align-items:center;
   justify-content:space-between;
-  flex-wrap:wrap;
+  flex-wrap:nowrap;         /* ✅ keep one line */
 }
 #imgPreview{
   width:96px; height:72px;
   border:1px solid rgba(255,255,255,.65);
   object-fit:cover;
   display:none;
+  flex:0 0 auto;
 }
-#uploadImgBtn{ min-width: 180px; }
+#uploadImgBtn{
+  min-width: 180px;
+  flex:1 1 auto;            /* ✅ allow shrink */
+}
 
-/* ✅ Text area reduced (so both modes fit without scrolling) */
+/* Text area (short) */
 #textArea{
   width:100%;
   min-height:54px;
@@ -365,7 +363,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
   align-items:center;
   justify-content:center;
   border:1px solid rgba(255,255,255,.75);
-  background:#000;              /* perfect black */
+  background:#000;
   border-radius:0;
   user-select:none;
   -webkit-user-select:none;
@@ -382,31 +380,42 @@ button:active{ opacity:.75; transform: translateY(1px); }
   white-space:pre-wrap;
 }
 
-/* Safety for tiny landscape heights */
+/* ✅ Make SHARE MY MEMORY definitely fit in landscape (no scrolling) */
+@media (orientation: landscape){
+  #modalHeader{ padding:8px 10px; }
+  #closeModalBtn{ padding:8px 12px; }
+  #modalBody{ padding:8px 10px 10px; gap:7px; }
+
+  #imgPreviewRow{ gap:8px; }
+  #uploadImgBtn{ min-width: 140px; padding:7px 10px; }
+  #imgPreview{ width:78px; height:56px; }
+
+  #textArea{ min-height:40px; max-height:58px; padding:7px 9px; }
+
+  #kbd{ padding:7px 3px 6px; gap:5px; }
+  .krow{ gap:5px; }
+  .key{ height:26px; min-width: 22px; padding:0 6px; }
+  .key.wide{ min-width: 78px; }
+  .key.space{ min-width: 120px; }
+
+  #statusLine{ min-height: 14px; }
+
+  /* a bit smaller orb so it never pushes layout perception */
+  #orbWrap{ width:min(58vmin, 480px); height:min(58vmin, 480px); }
+}
+
+/* Extra safety for very short heights */
 @media (max-height: 520px){
   :root{ --frame: clamp(8px, 2.0vmin, 18px); --gap: 8px; }
   #menuPanel{ top: calc(var(--frame) + 44px + var(--safe-t)); }
-  #uploadImgBtn{ min-width: 150px; }
-  .key{ height: 32px; min-width: 27px; }
-  .key.space{ min-width: 150px; }
-  #orbWrap{ width:min(60vmin, 480px); height:min(60vmin, 480px); }
-  #textArea{ min-height:48px; max-height:78px; }
   .tapHint{ right:calc(var(--frame) + var(--safe-r) + 22px); bottom:calc(var(--frame) + var(--safe-b) + 16px); }
+  #textArea{ min-height:38px; max-height:54px; }
+  .key{ height:24px; min-width: 21px; }
+  .key.space{ min-width: 110px; }
 }
 
-/* ✅ Specifically tune modal for landscape so “SHARE MY MEMORY” fits one screen */
-@media (orientation: landscape){
-  #modalBody{ gap:8px; padding:9px 10px 10px; }
-  #imgPreviewRow{ gap:8px; }
-  #imgPreview{ width:84px; height:64px; }
-  #uploadImgBtn{ min-width: 150px; padding:8px 12px; }
-  #textArea{ min-height:44px; max-height:72px; padding:8px 10px; }
-  #kbd{ padding:8px 4px 6px; gap:6px; }
-  .key{ height: 30px; min-width: 26px; padding:0 8px; }
-  .key.wide{ min-width: 92px; }
-  .key.space{ min-width: 140px; }
-  #statusLine{ min-height: 16px; }
-}
+/* rectilinear */
+.frameBox, #menuPanel, #modal { border-radius:0 !important; }
 </style>
 </head>
 
@@ -421,19 +430,20 @@ button:active{ opacity:.75; transform: translateY(1px); }
 
   <div class="frameBox" aria-hidden="true"></div>
 
-  <!-- ✅ Orb silhouette: fixed “photo-like” outline; movement via transform only -->
+  <!-- ✅ Orb silhouette (smooth, not squiggly) -->
   <div id="orbWrap" aria-hidden="true">
     <svg id="orbSvg" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet">
-      <!-- Hand-tuned smooth blob with a subtle dent (keeps stable shape; not squiggly) -->
+      <!-- Smooth “bean / egg” with a small dent on the upper-right (matches your reference vibe) -->
       <path id="orbPath" d="
-        M 226 170
-        C 156 236, 138 352, 160 482
-        C 186 636, 292 792, 452 854
-        C 610 914, 774 858, 834 742
-        C 902 612, 878 486, 862 366
-        C 846 250, 764 168, 652 142
-        C 560 120, 458 132, 378 162
-        C 318 184, 268 200, 226 170
+        M 255 135
+        C 170 190, 135 330, 150 480
+        C 170 690, 315 880, 520 900
+        C 705 918, 850 770, 875 590
+        C 896 440, 870 320, 825 235
+        C 780 150, 705 115, 615 105
+        C 555 98, 510 102, 470 112
+        C 430 122, 400 138, 360 150
+        C 315 164, 285 160, 255 135
         Z
       "></path>
     </svg>
@@ -762,7 +772,6 @@ function setSceneActive(n){
   }
   currentScene = n;
 
-  // Ninja + bottom bar only in scene #6
   if(n === 6){
     bottomBar.classList.add('show');
     loadNinja();
@@ -770,7 +779,6 @@ function setSceneActive(n){
     bottomBar.classList.remove('show');
   }
 
-  // orb only in scenes 1-5
   if(orbWrap){
     orbWrap.style.display = (n >= 1 && n <= 5) ? 'block' : 'none';
   }
@@ -814,7 +822,6 @@ for(const s of scenes){
   }
 }
 
-// Scene 5: tap -> scene 6
 document.getElementById('scene5').addEventListener('click', ()=>{
   if(currentScene === 5) goToScene(6);
 });
@@ -1029,8 +1036,6 @@ async function sendNow(){
 
 /* =========================
    CUSTOM KEYBOARD ONLY
-   - textarea is readonly
-   - prevent focus/tap to stop iOS/Android keyboard
 ========================= */
 function preventSystemKeyboard(){
   const blurIt = ()=>{ try{ textArea.blur(); }catch{} };
@@ -1085,24 +1090,6 @@ kbd.addEventListener('click', (e)=>{
 /* =========================
    INIT
 ========================= */
-function setSceneActive(n){
-  for(const s of scenes){
-    const sn = Number(s.dataset.scene || 0);
-    s.classList.toggle('active', sn === n);
-  }
-  currentScene = n;
-
-  if(n === 6){
-    bottomBar.classList.add('show');
-    loadNinja();
-  }else{
-    bottomBar.classList.remove('show');
-  }
-
-  if(orbWrap){
-    orbWrap.style.display = (n >= 1 && n <= 5) ? 'block' : 'none';
-  }
-}
 setSceneActive(1);
 
 })();
