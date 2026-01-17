@@ -23,7 +23,6 @@
   --bg:#000;
   --fg:#fff;
 
-  /* slightly smaller to avoid scroll in landscape */
   --fs-title: clamp(12.5px, 2.45vmin, 18.5px);
   --fs-body:  clamp(11px,   1.95vmin, 15px);
   --fs-small: clamp(10.2px, 1.65vmin, 13px);
@@ -70,7 +69,6 @@ button:active{ opacity:.75; transform: translateY(1px); }
 /* ===== Layers ===== */
 #root{ position:fixed; inset:0; }
 
-/* VDO.Ninja overlay (scene #6 background) */
 #ninjaOverlay{
   position:fixed;
   left:50%; top:50%;
@@ -85,7 +83,6 @@ button:active{ opacity:.75; transform: translateY(1px); }
   will-change:transform, opacity;
 }
 
-/* Frame */
 .frameBox{
   position:fixed;
   left:calc(var(--frame) + var(--safe-l));
@@ -97,7 +94,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
   z-index:50;
 }
 
-/* ✅ Orb: fixed silhouette (like your image) + very slow transform wobble */
+/* Orb */
 #orbWrap{
   position:fixed;
   left:50%; top:50%;
@@ -114,12 +111,11 @@ button:active{ opacity:.75; transform: translateY(1px); }
 #orbPath{
   fill:none;
   stroke:rgba(255,255,255,.82);
-  stroke-width:1.0;              /* ✅ thinner line */
+  stroke-width:1.0;
   vector-effect: non-scaling-stroke;
   stroke-linecap:round;
   stroke-linejoin:round;
 }
-
 @keyframes orbWobble{
   0%   { transform:translate(-50%,-50%) rotate(-1.0deg) scale(1.002, 0.998) translate(-0.5vmin, 0.2vmin); }
   25%  { transform:translate(-50%,-50%) rotate( 0.5deg) scale(0.997, 1.003) translate( 0.3vmin,-0.3vmin); }
@@ -128,7 +124,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
   100% { transform:translate(-50%,-50%) rotate(-1.0deg) scale(1.002, 0.998) translate(-0.5vmin, 0.2vmin); }
 }
 
-/* ===== Menu (top-left) ===== */
+/* Menu */
 #menuWrap{
   position:fixed;
   left:calc(var(--frame) + var(--safe-l));
@@ -150,7 +146,6 @@ button:active{ opacity:.75; transform: translateY(1px); }
 }
 #menuIcon div{ height:2px; background:var(--fg); }
 
-/* Menu panel */
 #menuPanel{
   position:fixed;
   left:calc(var(--frame) + var(--safe-l));
@@ -170,7 +165,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
   color:#ff2b2b;
 }
 
-/* ===== Scenes ===== */
+/* Scenes */
 .scene{
   position:fixed; inset:0;
   display:flex;
@@ -199,12 +194,11 @@ button:active{ opacity:.75; transform: translateY(1px); }
   max-height: calc(var(--vhpx) - (2*(var(--frame) + var(--gap))) - (var(--safe-t) + var(--safe-b)));
   overflow:hidden;
 }
-
 .h1{ font-size:var(--fs-title); letter-spacing:.10em; line-height:1.28; }
 .p { font-size:var(--fs-body);  letter-spacing:.02em; line-height:1.50; opacity:.95; }
 .note{ font-size:var(--fs-small); opacity:.85; letter-spacing:.06em; }
 
-/* ✅ bottom-right instruction: English, moved left + up */
+/* Tap hint */
 .tapHint{
   position:fixed;
   right:calc(var(--frame) + var(--safe-r) + 32px);
@@ -229,7 +223,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
   transform: rotate(-45deg);
 }
 
-/* ===== Scene #6 Bottom Buttons ===== */
+/* Scene 6 bottom buttons */
 #bottomBar{
   position:fixed;
   left:calc(var(--frame) + var(--safe-l));
@@ -254,7 +248,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
   border:0 !important;
 }
 
-/* ===== Modal ===== */
+/* Modal */
 #modalBackdrop{
   position:fixed; inset:0;
   background:rgba(0,0,0,.78);
@@ -269,7 +263,8 @@ button:active{ opacity:.75; transform: translateY(1px); }
   position:fixed;
   left:50%; top:50%;
   transform:translate(-50%,-50%);
-  width:min(900px, calc(100vw - 2*(var(--frame) + var(--safe-l) + var(--safe-r))));
+
+  width:min(980px, calc(100vw - 2*(max(8px,var(--frame)) + var(--safe-l) + var(--safe-r))));
   border:1px solid rgba(255,255,255,.85);
   background:rgba(0,0,0,.92);
   z-index:410;
@@ -299,17 +294,17 @@ button:active{ opacity:.75; transform: translateY(1px); }
   display:flex;
   flex-direction:column;
   gap:10px;
-  overflow:hidden; /* ✅ never scroll */
+  overflow:hidden;
   flex:1 1 auto;
 }
 
-/* Upload preview row */
+/* Upload row */
 #imgPreviewRow{
   display:flex;
   gap:10px;
   align-items:center;
   justify-content:space-between;
-  flex-wrap:nowrap;         /* ✅ keep one line */
+  flex-wrap:nowrap;
 }
 #imgPreview{
   width:96px; height:72px;
@@ -320,10 +315,10 @@ button:active{ opacity:.75; transform: translateY(1px); }
 }
 #uploadImgBtn{
   min-width: 180px;
-  flex:1 1 auto;            /* ✅ allow shrink */
+  flex:1 1 auto;
 }
 
-/* Text area (short) */
+/* Text area */
 #textArea{
   width:100%;
   min-height:54px;
@@ -336,29 +331,32 @@ button:active{ opacity:.75; transform: translateY(1px); }
   border-radius:0;
   letter-spacing:.02em;
   line-height:1.45;
-  caret-color: rgba(255,255,255,.75);
 }
 
-/* Custom keyboard */
+/* ✅ FINAL: keyboard wider + keys wider */
 #kbd{
-  width:100%;
+  width:calc(100% + 64px);   /* 더 넓게 */
+  margin-left:-32px;
+  margin-right:-32px;
+
   border-top:1px solid rgba(255,255,255,.45);
-  padding:10px 6px 8px;
+  padding:10px 18px 8px;
   display:flex;
   flex-direction:column;
-  gap:7px;
+  gap:8px;
   flex:0 0 auto;
 }
 .krow{
   display:flex;
-  gap:6px;
-  justify-content:center;
-  flex-wrap:nowrap;
+  gap:6px;                  /* ✅ gap 줄여서 키 폭 증가 */
+  justify-content:stretch;
+  width:100%;
 }
 .key{
-  min-width: 29px;
-  height: 35px;
-  padding:0 9px;
+  flex:1 1 0;
+  min-width:0;
+  height:40px;
+  padding:0 16px;           /* ✅ 좌우 눌리는 면 증가 */
   display:flex;
   align-items:center;
   justify-content:center;
@@ -370,8 +368,8 @@ button:active{ opacity:.75; transform: translateY(1px); }
   letter-spacing:.10em;
   text-transform:uppercase;
 }
-.key.wide{ min-width: 100px; }
-.key.space{ min-width: 170px; }
+.key.wide{ flex:3 1 0; }
+.key.space{ flex:6 1 0; }
 
 #statusLine{
   font-size:var(--fs-small);
@@ -380,7 +378,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
   white-space:pre-wrap;
 }
 
-/* ✅ Make SHARE MY MEMORY definitely fit in landscape (no scrolling) */
+/* Landscape: keep it wide */
 @media (orientation: landscape){
   #modalHeader{ padding:8px 10px; }
   #closeModalBtn{ padding:8px 12px; }
@@ -392,29 +390,31 @@ button:active{ opacity:.75; transform: translateY(1px); }
 
   #textArea{ min-height:40px; max-height:58px; padding:7px 9px; }
 
-  #kbd{ padding:7px 3px 6px; gap:5px; }
+  #kbd{
+    width:calc(100% + 56px);
+    margin-left:-28px; margin-right:-28px;
+    padding:8px 16px 6px;
+    gap:6px;
+  }
   .krow{ gap:5px; }
-  .key{ height:26px; min-width: 22px; padding:0 6px; }
-  .key.wide{ min-width: 78px; }
-  .key.space{ min-width: 120px; }
+  .key{ height:30px; padding:0 14px; }
+  .key.wide{ flex:3 1 0; }
+  .key.space{ flex:6 1 0; }
 
   #statusLine{ min-height: 14px; }
-
-  /* a bit smaller orb so it never pushes layout perception */
   #orbWrap{ width:min(58vmin, 480px); height:min(58vmin, 480px); }
 }
 
-/* Extra safety for very short heights */
+/* Extra short heights */
 @media (max-height: 520px){
   :root{ --frame: clamp(8px, 2.0vmin, 18px); --gap: 8px; }
   #menuPanel{ top: calc(var(--frame) + 44px + var(--safe-t)); }
   .tapHint{ right:calc(var(--frame) + var(--safe-r) + 22px); bottom:calc(var(--frame) + var(--safe-b) + 16px); }
   #textArea{ min-height:38px; max-height:54px; }
-  .key{ height:24px; min-width: 21px; }
-  .key.space{ min-width: 110px; }
+  #kbd{ padding:7px 16px 6px; }
+  .key{ height:28px; }
 }
 
-/* rectilinear */
 .frameBox, #menuPanel, #modal { border-radius:0 !important; }
 </style>
 </head>
@@ -430,10 +430,8 @@ button:active{ opacity:.75; transform: translateY(1px); }
 
   <div class="frameBox" aria-hidden="true"></div>
 
-  <!-- ✅ Orb silhouette (smooth, not squiggly) -->
   <div id="orbWrap" aria-hidden="true">
     <svg id="orbSvg" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet">
-      <!-- Smooth “bean / egg” with a small dent on the upper-right (matches your reference vibe) -->
       <path id="orbPath" d="
         M 255 135
         C 170 190, 135 330, 150 480
@@ -449,7 +447,6 @@ button:active{ opacity:.75; transform: translateY(1px); }
     </svg>
   </div>
 
-  <!-- Menu -->
   <div id="menuWrap">
     <button id="menuBtn" aria-label="Menu">
       <div id="menuIcon" aria-hidden="true">
@@ -464,7 +461,6 @@ button:active{ opacity:.75; transform: translateY(1px); }
     <button id="closeMenuBtn">CLOSE</button>
   </div>
 
-  <!-- Scenes -->
   <section id="scene1" class="scene active" data-scene="1">
     <div class="sceneInner">
       <div class="h1">ADD THIS EXPERIENCE TO YOUR HOME SCREEN</div>
@@ -545,7 +541,6 @@ button:active{ opacity:.75; transform: translateY(1px); }
     </div>
   </section>
 
-  <!-- Scene #6 -->
   <section id="scene6" class="scene" data-scene="6">
     <div class="sceneInner"></div>
   </section>
@@ -555,7 +550,6 @@ button:active{ opacity:.75; transform: translateY(1px); }
     <button id="memBtn" class="barBtn">SHARE MY MEMORY</button>
   </div>
 
-  <!-- Modal -->
   <div id="modalBackdrop"></div>
   <div id="modal" class="hidden" role="dialog" aria-modal="true" aria-label="Share dialog">
     <div id="modalHeader">
@@ -569,7 +563,6 @@ button:active{ opacity:.75; transform: translateY(1px); }
         <img id="imgPreview" alt="preview"/>
       </div>
 
-      <!-- readonly + inputmode none (no system keyboard) -->
       <textarea id="textArea"
         placeholder="TYPE HERE..."
         readonly inputmode="none"
@@ -601,9 +594,6 @@ button:active{ opacity:.75; transform: translateY(1px); }
 <script>
 (()=>{
 
-/* =========================
-   CONFIG
-========================= */
 const CONFIG = {
   SERVER: (location.origin && location.origin.startsWith('http')) ? location.origin : 'http://127.0.0.1:4000',
   UPLOAD_TIMEOUT_MS: 20000,
@@ -624,16 +614,12 @@ const CONFIG = {
   VIBRATE_MS: 12
 };
 
-// Optional: allow ?room=xxxx
 try{
   const qs = new URLSearchParams(location.search);
   const roomFromUrl = (qs.get('room') || '').trim();
   if(roomFromUrl) CONFIG.ROOM_ID = roomFromUrl;
 }catch{}
 
-/* =========================
-   ELEMENTS
-========================= */
 const ninja = document.getElementById('ninjaOverlay');
 
 const menuBtn = document.getElementById('menuBtn');
@@ -661,7 +647,6 @@ const statusLine = document.getElementById('statusLine');
 
 const orbWrap = document.getElementById('orbWrap');
 
-// hidden file input
 const imgInput = document.createElement('input');
 imgInput.type = 'file';
 imgInput.accept = 'image/*';
@@ -670,12 +655,9 @@ imgInput.style.left = '-9999px';
 document.body.appendChild(imgInput);
 
 let currentScene = 1;
-let mode = null; // 'memory' | 'feeling'
+let mode = null;
 let selectedImageFile = null;
 
-/* =========================
-   VIEWPORT VARS
-========================= */
 function setViewportVars(){
   const vv = window.visualViewport;
   const w = Math.round((vv?.width || innerWidth));
@@ -690,15 +672,8 @@ if (visualViewport){
   visualViewport.addEventListener('scroll', setViewportVars);
 }
 addEventListener('orientationchange', ()=> setTimeout(setViewportVars,120));
-
-/* =========================
-   FADE
-========================= */
 document.documentElement.style.setProperty('--fade-ms', CONFIG.FADE_MS + 'ms');
 
-/* =========================
-   CLICK SOUND + HAPTIC
-========================= */
 let audioCtx = null;
 function ensureAudio(){
   if(audioCtx) return audioCtx;
@@ -707,64 +682,38 @@ function ensureAudio(){
   audioCtx = new AC();
   return audioCtx;
 }
-
 function clickBeep(){
   try{
     const ctx = ensureAudio();
     if(!ctx) return;
     if(ctx.state === 'suspended'){ ctx.resume().catch(()=>{}); }
-
     const now = ctx.currentTime;
     const o = ctx.createOscillator();
     const g = ctx.createGain();
-
     o.type = 'sine';
     o.frequency.setValueAtTime(CONFIG.CLICK_HZ, now);
-
     const peak = Math.max(0.001, Math.min(0.15, CONFIG.CLICK_GAIN));
     g.gain.setValueAtTime(0.0001, now);
     g.gain.exponentialRampToValueAtTime(peak, now + 0.01);
     g.gain.exponentialRampToValueAtTime(0.0001, now + (CONFIG.CLICK_MS/1000));
-
-    o.connect(g);
-    g.connect(ctx.destination);
-
+    o.connect(g); g.connect(ctx.destination);
     o.start(now);
     o.stop(now + (CONFIG.CLICK_MS/1000) + 0.02);
   }catch{}
 }
-
-function haptic(){
-  try{
-    if(navigator.vibrate) navigator.vibrate(CONFIG.VIBRATE_MS);
-  }catch{}
-}
-
+function haptic(){ try{ if(navigator.vibrate) navigator.vibrate(CONFIG.VIBRATE_MS); }catch{} }
 function feedback(){ clickBeep(); haptic(); }
 
-/* =========================
-   MENU
-========================= */
 function openMenu(){ menuPanel.classList.remove('hidden'); }
 function closeMenu(){ menuPanel.classList.add('hidden'); }
-
 menuBtn.addEventListener('click', (e)=>{
   e.preventDefault(); feedback();
   if(menuPanel.classList.contains('hidden')) openMenu();
   else closeMenu();
 });
-closeMenuBtn.addEventListener('click', (e)=>{
-  e.preventDefault(); feedback(); closeMenu();
-});
-homeBtn.addEventListener('click', (e)=>{
-  e.preventDefault(); feedback();
-  closeMenu();
-  goToScene(1, true);
-});
+closeMenuBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); closeMenu(); });
+homeBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); closeMenu(); goToScene(1, true); });
 
-/* =========================
-   SCENES
-========================= */
 function setSceneActive(n){
   for(const s of scenes){
     const sn = Number(s.dataset.scene || 0);
@@ -778,10 +727,7 @@ function setSceneActive(n){
   }else{
     bottomBar.classList.remove('show');
   }
-
-  if(orbWrap){
-    orbWrap.style.display = (n >= 1 && n <= 5) ? 'block' : 'none';
-  }
+  if(orbWrap) orbWrap.style.display = (n >= 1 && n <= 5) ? 'block' : 'none';
 }
 
 let sceneLock = false;
@@ -804,13 +750,8 @@ function goToScene(n, immediate=false){
     setTimeout(()=>{ sceneLock = false; }, CONFIG.FADE_MS);
   }, CONFIG.FADE_MS);
 }
+function nextScene(){ goToScene(Math.min(6, currentScene + 1)); }
 
-function nextScene(){
-  const n = Math.min(6, currentScene + 1);
-  goToScene(n);
-}
-
-// Tap anywhere to proceed for scenes 1-5
 for(const s of scenes){
   const sn = Number(s.dataset.scene || 0);
   if(sn >= 1 && sn <= 5){
@@ -821,22 +762,14 @@ for(const s of scenes){
     });
   }
 }
+document.getElementById('scene5').addEventListener('click', ()=>{ if(currentScene === 5) goToScene(6); });
 
-document.getElementById('scene5').addEventListener('click', ()=>{
-  if(currentScene === 5) goToScene(6);
-});
-
-/* =========================
-   VDO.NINJA
-========================= */
 const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-
 function applyNinjaStyle(){
   ninja.style.opacity = String(Math.max(0, Math.min(1, CONFIG.NINJA_OPACITY)));
   const blend = CONFIG.BLEND_MODE;
   ninja.style.mixBlendMode = (isiOS && blend === 'screen') ? 'lighten' : blend;
 }
-
 function applyRezScale(){
   const s = Math.max(0.2, Math.min(1, Number(CONFIG.REZ_SCALE)||1));
   ninja.style.width  = `calc(var(--vwpx) * ${s})`;
@@ -845,13 +778,11 @@ function applyRezScale(){
   ninja.style.top  = '50%';
   ninja.style.transform = `translate(-50%,-50%) scale(${1/s})`;
 }
-
 const injectedCss = encodeURIComponent(`
   html,body{background:transparent!important;margin:0!important;overflow:hidden!important;}
   #container,.container{background:transparent!important;}
   video,canvas{position:fixed!important; inset:0!important; width:100vw!important; height:100vh!important; object-fit:cover!important; background:transparent!important;}
 `);
-
 const ninjaBase = () => (
   `https://vdo.ninja/?view=${encodeURIComponent(CONFIG.ROOM_ID)}`
   + `&clean&autostart&noaudio`
@@ -859,26 +790,15 @@ const ninjaBase = () => (
   + `&solo&transparent=1`
   + `&css=${injectedCss}`
 );
-
 const ninjaUrl = () => `${ninjaBase()}&ts=${Date.now()}`;
-
 function loadNinja(){
   applyNinjaStyle();
   applyRezScale();
-  if(!ninja.src || ninja.src === 'about:blank'){
-    ninja.src = ninjaUrl();
-  }
+  if(!ninja.src || ninja.src === 'about:blank') ninja.src = ninjaUrl();
 }
-
-setInterval(()=>{
-  if(currentScene === 6) ninja.src = ninjaUrl();
-}, CONFIG.AUTO_REFRESH_MS);
-
+setInterval(()=>{ if(currentScene === 6) ninja.src = ninjaUrl(); }, CONFIG.AUTO_REFRESH_MS);
 addEventListener('pageshow', ()=> setTimeout(()=>{ setViewportVars(); applyRezScale(); }, 60));
 
-/* =========================
-   MODAL
-========================= */
 function openModal(which){
   mode = which;
   selectedImageFile = null;
@@ -897,11 +817,8 @@ function openModal(which){
   textArea.value = '';
   modal.classList.remove('hidden');
   modalBackdrop.classList.add('show');
-
-  // keep system keyboard away
   try{ textArea.blur(); }catch{}
 }
-
 function closeModal(){
   modal.classList.add('hidden');
   modalBackdrop.classList.remove('show');
@@ -910,46 +827,29 @@ function closeModal(){
 
 memBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); openModal('memory'); });
 feelBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); openModal('feeling'); });
-
 closeModalBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); closeModal(); });
 modalBackdrop.addEventListener('click', ()=>{ feedback(); closeModal(); });
 
-/* =========================
-   IMAGE PICK + PREVIEW
-========================= */
-uploadImgBtn.addEventListener('click', (e)=>{
-  e.preventDefault(); feedback();
-  imgInput.click();
-});
-
+uploadImgBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); imgInput.click(); });
 imgInput.addEventListener('change', ()=>{
   const f = imgInput.files && imgInput.files[0];
   if(!f) return;
   selectedImageFile = f;
-
   const url = URL.createObjectURL(f);
   imgPreview.onload = ()=> URL.revokeObjectURL(url);
   imgPreview.onerror = ()=> URL.revokeObjectURL(url);
   imgPreview.src = url;
   imgPreview.style.display = 'block';
-
   statusLine.textContent = 'PHOTO SELECTED.';
   imgInput.value = '';
 });
 
-/* =========================
-   UPLOAD HELPERS
-========================= */
 async function fetchWithTimeout(url, options={}, timeoutMs=CONFIG.UPLOAD_TIMEOUT_MS){
   const controller = new AbortController();
   const id = setTimeout(()=>controller.abort(new Error("timeout")), timeoutMs);
-  try{
-    return await fetch(url, { ...options, signal: controller.signal });
-  } finally {
-    clearTimeout(id);
-  }
+  try{ return await fetch(url, { ...options, signal: controller.signal }); }
+  finally{ clearTimeout(id); }
 }
-
 async function postForm(url, formData){
   let res = await fetchWithTimeout(url, { method:'POST', body: formData });
   if((!res.ok && res.status >= 500) && CONFIG.UPLOAD_RETRY > 0){
@@ -959,22 +859,14 @@ async function postForm(url, formData){
   return res;
 }
 
-/* =========================
-   SEND
-========================= */
 async function sendNow(){
   const text = (textArea.value || '').trim();
-  if(!text){
-    statusLine.textContent = 'TYPE SOMETHING FIRST.';
-    return;
-  }
-
+  if(!text){ statusLine.textContent = 'TYPE SOMETHING FIRST.'; return; }
   feedback();
 
   if(mode === 'feeling'){
     statusLine.textContent = 'SENDING...';
     const payload = { text, clientTime: new Date().toISOString(), type:'feeling' };
-
     try{
       const res = await fetchWithTimeout(CONFIG.SERVER + '/upload-text', {
         method:'POST',
@@ -1034,9 +926,6 @@ async function sendNow(){
   }
 }
 
-/* =========================
-   CUSTOM KEYBOARD ONLY
-========================= */
 function preventSystemKeyboard(){
   const blurIt = ()=>{ try{ textArea.blur(); }catch{} };
   const stop = (e)=>{ try{ e.preventDefault(); }catch{} blurIt(); };
@@ -1045,7 +934,6 @@ function preventSystemKeyboard(){
   textArea.addEventListener('pointerdown', stop, {passive:false});
   textArea.addEventListener('touchstart', stop, {passive:false});
   textArea.addEventListener('mousedown', stop, {passive:false});
-
   blurIt();
 }
 preventSystemKeyboard();
@@ -1058,7 +946,6 @@ function insertText(s){
   const pos = start + s.length;
   try{ textArea.setSelectionRange(pos,pos); }catch{}
 }
-
 function backspace(){
   const start = (typeof textArea.selectionStart === 'number') ? textArea.selectionStart : 0;
   const end   = (typeof textArea.selectionEnd === 'number') ? textArea.selectionEnd : 0;
@@ -1087,9 +974,6 @@ kbd.addEventListener('click', (e)=>{
   feedback();
 });
 
-/* =========================
-   INIT
-========================= */
 setSceneActive(1);
 
 })();
