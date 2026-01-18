@@ -24,7 +24,6 @@
   --fg:#fff;
   --red:#ff2b2b;
 
-  /* slightly reduced overall (for landscape no-scroll) */
   --fs-title: clamp(12px, 2.35vmin, 18px);
   --fs-body:  clamp(10.6px, 1.85vmin, 14.6px);
   --fs-small: clamp(10px, 1.55vmin, 12.8px);
@@ -92,18 +91,6 @@ button:active{ opacity:.75; transform: translateY(1px); }
   border:1px solid rgba(255,255,255,.85);
   pointer-events:none;
   z-index:50;
-}
-
-/* ✅ SLEEEEEP “wobble ring” (scenes 1~5): clean thin line, slow organic motion */
-#sleepFX{
-  position:fixed; inset:0;
-  z-index:65;
-  pointer-events:none;
-  opacity:.98;
-}
-#sleepCanvas{
-  position:absolute; inset:0;
-  width:100%; height:100%;
 }
 
 /* ===== Menu ===== */
@@ -300,26 +287,48 @@ button:active{ opacity:.75; transform: translateY(1px); }
   flex:1 1 auto;
 }
 
-/* Text area (kept small so everything fits landscape) */
-#textArea{
+/* ===== INPUT AREA ===== */
+/* ✅ we show a "display" line with visible spaces, and keep a hidden textarea as the actual buffer */
+#typeDisplayWrap{
   width:100%;
+  border:1px solid rgba(255,255,255,.85);
+  background:rgba(0,0,0,.35);
+  padding:10px 12px;
+  line-height:1.42;
+  letter-spacing:.02em;
   min-height:46px;
   max-height:72px;
-  resize:none;
-  padding:10px 12px;
-  background:rgba(0,0,0,.35);
-  border:1px solid rgba(255,255,255,.85);
-  color:var(--fg);
-  border-radius:0;
-  letter-spacing:.02em;
-  line-height:1.42;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+}
+#typePrefix{
+  flex:0 0 auto;
+  opacity:.9;
+}
+#typeDisplay{
+  flex:1 1 auto;
+  text-align:left;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 
-/* Keyboard wider + keys wider */
+/* Hidden buffer (no system keyboard) */
+#textArea{
+  position:fixed;
+  left:-9999px;
+  top:-9999px;
+  width:1px; height:1px;
+  opacity:0;
+}
+
+/* ===== KEYBOARD (US-friendly) ===== */
+/* Wider keyboard + bigger hit targets + punctuation row */
 #kbd{
-  width:calc(100% + 64px);
-  margin-left:-32px;
-  margin-right:-32px;
+  width:calc(100% + 72px);
+  margin-left:-36px;
+  margin-right:-36px;
 
   border-top:1px solid rgba(255,255,255,.45);
   padding:10px 18px 8px;
@@ -330,15 +339,15 @@ button:active{ opacity:.75; transform: translateY(1px); }
 }
 .krow{
   display:flex;
-  gap:6px;
+  gap:7px;
   justify-content:stretch;
   width:100%;
 }
 .key{
   flex:1 1 0;
   min-width:0;
-  height:40px;
-  padding:0 16px;
+  height:44px;            /* ✅ a bit taller for fewer typos */
+  padding:0 18px;         /* ✅ wider finger landing */
   display:flex;
   align-items:center;
   justify-content:center;
@@ -351,16 +360,13 @@ button:active{ opacity:.75; transform: translateY(1px); }
   text-transform:uppercase;
 }
 .key.wide{ flex:3 1 0; }
-.key.space{ flex:6 1 0; }
-
-#statusLine{
-  font-size:var(--fs-small);
-  opacity:.85;
-  min-height: 18px;
-  white-space:pre-wrap;
+.key.space{ flex:7 1 0; }
+.key.sym{
+  letter-spacing:.02em;
+  text-transform:none;
 }
 
-/* Landscape tweaks */
+/* Landscape compact */
 @media (orientation: landscape){
   #modalHeader{ padding:8px 10px; }
   #closeModalBtn{ padding:8px 12px; }
@@ -370,18 +376,16 @@ button:active{ opacity:.75; transform: translateY(1px); }
   #uploadImgBtn{ min-width: 140px; padding:7px 10px; }
   #imgPreview{ width:78px; height:56px; }
 
-  #textArea{ min-height:38px; max-height:54px; padding:7px 9px; }
+  #typeDisplayWrap{ min-height:38px; max-height:54px; padding:7px 9px; }
 
   #kbd{
-    width:calc(100% + 56px);
-    margin-left:-28px; margin-right:-28px;
+    width:calc(100% + 62px);
+    margin-left:-31px; margin-right:-31px;
     padding:8px 16px 6px;
     gap:6px;
   }
-  .krow{ gap:5px; }
-  .key{ height:30px; padding:0 14px; }
-
-  #statusLine{ min-height: 14px; }
+  .krow{ gap:6px; }
+  .key{ height:34px; padding:0 16px; }
 }
 
 /* Extra short heights */
@@ -389,9 +393,9 @@ button:active{ opacity:.75; transform: translateY(1px); }
   :root{ --frame: clamp(8px, 2.0vmin, 18px); --gap: 8px; }
   #menuPanel{ top: calc(var(--frame) + 44px + var(--safe-t)); }
   .tapHint{ right:calc(var(--frame) + var(--safe-r) + 22px); bottom:calc(var(--frame) + var(--safe-b) + 16px); }
-  #textArea{ min-height:34px; max-height:48px; }
+  #typeDisplayWrap{ min-height:34px; max-height:48px; }
   #kbd{ padding:7px 16px 6px; }
-  .key{ height:28px; }
+  .key{ height:30px; }
 }
 
 .frameBox, #menuPanel, #modal { border-radius:0 !important; }
@@ -401,10 +405,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
 <body>
 <div id="root">
 
-  <!-- ✅ SLEEEEEP wobble ring (scenes 1~5) -->
-  <div id="sleepFX" aria-hidden="true">
-    <canvas id="sleepCanvas"></canvas>
-  </div>
+  <!-- background removed ✅ -->
 
   <iframe id="ninjaOverlay"
     allow="autoplay; fullscreen; clipboard-read; clipboard-write"
@@ -530,14 +531,29 @@ button:active{ opacity:.75; transform: translateY(1px); }
         <img id="imgPreview" alt="preview"/>
       </div>
 
+      <!-- ✅ Visible input preview with underscore -->
+      <div id="typeDisplayWrap" aria-label="Typed text">
+        <div id="typePrefix">_</div>
+        <div id="typeDisplay"></div>
+      </div>
+
+      <!-- hidden buffer -->
       <textarea id="textArea"
-        placeholder="TYPE HERE..."
         readonly inputmode="none"
         autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
 
       <div id="statusLine"></div>
 
+      <!-- ✅ US-friendly keyboard with punctuation row -->
       <div id="kbd" aria-hidden="true">
+        <div class="krow">
+          <div class="key sym" data-k=",">,</div>
+          <div class="key sym" data-k=".">.</div>
+          <div class="key sym" data-k="'">'</div>
+          <div class="key sym" data-k="?">?</div>
+          <div class="key sym" data-k="!">!</div>
+        </div>
+
         <div class="krow">
           <div class="key" data-k="Q">Q</div><div class="key" data-k="W">W</div><div class="key" data-k="E">E</div><div class="key" data-k="R">R</div><div class="key" data-k="T">T</div><div class="key" data-k="Y">Y</div><div class="key" data-k="U">U</div><div class="key" data-k="I">I</div><div class="key" data-k="O">O</div><div class="key" data-k="P">P</div>
         </div>
@@ -584,13 +600,8 @@ const CONFIG = {
   CLICK_GAIN: 0.05,
   VIBRATE_MS: 12,
 
-  // SLEEEEEP wobble
-  SLEEP_PTS: 220,           // enough to look smooth but not “mushy”
-  SLEEP_LINE_W: 0.7,        // thinner line
-  SLEEP_ALPHA: 0.58,
-  SLEEP_SPEED: 0.00024,     // very slow
-  SLEEP_WOBBLE: 0.010,      // subtle wobble amount (normalized)
-  SLEEP_WOBBLE2: 0.006      // secondary wobble
+  // typing helpers
+  AUTO_SPACE_AFTER_PUNCT: true
 };
 
 try{
@@ -620,13 +631,10 @@ const closeModalBtn = document.getElementById('closeModalBtn');
 const uploadImgBtn = document.getElementById('uploadImgBtn');
 const imgPreview = document.getElementById('imgPreview');
 
-const textArea = document.getElementById('textArea');
+const textArea = document.getElementById('textArea');      // hidden buffer
+const typeDisplay = document.getElementById('typeDisplay'); // visible
 const kbd = document.getElementById('kbd');
 const statusLine = document.getElementById('statusLine');
-
-const sleepFX = document.getElementById('sleepFX');
-const sleepCanvas = document.getElementById('sleepCanvas');
-const sctx = sleepCanvas.getContext('2d', { alpha:true });
 
 const imgInput = document.createElement('input');
 imgInput.type = 'file';
@@ -640,7 +648,7 @@ let mode = null;
 let selectedImageFile = null;
 
 /* =========================
-   VIEWPORT VARS + CANVAS
+   VIEWPORT VARS
 ========================= */
 function setViewportVars(){
   const vv = window.visualViewport;
@@ -648,13 +656,6 @@ function setViewportVars(){
   const h = Math.round((vv?.height || innerHeight));
   document.documentElement.style.setProperty('--vwpx', w + 'px');
   document.documentElement.style.setProperty('--vhpx', h + 'px');
-
-  const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
-  sleepCanvas.width = Math.round(w * dpr);
-  sleepCanvas.height = Math.round(h * dpr);
-  sleepCanvas.style.width = w + 'px';
-  sleepCanvas.style.height = h + 'px';
-  sctx.setTransform(dpr,0,0,dpr,0,0);
 }
 setViewportVars();
 addEventListener('resize', setViewportVars);
@@ -727,9 +728,6 @@ function setSceneActive(n){
   }else{
     bottomBar.classList.remove('show');
   }
-
-  // sleep wobble only in scenes 1~5
-  if(sleepFX) sleepFX.style.display = (n >= 1 && n <= 5) ? 'block' : 'none';
 }
 
 let sceneLock = false;
@@ -811,9 +809,9 @@ function hardClearInputs(){
   selectedImageFile = null;
   imgPreview.style.display = 'none';
   imgPreview.src = '';
-  textArea.value = '';
-  // also clear file input
   imgInput.value = '';
+  textArea.value = '';
+  renderDisplay();
 }
 
 function openModal(which){
@@ -846,7 +844,6 @@ feelBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); openMod
 closeModalBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); closeModal(); });
 modalBackdrop.addEventListener('click', ()=>{ feedback(); closeModal(); });
 
-/* Image pick */
 uploadImgBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); imgInput.click(); });
 imgInput.addEventListener('change', ()=>{
   const f = imgInput.files && imgInput.files[0];
@@ -883,7 +880,7 @@ async function postForm(url, formData){
 
 /* =========================
    SEND
-   ✅ SUCCESS or FAIL: clear inputs immediately on SEND press.
+   ✅ always clear on SEND (success or fail)
 ========================= */
 async function sendNow(){
   const text = (textArea.value || '').trim();
@@ -892,15 +889,15 @@ async function sendNow(){
     return;
   }
 
-  // ✅ clear instantly (regardless of outcome)
   const sendingText = text;
   const sendingImage = selectedImageFile;
+
+  // clear immediately
   hardClearInputs();
 
   feedback();
   statusLine.textContent = 'SENDING...';
 
-  // feeling
   if(mode === 'feeling'){
     const payload = { text: sendingText, clientTime: new Date().toISOString(), type:'feeling' };
     try{
@@ -922,7 +919,6 @@ async function sendNow(){
     }
   }
 
-  // memory
   if(mode === 'memory'){
     try{
       if(sendingImage){
@@ -960,19 +956,32 @@ async function sendNow(){
    PREVENT SYSTEM KEYBOARD
 ========================= */
 function preventSystemKeyboard(){
-  const blurIt = ()=>{ try{ textArea.blur(); }catch{} };
-  const stop = (e)=>{ try{ e.preventDefault(); }catch{} blurIt(); };
-
+  const stop = (e)=>{ try{ e.preventDefault(); }catch{} try{ textArea.blur(); }catch{} };
+  // no focus, no pointer down
   textArea.addEventListener('focus', stop, {passive:false});
   textArea.addEventListener('pointerdown', stop, {passive:false});
   textArea.addEventListener('touchstart', stop, {passive:false});
   textArea.addEventListener('mousedown', stop, {passive:false});
-  blurIt();
+  try{ textArea.blur(); }catch{}
 }
 preventSystemKeyboard();
 
 /* =========================
-   CUSTOM KEYBOARD INPUT
+   DISPLAY RENDERING (shows spaces clearly)
+   - show spaces as "·" so americans see it
+   - prefix "_" always visible in UI
+========================= */
+function renderDisplay(){
+  const v = textArea.value || '';
+  // show spaces & tabs
+  const shown = v
+    .replaceAll(' ', '·')
+    .replaceAll('\t', '⇥');
+  typeDisplay.textContent = shown;
+}
+
+/* =========================
+   INSERT + EDIT (buffer)
 ========================= */
 function insertText(s){
   const start = (typeof textArea.selectionStart === 'number') ? textArea.selectionStart : (textArea.value.length);
@@ -981,6 +990,7 @@ function insertText(s){
   textArea.value = v.slice(0,start) + s + v.slice(end);
   const pos = start + s.length;
   try{ textArea.setSelectionRange(pos,pos); }catch{}
+  renderDisplay();
 }
 function backspace(){
   const start = (typeof textArea.selectionStart === 'number') ? textArea.selectionStart : 0;
@@ -989,18 +999,41 @@ function backspace(){
   if(end > start){
     textArea.value = v.slice(0,start) + v.slice(end);
     try{ textArea.setSelectionRange(start,start); }catch{}
+    renderDisplay();
     return;
   }
   if(start <= 0) return;
   textArea.value = v.slice(0,start-1) + v.slice(start);
   try{ textArea.setSelectionRange(start-1,start-1); }catch{}
+  renderDisplay();
 }
 
+function maybeAutoSpaceAfterPunct(ch){
+  if(!CONFIG.AUTO_SPACE_AFTER_PUNCT) return;
+  if([',','.','?','!'].includes(ch)){
+    // if next char isn't space and we are at end, add a space
+    const v = textArea.value || '';
+    const pos = (typeof textArea.selectionStart === 'number') ? textArea.selectionStart : v.length;
+    if(pos === v.length){
+      // avoid double space
+      if(!v.endsWith(' ')) insertText(' ');
+    }
+  }
+}
+
+/* =========================
+   KEYBOARD CLICK
+   ✅ bigger hit targets already (CSS)
+   ✅ punctuation row added
+========================= */
 kbd.addEventListener('click', (e)=>{
   const key = e.target.closest('.key');
   if(!key) return;
   const k = key.dataset.k;
   if(!k) return;
+
+  // do NOT focus anything (avoid system keyboard)
+  try{ textArea.blur(); }catch{}
 
   if(k === 'SPACE'){ insertText(' '); feedback(); return; }
   if(k === 'BACKSPACE'){ backspace(); feedback(); return; }
@@ -1008,54 +1041,8 @@ kbd.addEventListener('click', (e)=>{
 
   insertText(k);
   feedback();
+  maybeAutoSpaceAfterPunct(k);
 });
-
-/* =========================
-   ✅ SLEEEEEP WOBBLE RING
-   - clean line (not too bumpy)
-   - slow organic motion
-========================= */
-function drawSleep(t){
-  const w = (window.visualViewport?.width || innerWidth);
-  const h = (window.visualViewport?.height || innerHeight);
-
-  sctx.clearRect(0,0,w,h);
-
-  const cx = w*0.5;
-  const cy = h*0.5;
-  const baseR = Math.min(w,h) * 0.235;
-
-  // super slow time
-  const tt = t * CONFIG.SLEEP_SPEED;
-
-  // thin white line
-  sctx.lineWidth = CONFIG.SLEEP_LINE_W;
-  sctx.strokeStyle = `rgba(255,255,255,${CONFIG.SLEEP_ALPHA})`;
-
-  sctx.beginPath();
-  for(let i=0;i<=CONFIG.SLEEP_PTS;i++){
-    const a = (i/CONFIG.SLEEP_PTS) * Math.PI*2;
-
-    // Two gentle wobble layers (keeps the “SLEEEEEP” feel, not mushy)
-    const wob1 = Math.sin(a*3.0 + tt*2.0) * CONFIG.SLEEP_WOBBLE;
-    const wob2 = Math.sin(a*7.0 - tt*1.3) * CONFIG.SLEEP_WOBBLE2;
-
-    // tiny drift so it "breathes"
-    const drift = 0.006*Math.sin(tt*1.1) + 0.004*Math.sin(tt*0.7 + 1.2);
-
-    const rr = baseR * (1 + wob1 + wob2 + drift);
-
-    const x = cx + Math.cos(a) * rr;
-    const y = cy + Math.sin(a) * rr;
-
-    if(i===0) sctx.moveTo(x,y);
-    else sctx.lineTo(x,y);
-  }
-  sctx.stroke();
-
-  requestAnimationFrame(drawSleep);
-}
-requestAnimationFrame(drawSleep);
 
 /* =========================
    INIT
@@ -1073,10 +1060,9 @@ function setSceneActive(n){
   }else{
     bottomBar.classList.remove('show');
   }
-
-  if(sleepFX) sleepFX.style.display = (n >= 1 && n <= 5) ? 'block' : 'none';
 }
 setSceneActive(1);
+renderDisplay();
 
 })();
 </script>
