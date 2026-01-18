@@ -22,6 +22,7 @@
 
   --bg:#000;
   --fg:#fff;
+  --red:#ff2b2b;
 
   --fs-title: clamp(12.5px, 2.45vmin, 18.5px);
   --fs-body:  clamp(11px,   1.95vmin, 15px);
@@ -56,14 +57,12 @@ button, textarea, input{
   border-radius:0;
   outline:none;
 }
-
 button{
   padding: var(--btn-pad-y) var(--btn-pad-x);
   letter-spacing:.12em;
   text-transform:uppercase;
 }
 button:active{ opacity:.75; transform: translateY(1px); }
-
 .hidden{ display:none !important; }
 
 /* ===== Layers ===== */
@@ -94,23 +93,19 @@ button:active{ opacity:.75; transform: translateY(1px); }
   z-index:50;
 }
 
-/* ===========================
-   ✅ BACKGROUND GENERATIVE LINES (scenes 1~5)
-   - “dots gather → lines connect → space appears → disappears”
-   - reacts to ambient mic (if permission granted) or auto-pulses
-=========================== */
-#bgFX{
+/* ✅ BG: 38-point connected "orb" that wiggles with audio (scenes 1~5) */
+#orbFX{
   position:fixed; inset:0;
-  z-index:65;              /* between frame(50) and text(100) */
+  z-index:65;
   pointer-events:none;
-  opacity:.95;
+  opacity:.98;
 }
-#bgCanvas{
+#orbCanvas{
   position:absolute; inset:0;
   width:100%; height:100%;
 }
 
-/* Menu */
+/* ===== Menu ===== */
 #menuWrap{
   position:fixed;
   left:calc(var(--frame) + var(--safe-l));
@@ -147,11 +142,11 @@ button:active{ opacity:.75; transform: translateY(1px); }
   max-width: calc(100vw - (2*(var(--frame) + var(--safe-l) + var(--safe-r))));
 }
 #homeBtn{
-  border:1px solid #ff2b2b;
-  color:#ff2b2b;
+  border:1px solid var(--red);
+  color:var(--red);
 }
 
-/* Scenes */
+/* ===== Scenes ===== */
 .scene{
   position:fixed; inset:0;
   display:flex;
@@ -198,14 +193,14 @@ button:active{ opacity:.75; transform: translateY(1px); }
 .tapHintText{
   font-size:var(--fs-small);
   letter-spacing:.01em;
-  color:#ff2b2b;
+  color:var(--red);
   text-transform:none;
   white-space:nowrap;
 }
 .arrow{
   width:12px; height:12px;
-  border-right:2px solid var(--fg);
-  border-bottom:2px solid var(--fg);
+  border-right:2px solid var(--red);
+  border-bottom:2px solid var(--red);
   transform: rotate(-45deg);
 }
 
@@ -230,7 +225,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
 .barBtn{
   flex:1 1 160px;
   min-width: 0;
-  background:#000;
+  background:#000;     /* ✅ perfect black */
   border:0 !important;
 }
 
@@ -347,7 +342,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
   align-items:center;
   justify-content:center;
   border:1px solid rgba(255,255,255,.75);
-  background:#000;
+  background:#000;   /* ✅ perfect black */
   border-radius:0;
   user-select:none;
   -webkit-user-select:none;
@@ -405,9 +400,9 @@ button:active{ opacity:.75; transform: translateY(1px); }
 <body>
 <div id="root">
 
-  <!-- ✅ Background FX canvas (scenes 1~5) -->
-  <div id="bgFX" aria-hidden="true">
-    <canvas id="bgCanvas"></canvas>
+  <!-- ✅ 38-point connected orb canvas (scenes 1~5) -->
+  <div id="orbFX" aria-hidden="true">
+    <canvas id="orbCanvas"></canvas>
   </div>
 
   <iframe id="ninjaOverlay"
@@ -441,6 +436,15 @@ button:active{ opacity:.75; transform: translateY(1px); }
         When added, it can run in full screen.
       </div>
       <div class="p">We recommend using <strong>LANDSCAPE</strong> mode.</div>
+
+      <!-- ✅ Mic hint goes here -->
+      <div class="p">
+        If you allow microphone access, the background will subtly move with sound.
+        <br/>
+        You can enable it when you begin the experience.
+      </div>
+
+      <div class="note">Microphone is optional.</div>
     </div>
     <div class="tapHint" aria-hidden="true">
       <div class="tapHintText">Tap here to go to the next page.</div>
@@ -566,15 +570,17 @@ button:active{ opacity:.75; transform: translateY(1px); }
 (()=>{
 
 /* =========================
-   ✅ YES: Upload server + Ninja are active
-   - Upload server: CONFIG.SERVER + /upload  and /upload-text
-   - Ninja view: CONFIG.ROOM_ID loaded in scene #6
+   CONFIG
 ========================= */
 const CONFIG = {
+  // ✅ Upload server endpoints still active:
+  //   POST  /upload       (multipart form image)
+  //   POST  /upload-text  (json text)
   SERVER: (location.origin && location.origin.startsWith('http')) ? location.origin : 'http://127.0.0.1:4000',
   UPLOAD_TIMEOUT_MS: 20000,
   UPLOAD_RETRY: 1,
 
+  // ✅ VDO.Ninja still active (scene #6)
   ROOM_ID: "YOURROOMID",
   REZ_SCALE: 1.0,
   NINJA_OPACITY: 1.0,
@@ -584,21 +590,26 @@ const CONFIG = {
 
   FADE_MS: 1500,
 
+  // feedback
   CLICK_HZ: 85,
   CLICK_MS: 70,
   CLICK_GAIN: 0.05,
   VIBRATE_MS: 12,
 
-  // BG FX
-  BG_POINTS: 140,
-  BG_MAX_LINK_DIST: 120,     // px (scaled)
-  BG_LINE_ALPHA: 0.22,
-  BG_POINT_ALPHA: 0.55,
-  BG_SPEED: 0.55,            // base speed
-  BG_PULSE_BOOST: 1.8,       // audio/pulse boost
-  BG_SMOOTH: 0.12            // energy smoothing
+  // orb
+  ORB_N: 38,
+  ORB_RADIUS: 155,         // base radius (px; auto scales per screen)
+  ORB_LINE_ALPHA: 0.40,
+  ORB_POINT_ALPHA: 0.78,
+  ORB_POINT_R: 1.35,       // not big
+  ORB_STROKE_W: 0.85,      // thin-ish
+  ORB_WOBBLE_BASE: 1.6,    // px
+  ORB_WOBBLE_AUDIO: 12.0,  // px
+  ORB_SMOOTH: 0.14,        // energy smoothing
+  ORB_ROT_SPEED: 0.00006   // very slow rotation
 };
 
+// allow ?room=xxxx
 try{
   const qs = new URLSearchParams(location.search);
   const roomFromUrl = (qs.get('room') || '').trim();
@@ -630,9 +641,9 @@ const textArea = document.getElementById('textArea');
 const kbd = document.getElementById('kbd');
 const statusLine = document.getElementById('statusLine');
 
-const bgFX = document.getElementById('bgFX');
-const bgCanvas = document.getElementById('bgCanvas');
-const ctx2d = bgCanvas.getContext('2d', { alpha:true });
+const orbFX = document.getElementById('orbFX');
+const orbCanvas = document.getElementById('orbCanvas');
+const octx = orbCanvas.getContext('2d', { alpha:true });
 
 const imgInput = document.createElement('input');
 imgInput.type = 'file';
@@ -646,21 +657,22 @@ let mode = null;
 let selectedImageFile = null;
 
 /* =========================
-   VIEWPORT VARS
+   VIEWPORT VARS + CANVAS
 ========================= */
+let DPR = 1;
 function setViewportVars(){
   const vv = window.visualViewport;
   const w = Math.round((vv?.width || innerWidth));
   const h = Math.round((vv?.height || innerHeight));
   document.documentElement.style.setProperty('--vwpx', w + 'px');
   document.documentElement.style.setProperty('--vhpx', h + 'px');
-  // canvas backing store
-  const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
-  bgCanvas.width = Math.round(w * dpr);
-  bgCanvas.height = Math.round(h * dpr);
-  bgCanvas.style.width = w + 'px';
-  bgCanvas.style.height = h + 'px';
-  ctx2d.setTransform(dpr,0,0,dpr,0,0);
+
+  DPR = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+  orbCanvas.width = Math.round(w * DPR);
+  orbCanvas.height = Math.round(h * DPR);
+  orbCanvas.style.width = w + 'px';
+  orbCanvas.style.height = h + 'px';
+  octx.setTransform(DPR,0,0,DPR,0,0);
 }
 setViewportVars();
 addEventListener('resize', setViewportVars);
@@ -734,8 +746,8 @@ function setSceneActive(n){
     bottomBar.classList.remove('show');
   }
 
-  // ✅ BG FX only in scenes 1~5
-  if(bgFX) bgFX.style.display = (n >= 1 && n <= 5) ? 'block' : 'none';
+  // orb only in scenes 1~5
+  if(orbFX) orbFX.style.display = (n >= 1 && n <= 5) ? 'block' : 'none';
 }
 
 let sceneLock = false;
@@ -886,7 +898,7 @@ async function postForm(url, formData){
 
 /* =========================
    SEND
-   ✅ After SEND: clear everything so they can submit again immediately
+   ✅ After SEND: clear photo+text immediately, so they can upload again.
 ========================= */
 async function sendNow(){
   const text = (textArea.value || '').trim();
@@ -896,7 +908,6 @@ async function sendNow(){
   }
   feedback();
 
-  // Feeling: send text only
   if(mode === 'feeling'){
     statusLine.textContent = 'SENDING...';
     const payload = { text, clientTime: new Date().toISOString(), type:'feeling' };
@@ -911,7 +922,6 @@ async function sendNow(){
         statusLine.textContent = `FAILED (${res.status}) ${t ? '\\n'+t.slice(0,120) : ''}`;
         return;
       }
-      // ✅ clear immediately
       resetComposerUI();
       statusLine.textContent = 'SENT ✓';
       return;
@@ -921,7 +931,6 @@ async function sendNow(){
     }
   }
 
-  // Memory: photo optional + text
   if(mode === 'memory'){
     statusLine.textContent = 'SENDING...';
 
@@ -953,7 +962,6 @@ async function sendNow(){
         statusLine.textContent = `TEXT FAILED (${res2.status}) ${t ? '\\n'+t.slice(0,120) : ''}`;
         return;
       }
-      // ✅ clear immediately
       resetComposerUI();
       statusLine.textContent = 'SENT ✓';
       return;
@@ -1019,16 +1027,16 @@ kbd.addEventListener('click', (e)=>{
 });
 
 /* =========================
-   ✅ BACKGROUND FX ENGINE
-   - tries mic; if denied, uses auto pulse
+   ✅ ORB (38 points, all connected)
+   - base ring points
+   - each point has its own audio-react envelope + phase
 ========================= */
-let energy = 0;         // smoothed 0..1
-let targetEnergy = 0;   // target 0..1
 let micReady = false;
-
 let analyser = null;
 let micData = null;
 let micCtx = null;
+let energy = 0;           // global energy (0..1)
+let targetEnergy = 0;
 
 function clamp01(x){ return Math.max(0, Math.min(1, x)); }
 
@@ -1050,7 +1058,8 @@ async function initMic(){
     micReady = false;
   }
 }
-// try once on first user gesture (required on iOS)
+
+// arm mic on first user gesture
 let micArmed = false;
 function armMicOnce(){
   if(micArmed) return;
@@ -1059,31 +1068,12 @@ function armMicOnce(){
 }
 document.addEventListener('pointerdown', armMicOnce, { once:true, passive:true });
 
-const pts = [];
-function initPoints(){
-  pts.length = 0;
-  const w = (window.visualViewport?.width || innerWidth);
-  const h = (window.visualViewport?.height || innerHeight);
-  const n = CONFIG.BG_POINTS;
-  for(let i=0;i<n;i++){
-    pts.push({
-      x: Math.random()*w,
-      y: Math.random()*h,
-      vx: (Math.random()*2-1) * CONFIG.BG_SPEED,
-      vy: (Math.random()*2-1) * CONFIG.BG_SPEED,
-      phase: Math.random()*Math.PI*2
-    });
-  }
-}
-initPoints();
-
 function sampleEnergyAuto(t){
-  // slow “breathing” when mic not allowed
-  const a = 0.35 + 0.25*Math.sin(t*0.0007);
-  const b = 0.18 + 0.18*Math.sin(t*0.0013 + 1.2);
+  // slow breathing (no mic)
+  const a = 0.18 + 0.14*Math.sin(t*0.00065);
+  const b = 0.10 + 0.10*Math.sin(t*0.0012 + 1.3);
   return clamp01(a+b);
 }
-
 function sampleEnergyMic(){
   if(!micReady || !analyser || !micData) return null;
   analyser.getByteTimeDomainData(micData);
@@ -1092,101 +1082,109 @@ function sampleEnergyMic(){
     const v = (micData[i]-128)/128;
     sum += v*v;
   }
-  const rms = Math.sqrt(sum/micData.length); // ~0..1
-  // emphasize quiet changes
-  return clamp01(rms*2.6);
+  const rms = Math.sqrt(sum/micData.length);
+  return clamp01(rms*2.8);
 }
 
-let lastT = performance.now();
-function tick(t){
+const orbPts = [];
+function initOrb(){
+  orbPts.length = 0;
+  for(let i=0;i<CONFIG.ORB_N;i++){
+    orbPts.push({
+      // stable per-point params
+      a: Math.random()*Math.PI*2,
+      ph: Math.random()*Math.PI*2,
+      sp: 0.6 + Math.random()*0.9,
+      // per-point audio response multiplier
+      gain: 0.4 + Math.random()*1.1,
+      // a tiny drift vector so points can move slightly apart
+      driftX: (Math.random()*2-1),
+      driftY: (Math.random()*2-1)
+    });
+  }
+}
+initOrb();
+
+function drawOrb(t){
   const w = (window.visualViewport?.width || innerWidth);
   const h = (window.visualViewport?.height || innerHeight);
 
+  // clear
+  octx.clearRect(0,0,w,h);
+
+  // center & base radius scales with screen
+  const cx = w * 0.5;
+  const cy = h * 0.5;
+  const rBase = Math.min(w,h) * 0.22; // responsive
+  const rot = t * CONFIG.ORB_ROT_SPEED;
+
+  // global energy
   const micE = sampleEnergyMic();
   targetEnergy = (micE === null) ? sampleEnergyAuto(t) : micE;
-
-  // smooth
-  energy += (targetEnergy - energy) * CONFIG.BG_SMOOTH;
+  energy += (targetEnergy - energy) * CONFIG.ORB_SMOOTH;
   const e = energy;
 
-  // clear
-  ctx2d.clearRect(0,0,w,h);
+  // compute points
+  const ptsXY = new Array(CONFIG.ORB_N);
+  for(let i=0;i<orbPts.length;i++){
+    const p = orbPts[i];
+    const ang = (i/CONFIG.ORB_N) * Math.PI*2 + rot;
 
-  // density & reach controlled by energy
-  const maxDist = CONFIG.BG_MAX_LINK_DIST * (0.65 + e*CONFIG.BG_PULSE_BOOST);
-  const lineA = CONFIG.BG_LINE_ALPHA * (0.45 + e*1.2);
-  const ptA   = CONFIG.BG_POINT_ALPHA * (0.45 + e*1.0);
+    // each point reacts a bit differently
+    const indiv = (0.45 + 0.55*Math.sin(t*0.0012*p.sp + p.ph));
+    const wob = CONFIG.ORB_WOBBLE_BASE + (CONFIG.ORB_WOBBLE_AUDIO * e * p.gain * indiv);
 
-  // move points (a bit more when louder)
-  const dt = Math.max(0.016, Math.min(0.05, (t-lastT)/1000));
-  lastT = t;
-  const speedMul = (0.65 + e*1.7);
+    // subtle non-uniform radius + drift so not "spacey"
+    const rr = rBase + wob + 3.0*Math.sin(ang*2 + p.ph)* (0.3 + e);
+    const dx = (p.driftX) * (0.6 + e*1.2);
+    const dy = (p.driftY) * (0.6 + e*1.2);
 
-  for(const p of pts){
-    p.phase += dt*(0.6 + e*2.0);
-    p.x += p.vx * speedMul;
-    p.y += p.vy * speedMul;
+    const x = cx + Math.cos(ang)*rr + dx;
+    const y = cy + Math.sin(ang)*rr + dy;
 
-    // gentle wandering
-    p.x += Math.cos(p.phase)*0.12*(0.5+e);
-    p.y += Math.sin(p.phase)*0.12*(0.5+e);
-
-    // wrap
-    if(p.x < -30) p.x = w+30;
-    if(p.x > w+30) p.x = -30;
-    if(p.y < -30) p.y = h+30;
-    if(p.y > h+30) p.y = -30;
+    ptsXY[i] = {x,y};
   }
 
-  // draw lines
-  ctx2d.lineWidth = 0.75; // thin
-  ctx2d.strokeStyle = `rgba(255,255,255,${lineA})`;
+  // lines: all connected (ring + diagonals lightly)
+  const lineA = CONFIG.ORB_LINE_ALPHA * (0.65 + e*0.9);
+  octx.lineWidth = CONFIG.ORB_STROKE_W;
+  octx.strokeStyle = `rgba(255,255,255,${lineA})`;
+  octx.beginPath();
+  for(let i=0;i<ptsXY.length;i++){
+    const p = ptsXY[i];
+    if(i===0) octx.moveTo(p.x,p.y);
+    else octx.lineTo(p.x,p.y);
+  }
+  // close ring
+  octx.closePath();
+  octx.stroke();
 
-  for(let i=0;i<pts.length;i++){
-    const aP = pts[i];
-    for(let j=i+1;j<pts.length;j++){
-      const bP = pts[j];
-      const dx = aP.x - bP.x;
-      const dy = aP.y - bP.y;
-      const d2 = dx*dx + dy*dy;
-      if(d2 > maxDist*maxDist) continue;
+  // add sparse chords (still "all connected" feel, but not a web)
+  // connect i -> i+5 and i -> i+9 (wrap), very thin
+  octx.lineWidth = Math.max(0.6, CONFIG.ORB_STROKE_W * 0.75);
+  for(let i=0;i<ptsXY.length;i++){
+    const a = ptsXY[i];
+    const b = ptsXY[(i+5)%ptsXY.length];
+    const c = ptsXY[(i+9)%ptsXY.length];
 
-      // alpha falloff with distance
-      const d = Math.sqrt(d2);
-      const k = 1 - (d / maxDist);
-      const alpha = lineA * (k*k);
-
-      ctx2d.strokeStyle = `rgba(255,255,255,${alpha})`;
-      ctx2d.beginPath();
-      ctx2d.moveTo(aP.x, aP.y);
-      ctx2d.lineTo(bP.x, bP.y);
-      ctx2d.stroke();
-    }
+    octx.strokeStyle = `rgba(255,255,255,${lineA*0.42})`;
+    octx.beginPath(); octx.moveTo(a.x,a.y); octx.lineTo(b.x,b.y); octx.stroke();
+    octx.beginPath(); octx.moveTo(a.x,a.y); octx.lineTo(c.x,c.y); octx.stroke();
   }
 
-  // draw points (dots gather feeling)
-  ctx2d.fillStyle = `rgba(255,255,255,${ptA})`;
-  const r = 1.2 + e*1.1;
-  for(const p of pts){
-    ctx2d.beginPath();
-    ctx2d.arc(p.x, p.y, r, 0, Math.PI*2);
-    ctx2d.fill();
+  // points
+  const ptA = CONFIG.ORB_POINT_ALPHA * (0.72 + e*0.6);
+  octx.fillStyle = `rgba(255,255,255,${ptA})`;
+  const pr = CONFIG.ORB_POINT_R;
+  for(const p of ptsXY){
+    octx.beginPath();
+    octx.arc(p.x,p.y, pr, 0, Math.PI*2);
+    octx.fill();
   }
 
-  requestAnimationFrame(tick);
+  requestAnimationFrame(drawOrb);
 }
-requestAnimationFrame(tick);
-
-// re-init points on big resize/orientation
-let resizeTO = null;
-addEventListener('resize', ()=>{
-  clearTimeout(resizeTO);
-  resizeTO = setTimeout(()=> initPoints(), 120);
-});
-addEventListener('orientationchange', ()=>{
-  clearTimeout(resizeTO);
-  resizeTO = setTimeout(()=> initPoints(), 180);
-});
+requestAnimationFrame(drawOrb);
 
 /* =========================
    INIT
