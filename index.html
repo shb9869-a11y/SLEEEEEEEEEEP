@@ -35,11 +35,6 @@
 
   --vwpx:100vw;
   --vhpx:100vh;
-
-  --key-h: 32px;
-  --key-pad-x: 16px;
-  --kbd-pad-y: 8px;
-  --kbd-gap: 6px;
 }
 
 html,body{
@@ -70,6 +65,7 @@ button{
 button:active{ opacity:.75; transform: translateY(1px); }
 .hidden{ display:none !important; }
 
+/* ===== Layers ===== */
 #root{ position:fixed; inset:0; }
 
 #ninjaOverlay{
@@ -239,7 +235,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
   border:0 !important;
 }
 
-/* ===== Backdrop ===== */
+/* ===== Modal Backdrop (click should NOT close) ===== */
 #modalBackdrop{
   position:fixed; inset:0;
   background:rgba(0,0,0,.78);
@@ -250,26 +246,43 @@ button:active{ opacity:.75; transform: translateY(1px); }
 }
 #modalBackdrop.show{ opacity:1; pointer-events:auto; }
 
-/* =========================================================
-   ✅ 핵심 수정: 모달은 center/translate 금지
-   ✅ 화면 안에 고정되도록 inset로 "항상 fit"
-========================================================= */
 #modal{
   position:fixed;
-  top:  calc(var(--frame) + var(--safe-t));
-  bottom:calc(var(--frame) + var(--safe-b));
-  left: calc(var(--frame) + var(--safe-l));
-  right:calc(var(--frame) + var(--safe-r));
+  left:50%; top:50%;
+  transform:translate(-50%,-50%);
 
+  width:min(980px, calc(100vw - 2*(max(8px,var(--frame)) + var(--safe-l) + var(--safe-r))));
   border:1px solid rgba(255,255,255,.85);
   background:rgba(0,0,0,.92);
   z-index:410;
 
   display:flex;
   flex-direction:column;
-  overflow:hidden;
+  max-height: calc(var(--vhpx) - 2*(var(--frame) + var(--safe-t) + var(--safe-b)));
 }
 
+/* Document viewer modal */
+#docModal{
+  position:fixed;
+  left:50%; top:50%;
+  transform:translate(-50%,-50%);
+  width:min(1100px, calc(100vw - 2*(max(8px,var(--frame)) + var(--safe-l) + var(--safe-r))));
+  height: calc(var(--vhpx) - 2*(var(--frame) + var(--safe-t) + var(--safe-b)));
+  border:1px solid rgba(255,255,255,.85);
+  background:rgba(0,0,0,.92);
+  z-index:420;
+  display:flex;
+  flex-direction:column;
+}
+#docModal.hidden{ display:none !important; }
+#docFrame{
+  border:0;
+  width:100%;
+  height:100%;
+  background:#000;
+}
+
+/* Modal headers */
 .modalHeader{
   display:flex;
   justify-content:space-between;
@@ -285,12 +298,13 @@ button:active{ opacity:.75; transform: translateY(1px); }
 }
 .modalExitBtn{ padding:10px 14px; }
 
-#modalTop{
-  padding:10px 12px;
+#modalBody{
+  padding:10px 12px 12px;
   display:flex;
   flex-direction:column;
   gap:10px;
-  flex:0 0 auto;
+  overflow:hidden;
+  flex:1 1 auto;
 }
 
 /* Upload row */
@@ -321,8 +335,8 @@ button:active{ opacity:.75; transform: translateY(1px); }
   padding:10px 12px;
   line-height:1.42;
   letter-spacing:.02em;
-  min-height:44px;
-  max-height:60px;
+  min-height:46px;
+  max-height:72px;
   overflow:hidden;
   display:flex;
   align-items:center;
@@ -336,18 +350,6 @@ button:active{ opacity:.75; transform: translateY(1px); }
   text-overflow:ellipsis;
 }
 
-/* ✅ 에러가 길어도 레이아웃 밀지 않게: 1~2줄 clamp */
-#statusLine{
-  font-size:var(--fs-small);
-  opacity:.85;
-  line-height:1.3;
-  max-height: calc(2 * 1.3em);
-  overflow:hidden;
-  display:-webkit-box;
-  -webkit-line-clamp:2;
-  -webkit-box-orient:vertical;
-}
-
 /* Hidden buffer */
 #textArea{
   position:fixed;
@@ -357,26 +359,19 @@ button:active{ opacity:.75; transform: translateY(1px); }
   opacity:0;
 }
 
-/* middle grows, keyboard always visible */
-#modalMid{
-  flex:1 1 auto;
-  overflow:hidden;
-  display:flex;
-  flex-direction:column;
-  min-height: 0; /* important for flex overflow */
-}
-
+/* Keyboard: prevent cropping when photo row visible
+   ✅ solution: cap modal height, and make body internally scroll-free by shrinking keyboard slightly if needed */
 #kbd{
+  width:calc(100% + 72px);
+  margin-left:-36px;
+  margin-right:-36px;
+
   border-top:1px solid rgba(255,255,255,.45);
-  padding: var(--kbd-pad-y) 18px 8px;
+  padding:10px 18px 8px;
   display:flex;
   flex-direction:column;
-  gap: var(--kbd-gap);
-  width:100%;
-  flex:1 1 auto;
-  justify-content:center;
-  overflow:hidden;
-  min-height: 0;
+  gap:8px;
+  flex:0 0 auto;
 }
 .krow{
   display:flex;
@@ -387,8 +382,8 @@ button:active{ opacity:.75; transform: translateY(1px); }
 .key{
   flex:1 1 0;
   min-width:0;
-  height: var(--key-h);
-  padding:0 var(--key-pad-x);
+  height:44px;
+  padding:0 18px;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -404,52 +399,39 @@ button:active{ opacity:.75; transform: translateY(1px); }
 .key.space{ flex:7 1 0; }
 .key.sym{ letter-spacing:.02em; text-transform:none; }
 
-/* bottom fixed bar INSIDE modal */
-#modalBottomBar{
-  flex:0 0 auto;
-  display:flex;
-  gap:10px;
-  padding:10px 12px;
-  border-top:1px solid rgba(255,255,255,.45);
-}
-#sendBtn{
-  flex:1 1 auto;
-  background:#000;
-  border:1px solid rgba(255,255,255,.85);
-}
-#exitBtn2{
-  flex:0 0 140px;
+/* Landscape compact */
+@media (orientation: landscape){
+  #modal .modalHeader{ padding:8px 10px; }
+  #modal .modalExitBtn{ padding:8px 12px; }
+  #modalBody{ padding:8px 10px 10px; gap:7px; }
+
+  #imgPreviewRow{ gap:8px; }
+  #uploadImgBtn{ min-width: 140px; padding:7px 10px; }
+  #imgPreview{ width:78px; height:56px; }
+
+  #typeDisplayWrap{ min-height:38px; max-height:54px; padding:7px 9px; }
+
+  #kbd{
+    width:calc(100% + 62px);
+    margin-left:-31px; margin-right:-31px;
+    padding:8px 16px 6px;
+    gap:6px;
+  }
+  .krow{ gap:6px; }
+  .key{ height:32px; padding:0 16px; } /* ✅ keep visible even with photo */
 }
 
-/* Document modal also inset-fixed */
-#docModal{
-  position:fixed;
-  top:  calc(var(--frame) + var(--safe-t));
-  bottom:calc(var(--frame) + var(--safe-b));
-  left: calc(var(--frame) + var(--safe-l));
-  right:calc(var(--frame) + var(--safe-r));
-
-  border:1px solid rgba(255,255,255,.85);
-  background:rgba(0,0,0,.92);
-  z-index:420;
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
-}
-#docModal.hidden{ display:none !important; }
-#docFrame{
-  border:0;
-  width:100%;
-  height:100%;
-  background:#000;
+/* Extra short heights: shrink keyboard further (fix cropping) */
+@media (max-height: 520px){
+  :root{ --frame: clamp(8px, 2.0vmin, 18px); --gap: 8px; }
+  #menuPanel{ top: calc(var(--frame) + 44px + var(--safe-t)); }
+  .tapHint{ right:calc(var(--frame) + var(--safe-r) + 22px); bottom:calc(var(--frame) + var(--safe-b) + 16px); }
+  #typeDisplayWrap{ min-height:34px; max-height:48px; }
+  #kbd{ padding:6px 14px 6px; gap:5px; }
+  .key{ height:28px; padding:0 14px; }
 }
 
 .frameBox, #menuPanel, #modal, #docModal { border-radius:0 !important; }
-
-@media (max-height: 520px){
-  :root{ --key-h: 28px; --key-pad-x: 14px; --kbd-pad-y: 6px; --kbd-gap: 5px; }
-  #exitBtn2{ flex-basis:120px; }
-}
 </style>
 </head>
 
@@ -464,6 +446,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
 
   <div class="frameBox" aria-hidden="true"></div>
 
+  <!-- Orientation overlay -->
   <div id="rotateOverlay" aria-hidden="true">
     <div>
       <div class="h1">PLEASE ROTATE YOUR PHONE</div>
@@ -486,7 +469,6 @@ button:active{ opacity:.75; transform: translateY(1px); }
     <button id="closeMenuBtn">CLOSE</button>
   </div>
 
-  <!-- Scenes -->
   <section id="scene1" class="scene active" data-scene="1">
     <div class="sceneInner">
       <div class="h1">ADD THIS EXPERIENCE TO YOUR HOME SCREEN</div>
@@ -576,16 +558,17 @@ button:active{ opacity:.75; transform: translateY(1px); }
     <button id="memBtn" class="barBtn">SHARE MY MEMORY</button>
   </div>
 
+  <!-- Share Modal Backdrop -->
   <div id="modalBackdrop"></div>
 
-  <!-- SHARE MODAL -->
+  <!-- Share Modal -->
   <div id="modal" class="hidden" role="dialog" aria-modal="true" aria-label="Share dialog">
     <div class="modalHeader">
       <div id="modalTitle" class="modalTitle">SHARE</div>
       <button id="closeModalBtn" class="modalExitBtn">EXIT</button>
     </div>
 
-    <div id="modalTop">
+    <div id="modalBody">
       <div id="imgPreviewRow">
         <button id="uploadImgBtn">UPLOAD A PHOTO</button>
         <img id="imgPreview" alt="preview"/>
@@ -596,14 +579,12 @@ button:active{ opacity:.75; transform: translateY(1px); }
         <div id="typeDisplay"></div>
       </div>
 
-      <div id="statusLine"></div>
-
       <textarea id="textArea"
         readonly inputmode="none"
         autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
-    </div>
 
-    <div id="modalMid">
+      <div id="statusLine"></div>
+
       <div id="kbd" aria-hidden="true">
         <div class="krow">
           <div class="key sym" data-k=",">,</div>
@@ -629,14 +610,9 @@ button:active{ opacity:.75; transform: translateY(1px); }
         </div>
       </div>
     </div>
-
-    <div id="modalBottomBar">
-      <button id="sendBtn">SEND</button>
-      <button id="exitBtn2">EXIT</button>
-    </div>
   </div>
 
-  <!-- DOCUMENT MODAL -->
+  <!-- Document Modal -->
   <div id="docModal" class="hidden" role="dialog" aria-modal="true" aria-label="Document viewer">
     <div class="modalHeader">
       <div class="modalTitle">DOCUMENT</div>
@@ -652,6 +628,9 @@ button:active{ opacity:.75; transform: translateY(1px); }
 <script>
 (()=>{
 
+/* =========================
+   CONFIG
+========================= */
 const CONFIG = {
   SERVER: (location.origin && location.origin.startsWith('http')) ? location.origin : 'http://127.0.0.1:4000',
   UPLOAD_TIMEOUT_MS: 20000,
@@ -672,6 +651,8 @@ const CONFIG = {
   VIBRATE_MS: 12,
 
   AUTO_SPACE_AFTER_PUNCT: true,
+
+  // ✅ document path served by your node server
   DOCUMENT_URL: "/document.pdf"
 };
 
@@ -682,6 +663,7 @@ try{
 }catch{}
 
 const ninja = document.getElementById('ninjaOverlay');
+
 const rotateOverlay = document.getElementById('rotateOverlay');
 
 const menuBtn = document.getElementById('menuBtn');
@@ -692,6 +674,7 @@ const docBtn = document.getElementById('docBtn');
 
 const scenes = [...document.querySelectorAll('.scene')];
 const bottomBar = document.getElementById('bottomBar');
+
 const memBtn = document.getElementById('memBtn');
 const feelBtn = document.getElementById('feelBtn');
 
@@ -699,11 +682,8 @@ const modalBackdrop = document.getElementById('modalBackdrop');
 const modal = document.getElementById('modal');
 const modalTitle = document.getElementById('modalTitle');
 const closeModalBtn = document.getElementById('closeModalBtn');
-const exitBtn2 = document.getElementById('exitBtn2');
-const sendBtn = document.getElementById('sendBtn');
 
 const uploadImgBtn = document.getElementById('uploadImgBtn');
-const imgPreviewRow = document.getElementById('imgPreviewRow');
 const imgPreview = document.getElementById('imgPreview');
 
 const textArea = document.getElementById('textArea');
@@ -726,7 +706,9 @@ let currentScene = 1;
 let mode = null;
 let selectedImageFile = null;
 
-/* viewport vars */
+/* =========================
+   VIEWPORT VARS
+========================= */
 function setViewportVars(){
   const vv = window.visualViewport;
   const w = Math.round((vv?.width || innerWidth));
@@ -743,7 +725,9 @@ if (visualViewport){
 addEventListener('orientationchange', ()=> setTimeout(setViewportVars,120));
 document.documentElement.style.setProperty('--fade-ms', CONFIG.FADE_MS + 'ms');
 
-/* landscape only */
+/* =========================
+   LANDSCAPE ONLY
+========================= */
 function isLandscape(){
   const w = window.visualViewport?.width || innerWidth;
   const h = window.visualViewport?.height || innerHeight;
@@ -752,18 +736,22 @@ function isLandscape(){
 function enforceLandscape(){
   const ok = isLandscape();
   rotateOverlay.classList.toggle('show', !ok);
+  // disable interactions when portrait
   document.body.style.pointerEvents = ok ? 'auto' : 'none';
   rotateOverlay.style.pointerEvents = 'auto';
+  // close any open modal if rotated
   if(!ok){
     closeMenu();
     closeModal(false);
-    closeDoc(false);
+    closeDoc();
   }
 }
 addEventListener('resize', enforceLandscape);
 addEventListener('orientationchange', ()=> setTimeout(enforceLandscape,100));
 
-/* click+haptic */
+/* =========================
+   CLICK + HAPTIC
+========================= */
 let audioCtx = null;
 function ensureAudio(){
   if(audioCtx) return audioCtx;
@@ -794,40 +782,64 @@ function clickBeep(){
 function haptic(){ try{ if(navigator.vibrate) navigator.vibrate(CONFIG.VIBRATE_MS); }catch{} }
 function feedback(){ clickBeep(); haptic(); }
 
-/* menu */
+/* =========================
+   MENU
+========================= */
 function openMenu(){ if(!isLandscape()) return; menuPanel.classList.remove('hidden'); }
 function closeMenu(){ menuPanel.classList.add('hidden'); }
+
 menuBtn.addEventListener('click', (e)=>{
   e.preventDefault(); feedback();
   if(menuPanel.classList.contains('hidden')) openMenu();
   else closeMenu();
 });
 closeMenuBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); closeMenu(); });
-homeBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); closeMenu(); goToScene(1,true); });
-docBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); closeMenu(); openDoc(); });
 
-/* scenes */
+homeBtn.addEventListener('click', (e)=>{
+  e.preventDefault(); feedback();
+  closeMenu();
+  goToScene(1, true);
+});
+
+docBtn.addEventListener('click', (e)=>{
+  e.preventDefault(); feedback();
+  closeMenu();
+  openDoc();
+});
+
+/* =========================
+   SCENES
+========================= */
 function setSceneActive(n){
   for(const s of scenes){
     const sn = Number(s.dataset.scene || 0);
     s.classList.toggle('active', sn === n);
   }
   currentScene = n;
-  if(n === 6){ bottomBar.classList.add('show'); loadNinja(); }
-  else{ bottomBar.classList.remove('show'); }
+
+  if(n === 6){
+    bottomBar.classList.add('show');
+    loadNinja();
+  }else{
+    bottomBar.classList.remove('show');
+  }
 }
+
 let sceneLock = false;
 function goToScene(n, immediate=false){
   if(sceneLock) return;
   sceneLock = true;
+
   const old = currentScene;
   if(immediate){
     setSceneActive(n);
     sceneLock = false;
     return;
   }
+
   const oldEl = scenes.find(x => Number(x.dataset.scene) === old);
   if(oldEl) oldEl.classList.remove('active');
+
   setTimeout(()=>{
     setSceneActive(n);
     setTimeout(()=>{ sceneLock = false; }, CONFIG.FADE_MS);
@@ -848,7 +860,9 @@ for(const s of scenes){
 }
 document.getElementById('scene5').addEventListener('click', ()=>{ if(currentScene === 5 && isLandscape()) goToScene(6); });
 
-/* ninja */
+/* =========================
+   VDO.NINJA
+========================= */
 const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 function applyNinjaStyle(){
   ninja.style.opacity = String(Math.max(0, Math.min(1, CONFIG.NINJA_OPACITY)));
@@ -884,23 +898,10 @@ function loadNinja(){
 setInterval(()=>{ if(currentScene === 6 && isLandscape()) ninja.src = ninjaUrl(); }, CONFIG.AUTO_REFRESH_MS);
 addEventListener('pageshow', ()=> setTimeout(()=>{ setViewportVars(); applyRezScale(); }, 60));
 
-/* adaptive keyboard sizing */
-function setKeyboardCompact(compact){
-  const r = document.documentElement.style;
-  if(compact){
-    r.setProperty('--key-h', '28px');
-    r.setProperty('--key-pad-x', '14px');
-    r.setProperty('--kbd-pad-y', '6px');
-    r.setProperty('--kbd-gap', '5px');
-  }else{
-    r.setProperty('--key-h', '32px');
-    r.setProperty('--key-pad-x', '16px');
-    r.setProperty('--kbd-pad-y', '8px');
-    r.setProperty('--kbd-gap', '6px');
-  }
-}
-
-/* share modal */
+/* =========================
+   SHARE MODAL
+   ✅ backdrop click no longer closes
+========================= */
 function hardClearInputs(){
   selectedImageFile = null;
   imgPreview.style.display = 'none';
@@ -908,7 +909,6 @@ function hardClearInputs(){
   imgInput.value = '';
   textArea.value = '';
   renderDisplay();
-  setKeyboardCompact(false);
 }
 
 function openModal(which){
@@ -917,11 +917,11 @@ function openModal(which){
 
   if(which === 'memory'){
     modalTitle.textContent = 'SHARE MY MEMORY';
-    imgPreviewRow.classList.remove('hidden');
+    document.getElementById('imgPreviewRow').classList.remove('hidden');
     uploadImgBtn.classList.remove('hidden');
   }else{
     modalTitle.textContent = 'SHARE MY FEELING';
-    imgPreviewRow.classList.add('hidden');
+    document.getElementById('imgPreviewRow').classList.add('hidden');
     selectedImageFile = null;
   }
 
@@ -935,8 +935,7 @@ function openModal(which){
 function closeModal(withFeedback=true){
   if(withFeedback) feedback();
   modal.classList.add('hidden');
-  const docOpen = !docModal.classList.contains('hidden');
-  if(!docOpen) modalBackdrop.classList.remove('show');
+  modalBackdrop.classList.remove('show');
   mode = null;
 }
 
@@ -944,10 +943,8 @@ memBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); openModa
 feelBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); openModal('feeling'); });
 
 closeModalBtn.addEventListener('click', (e)=>{ e.preventDefault(); closeModal(true); });
-document.getElementById('exitBtn2').addEventListener('click', (e)=>{ e.preventDefault(); closeModal(true); });
-document.getElementById('sendBtn').addEventListener('click', (e)=>{ e.preventDefault(); sendNow(); });
 
-// backdrop click should NOT close
+// ✅ DO NOT close when tapping backdrop
 modalBackdrop.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); });
 
 uploadImgBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); imgInput.click(); });
@@ -965,31 +962,31 @@ imgInput.addEventListener('change', ()=>{
   statusLine.textContent = 'PHOTO SELECTED.';
   imgInput.value = '';
 
-  setKeyboardCompact(true);
-
-  // ✅ iOS 사진 선택 후 복귀 시 viewport 흔들림 2~3프레임 잡기
-  setTimeout(setViewportVars, 50);
-  setTimeout(setViewportVars, 150);
-  setTimeout(setViewportVars, 300);
+  // ✅ after selecting photo, ensure layout vars updated (fix “keyboard cut” on some devices)
+  setTimeout(()=>{ setViewportVars(); applyRezScale(); }, 80);
 });
 
-/* document modal */
+/* =========================
+   DOCUMENT MODAL
+========================= */
 function openDoc(){
   if(!isLandscape()) return;
-  modalBackdrop.classList.add('show');
+  modalBackdrop.classList.add('show');     // reuse same backdrop
   docModal.classList.remove('hidden');
   docFrame.src = CONFIG.DOCUMENT_URL + '?ts=' + Date.now();
 }
-function closeDoc(withFeedback=true){
-  if(withFeedback) feedback();
+function closeDoc(){
   docModal.classList.add('hidden');
   docFrame.src = 'about:blank';
+  // if share modal is not open, remove backdrop
   const shareOpen = !modal.classList.contains('hidden');
   if(!shareOpen) modalBackdrop.classList.remove('show');
 }
-closeDocBtn.addEventListener('click', (e)=>{ e.preventDefault(); closeDoc(true); });
+closeDocBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); closeDoc(); });
 
-/* upload helpers */
+/* =========================
+   UPLOAD HELPERS
+========================= */
 async function fetchWithTimeout(url, options={}, timeoutMs=CONFIG.UPLOAD_TIMEOUT_MS){
   const controller = new AbortController();
   const id = setTimeout(()=>controller.abort(new Error("timeout")), timeoutMs);
@@ -1005,7 +1002,9 @@ async function postForm(url, formData){
   return res;
 }
 
-/* send (clear always) */
+/* =========================
+   SEND (clear always)
+========================= */
 async function sendNow(){
   const text = (textArea.value || '').trim();
   if(!text){
@@ -1017,39 +1016,67 @@ async function sendNow(){
   const sendingImage = selectedImageFile;
 
   hardClearInputs();
+
   feedback();
   statusLine.textContent = 'SENDING...';
 
-  try{
-    if(mode === 'memory' && sendingImage){
-      const form = new FormData();
-      form.append('image', sendingImage, `image_${Date.now()}.jpg`);
-      const resImg = await postForm(CONFIG.SERVER + '/upload', form);
-      if(!resImg.ok){
-        const t = await resImg.text().catch(()=> '');
-        statusLine.textContent = `PHOTO FAILED (${resImg.status}) ${t ? ' ' + t.slice(0,80) : ''}`;
+  if(mode === 'feeling'){
+    const payload = { text: sendingText, clientTime: new Date().toISOString(), type:'feeling' };
+    try{
+      const res = await fetchWithTimeout(CONFIG.SERVER + '/upload-text', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if(!res.ok){
+        const t = await res.text().catch(()=> '');
+        statusLine.textContent = `FAILED (${res.status}) ${t ? '\n'+t.slice(0,120) : ''}`;
         return;
       }
-    }
-
-    const payload = { text: sendingText, clientTime: new Date().toISOString(), type: mode || 'memory' };
-    const res = await fetchWithTimeout(CONFIG.SERVER + '/upload-text', {
-      method:'POST',
-      headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify(payload)
-    });
-    if(!res.ok){
-      const t = await res.text().catch(()=> '');
-      statusLine.textContent = `FAILED (${res.status}) ${t ? ' ' + t.slice(0,80) : ''}`;
+      statusLine.textContent = 'SENT ✓';
+      return;
+    }catch(err){
+      statusLine.textContent = `ERROR: ${String(err && err.message ? err.message : err)}`;
       return;
     }
-    statusLine.textContent = 'SENT ✓';
-  }catch(err){
-    statusLine.textContent = `ERROR: ${String(err && err.message ? err.message : err).slice(0,120)}`;
+  }
+
+  if(mode === 'memory'){
+    try{
+      if(sendingImage){
+        const form = new FormData();
+        form.append('image', sendingImage, `image_${Date.now()}.jpg`);
+        const resImg = await postForm(CONFIG.SERVER + '/upload', form);
+        if(!resImg.ok){
+          const t = await resImg.text().catch(()=> '');
+          statusLine.textContent = `PHOTO FAILED (${resImg.status}) ${t ? '\n'+t.slice(0,120) : ''}`;
+          return;
+        }
+      }
+
+      const payload = { text: sendingText, clientTime: new Date().toISOString(), type:'memory' };
+      const res2 = await fetchWithTimeout(CONFIG.SERVER + '/upload-text', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if(!res2.ok){
+        const t = await res2.text().catch(()=> '');
+        statusLine.textContent = `TEXT FAILED (${res2.status}) ${t ? '\n'+t.slice(0,120) : ''}`;
+        return;
+      }
+      statusLine.textContent = 'SENT ✓';
+      return;
+    }catch(err){
+      statusLine.textContent = `ERROR: ${String(err && err.message ? err.message : err)}`;
+      return;
+    }
   }
 }
 
-/* prevent system keyboard */
+/* =========================
+   PREVENT SYSTEM KEYBOARD
+========================= */
 function preventSystemKeyboard(){
   const stop = (e)=>{ try{ e.preventDefault(); }catch{} try{ textArea.blur(); }catch{} };
   textArea.addEventListener('focus', stop, {passive:false});
@@ -1060,13 +1087,18 @@ function preventSystemKeyboard(){
 }
 preventSystemKeyboard();
 
-/* display */
+/* =========================
+   DISPLAY (show spaces)
+========================= */
 function renderDisplay(){
   const v = textArea.value || '';
-  typeDisplay.textContent = v.replaceAll(' ', '·').replaceAll('\t', '⇥');
+  const shown = v.replaceAll(' ', '·').replaceAll('\t', '⇥');
+  typeDisplay.textContent = shown;
 }
 
-/* insert/edit */
+/* =========================
+   INSERT + EDIT
+========================= */
 function insertText(s){
   const start = (typeof textArea.selectionStart === 'number') ? textArea.selectionStart : (textArea.value.length);
   const end   = (typeof textArea.selectionEnd === 'number') ? textArea.selectionEnd : (textArea.value.length);
@@ -1096,11 +1128,13 @@ function maybeAutoSpaceAfterPunct(ch){
   if([',','.','?','!'].includes(ch)){
     const v = textArea.value || '';
     const pos = (typeof textArea.selectionStart === 'number') ? textArea.selectionStart : v.length;
-    if(pos === v.length && !v.endsWith(' ')) insertText(' ');
+    if(pos === v.length){
+      if(!v.endsWith(' ')) insertText(' ');
+    }
   }
 }
 
-/* keyboard click */
+/* Keyboard click */
 kbd.addEventListener('click', (e)=>{
   const key = e.target.closest('.key');
   if(!key) return;
@@ -1118,7 +1152,9 @@ kbd.addEventListener('click', (e)=>{
   maybeAutoSpaceAfterPunct(k);
 });
 
-/* init */
+/* =========================
+   INIT
+========================= */
 setSceneActive(1);
 renderDisplay();
 enforceLandscape();
