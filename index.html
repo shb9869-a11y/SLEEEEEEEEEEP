@@ -3,128 +3,31 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<title>VDO Screen PUSH — CULTUREHUB</title>
+<title>SCREEN PUSH — CULTUREHUB</title>
 <meta name="theme-color" content="#000000">
 <style>
-  html,body{margin:0;height:100%;background:#000;color:#fff;font-family:Courier New,monospace;overflow:hidden}
-  video{position:fixed;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
-  .hud{
-    position:fixed;left:12px;top:12px;right:12px;display:flex;gap:10px;justify-content:space-between;align-items:center;
-    pointer-events:none
-  }
-  .pill{
-    border:1px solid rgba(255,255,255,.6);
-    padding:6px 10px;border-radius:8px;background:rgba(0,0,0,.35);
-    font-size:12px;opacity:.95;pointer-events:none;word-break:break-all
-  }
-  .center{
-    position:fixed;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;
-    padding:24px;line-height:1.6;font-size:14px;opacity:.95
-  }
-  .center.hidden{display:none}
+  html,body{margin:0;height:100%;background:#000;overflow:hidden}
+  iframe{position:fixed;inset:0;width:100%;height:100%;border:0;background:#000}
 </style>
 </head>
 <body>
 
-<div class="hud">
-  <div class="pill" id="statusPill">INIT…</div>
-  <div class="pill" id="roomPill">PUSH: CULTUREHUB</div>
-</div>
-
-<div class="center" id="fallback">
-  자동으로 화면 공유를 시작하려 했는데 브라우저가 막았어.<br><br>
-  <b>화면 아무데나 한 번 탭</b>하면 바로 시작됨.
-  <br><br>
-  (iOS Safari는 화면공유가 제한될 수 있음. 크롬/엣지/데스크탑 권장)
-</div>
-
-<video id="preview" autoplay muted playsinline></video>
-
 <script>
-(() => {
+  // ✅ 룸 아이디 고정
   const ROOM_ID = "CULTUREHUB";
-  const VDO_PUSH_URL = `https://vdo.ninja/?push=${encodeURIComponent(ROOM_ID)}&clean&autostart&noaudio&codec=vp8`;
 
-  const preview = document.getElementById('preview');
-  const statusPill = document.getElementById('statusPill');
-  const fallback = document.getElementById('fallback');
+  // ✅ VDO.Ninja가 "카메라" 대신 "화면공유"를 바로 요청하게 하는 핵심: &screenshare
+  // clean/autostart/noaudio 등은 취향 옵션
+  const SRC =
+    `https://vdo.ninja/?push=${encodeURIComponent(ROOM_ID)}` +
+    `&screenshare&clean&autostart&noaudio&codec=vp8`;
 
-  let screenStream = null;
-  let vdoFrame = null;
-  let started = false;
-
-  function setStatus(t){ statusPill.textContent = t; }
-
-  async function startScreenShare() {
-    if(started) return;
-    started = true;
-
-    try{
-      setStatus("REQUESTING SCREEN…");
-
-      // 화면 공유
-      screenStream = await navigator.mediaDevices.getDisplayMedia({
-        video: { frameRate: { ideal: 30, max: 30 } },
-        audio: false
-      });
-
-      fallback.classList.add('hidden');
-
-      // 로컬 프리뷰
-      preview.srcObject = screenStream;
-      try { await preview.play(); } catch {}
-      setStatus("SCREEN CAPTURE OK");
-
-      // VDO.Ninja push 페이지를 백그라운드 iframe으로 띄워서 동일 키로 송출
-      vdoFrame = document.createElement('iframe');
-      vdoFrame.allow = "autoplay; camera; microphone; display-capture; fullscreen";
-      vdoFrame.referrerPolicy = "no-referrer";
-      vdoFrame.style.position = "fixed";
-      vdoFrame.style.inset = "0";
-      vdoFrame.style.width = "1px";
-      vdoFrame.style.height = "1px";
-      vdoFrame.style.opacity = "0.001";
-      vdoFrame.style.pointerEvents = "none";
-      vdoFrame.src = VDO_PUSH_URL;
-      document.body.appendChild(vdoFrame);
-
-      setStatus("PUSHING TO VDO…");
-
-      // 화면 공유가 사용자가 "중지"하면 자동 정리
-      const [track] = screenStream.getVideoTracks();
-      if(track){
-        track.onended = () => {
-          setStatus("STOPPED");
-          try{ if(vdoFrame) vdoFrame.remove(); }catch{}
-          vdoFrame = null;
-          started = false;
-          fallback.classList.remove('hidden');
-        };
-      }
-
-      // 참고: 일부 환경에서는 iframe 방식이 제한될 수 있음.
-      // 그 경우 가장 확실한 방법은 VDO_PUSH_URL을 "직접" 브라우저에서 열고,
-      // 거기서 화면 공유를 선택하는 방식임.
-      setStatus("STREAMING (IFRAME)");
-    }catch(e){
-      console.error(e);
-      started = false;
-      setStatus("BLOCKED / FAILED");
-      fallback.classList.remove('hidden');
-    }
-  }
-
-  // 1) 페이지 로드 즉시 자동 시도
-  Promise.resolve().then(startScreenShare);
-
-  // 2) 자동이 막히면: 아무데나 한번 탭하면 시작 (버튼 없음)
-  function tapStart(){
-    startScreenShare();
-  }
-  window.addEventListener('touchend', tapStart, {passive:true});
-  window.addEventListener('click', tapStart);
-
-})();
+  const f = document.createElement('iframe');
+  f.allow = "display-capture; autoplay; camera; microphone; fullscreen";
+  f.referrerPolicy = "no-referrer";
+  f.src = SRC;
+  document.body.appendChild(f);
 </script>
+
 </body>
 </html>
