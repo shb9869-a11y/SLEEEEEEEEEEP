@@ -35,6 +35,12 @@
 
   --vwpx:100vw;
   --vhpx:100vh;
+
+  /* keyboard sizing vars (JS will update) */
+  --key-h: 32px;
+  --key-pad-x: 16px;
+  --kbd-pad-y: 8px;
+  --kbd-gap: 6px;
 }
 
 html,body{
@@ -246,43 +252,21 @@ button:active{ opacity:.75; transform: translateY(1px); }
 }
 #modalBackdrop.show{ opacity:1; pointer-events:auto; }
 
+/* ===== Share modal (3-block fixed) ===== */
 #modal{
   position:fixed;
   left:50%; top:50%;
   transform:translate(-50%,-50%);
-
-  width:min(980px, calc(100vw - 2*(max(8px,var(--frame)) + var(--safe-l) + var(--safe-r))));
+  width:min(1100px, calc(100vw - 2*(max(8px,var(--frame)) + var(--safe-l) + var(--safe-r))));
+  max-height: calc(var(--vhpx) - 2*(var(--frame) + var(--safe-t) + var(--safe-b)));
   border:1px solid rgba(255,255,255,.85);
   background:rgba(0,0,0,.92);
   z-index:410;
 
   display:flex;
   flex-direction:column;
-  max-height: calc(var(--vhpx) - 2*(var(--frame) + var(--safe-t) + var(--safe-b)));
+  overflow:hidden;
 }
-
-/* Document viewer modal */
-#docModal{
-  position:fixed;
-  left:50%; top:50%;
-  transform:translate(-50%,-50%);
-  width:min(1100px, calc(100vw - 2*(max(8px,var(--frame)) + var(--safe-l) + var(--safe-r))));
-  height: calc(var(--vhpx) - 2*(var(--frame) + var(--safe-t) + var(--safe-b)));
-  border:1px solid rgba(255,255,255,.85);
-  background:rgba(0,0,0,.92);
-  z-index:420;
-  display:flex;
-  flex-direction:column;
-}
-#docModal.hidden{ display:none !important; }
-#docFrame{
-  border:0;
-  width:100%;
-  height:100%;
-  background:#000;
-}
-
-/* Modal headers */
 .modalHeader{
   display:flex;
   justify-content:space-between;
@@ -298,13 +282,36 @@ button:active{ opacity:.75; transform: translateY(1px); }
 }
 .modalExitBtn{ padding:10px 14px; }
 
-#modalBody{
-  padding:10px 12px 12px;
+#modalTop{
+  padding:10px 12px;
   display:flex;
   flex-direction:column;
   gap:10px;
-  overflow:hidden;
+  flex:0 0 auto;
+}
+
+#modalMid{
   flex:1 1 auto;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+
+/* bottom fixed bar INSIDE modal: SEND always visible */
+#modalBottomBar{
+  flex:0 0 auto;
+  display:flex;
+  gap:10px;
+  padding:10px 12px;
+  border-top:1px solid rgba(255,255,255,.45);
+}
+#sendBtn{
+  flex:1 1 auto;
+  background:#000;
+  border:1px solid rgba(255,255,255,.85);
+}
+#exitBtn2{
+  flex:0 0 140px;
 }
 
 /* Upload row */
@@ -335,8 +342,8 @@ button:active{ opacity:.75; transform: translateY(1px); }
   padding:10px 12px;
   line-height:1.42;
   letter-spacing:.02em;
-  min-height:46px;
-  max-height:72px;
+  min-height:44px;
+  max-height:60px;
   overflow:hidden;
   display:flex;
   align-items:center;
@@ -349,6 +356,12 @@ button:active{ opacity:.75; transform: translateY(1px); }
   overflow:hidden;
   text-overflow:ellipsis;
 }
+#statusLine{
+  font-size:var(--fs-small);
+  opacity:.85;
+  min-height: 18px;
+  white-space:pre-wrap;
+}
 
 /* Hidden buffer */
 #textArea{
@@ -359,19 +372,18 @@ button:active{ opacity:.75; transform: translateY(1px); }
   opacity:0;
 }
 
-/* Keyboard: prevent cropping when photo row visible
-   ✅ solution: cap modal height, and make body internally scroll-free by shrinking keyboard slightly if needed */
+/* Keyboard */
 #kbd{
-  width:calc(100% + 72px);
-  margin-left:-36px;
-  margin-right:-36px;
-
+  margin-top:0;
   border-top:1px solid rgba(255,255,255,.45);
-  padding:10px 18px 8px;
+  padding: var(--kbd-pad-y) 18px 8px;
   display:flex;
   flex-direction:column;
-  gap:8px;
-  flex:0 0 auto;
+  gap: var(--kbd-gap);
+  width:100%;
+  flex:1 1 auto;
+  justify-content:center;
+  overflow:hidden;
 }
 .krow{
   display:flex;
@@ -382,8 +394,8 @@ button:active{ opacity:.75; transform: translateY(1px); }
 .key{
   flex:1 1 0;
   min-width:0;
-  height:44px;
-  padding:0 18px;
+  height: var(--key-h);
+  padding:0 var(--key-pad-x);
   display:flex;
   align-items:center;
   justify-content:center;
@@ -399,39 +411,44 @@ button:active{ opacity:.75; transform: translateY(1px); }
 .key.space{ flex:7 1 0; }
 .key.sym{ letter-spacing:.02em; text-transform:none; }
 
-/* Landscape compact */
-@media (orientation: landscape){
-  #modal .modalHeader{ padding:8px 10px; }
-  #modal .modalExitBtn{ padding:8px 12px; }
-  #modalBody{ padding:8px 10px 10px; gap:7px; }
-
-  #imgPreviewRow{ gap:8px; }
-  #uploadImgBtn{ min-width: 140px; padding:7px 10px; }
-  #imgPreview{ width:78px; height:56px; }
-
-  #typeDisplayWrap{ min-height:38px; max-height:54px; padding:7px 9px; }
-
-  #kbd{
-    width:calc(100% + 62px);
-    margin-left:-31px; margin-right:-31px;
-    padding:8px 16px 6px;
-    gap:6px;
-  }
-  .krow{ gap:6px; }
-  .key{ height:32px; padding:0 16px; } /* ✅ keep visible even with photo */
+/* Document viewer modal */
+#docModal{
+  position:fixed;
+  left:50%; top:50%;
+  transform:translate(-50%,-50%);
+  width:min(1100px, calc(100vw - 2*(max(8px,var(--frame)) + var(--safe-l) + var(--safe-r))));
+  height: calc(var(--vhpx) - 2*(var(--frame) + var(--safe-t) + var(--safe-b)));
+  border:1px solid rgba(255,255,255,.85);
+  background:rgba(0,0,0,.92);
+  z-index:420;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
 }
-
-/* Extra short heights: shrink keyboard further (fix cropping) */
-@media (max-height: 520px){
-  :root{ --frame: clamp(8px, 2.0vmin, 18px); --gap: 8px; }
-  #menuPanel{ top: calc(var(--frame) + 44px + var(--safe-t)); }
-  .tapHint{ right:calc(var(--frame) + var(--safe-r) + 22px); bottom:calc(var(--frame) + var(--safe-b) + 16px); }
-  #typeDisplayWrap{ min-height:34px; max-height:48px; }
-  #kbd{ padding:6px 14px 6px; gap:5px; }
-  .key{ height:28px; padding:0 14px; }
+#docModal.hidden{ display:none !important; }
+#docFrame{
+  border:0;
+  width:100%;
+  height:100%;
+  background:#000;
 }
 
 .frameBox, #menuPanel, #modal, #docModal { border-radius:0 !important; }
+
+/* Tight landscape */
+@media (orientation: landscape){
+  .modalHeader{ padding:8px 10px; }
+  #modalTop{ padding:8px 10px; gap:8px; }
+  #modalBottomBar{ padding:8px 10px; }
+  #exitBtn2{ flex-basis:120px; }
+  #typeDisplayWrap{ min-height:38px; max-height:52px; padding:7px 9px; }
+  #imgPreview{ width:78px; height:56px; }
+}
+
+/* very short height */
+@media (max-height: 520px){
+  :root{ --key-h: 28px; --key-pad-x: 14px; --kbd-pad-y: 6px; --kbd-gap: 5px; }
+}
 </style>
 </head>
 
@@ -446,7 +463,6 @@ button:active{ opacity:.75; transform: translateY(1px); }
 
   <div class="frameBox" aria-hidden="true"></div>
 
-  <!-- Orientation overlay -->
   <div id="rotateOverlay" aria-hidden="true">
     <div>
       <div class="h1">PLEASE ROTATE YOUR PHONE</div>
@@ -469,6 +485,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
     <button id="closeMenuBtn">CLOSE</button>
   </div>
 
+  <!-- scenes 1~6 (same copy) -->
   <section id="scene1" class="scene active" data-scene="1">
     <div class="sceneInner">
       <div class="h1">ADD THIS EXPERIENCE TO YOUR HOME SCREEN</div>
@@ -558,17 +575,16 @@ button:active{ opacity:.75; transform: translateY(1px); }
     <button id="memBtn" class="barBtn">SHARE MY MEMORY</button>
   </div>
 
-  <!-- Share Modal Backdrop -->
   <div id="modalBackdrop"></div>
 
-  <!-- Share Modal -->
+  <!-- SHARE MODAL -->
   <div id="modal" class="hidden" role="dialog" aria-modal="true" aria-label="Share dialog">
     <div class="modalHeader">
       <div id="modalTitle" class="modalTitle">SHARE</div>
       <button id="closeModalBtn" class="modalExitBtn">EXIT</button>
     </div>
 
-    <div id="modalBody">
+    <div id="modalTop">
       <div id="imgPreviewRow">
         <button id="uploadImgBtn">UPLOAD A PHOTO</button>
         <img id="imgPreview" alt="preview"/>
@@ -579,12 +595,13 @@ button:active{ opacity:.75; transform: translateY(1px); }
         <div id="typeDisplay"></div>
       </div>
 
+      <div id="statusLine"></div>
       <textarea id="textArea"
         readonly inputmode="none"
         autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+    </div>
 
-      <div id="statusLine"></div>
-
+    <div id="modalMid">
       <div id="kbd" aria-hidden="true">
         <div class="krow">
           <div class="key sym" data-k=",">,</div>
@@ -610,9 +627,14 @@ button:active{ opacity:.75; transform: translateY(1px); }
         </div>
       </div>
     </div>
+
+    <div id="modalBottomBar">
+      <button id="sendBtn">SEND</button>
+      <button id="exitBtn2">EXIT</button>
+    </div>
   </div>
 
-  <!-- Document Modal -->
+  <!-- DOCUMENT MODAL -->
   <div id="docModal" class="hidden" role="dialog" aria-modal="true" aria-label="Document viewer">
     <div class="modalHeader">
       <div class="modalTitle">DOCUMENT</div>
@@ -628,9 +650,6 @@ button:active{ opacity:.75; transform: translateY(1px); }
 <script>
 (()=>{
 
-/* =========================
-   CONFIG
-========================= */
 const CONFIG = {
   SERVER: (location.origin && location.origin.startsWith('http')) ? location.origin : 'http://127.0.0.1:4000',
   UPLOAD_TIMEOUT_MS: 20000,
@@ -651,8 +670,6 @@ const CONFIG = {
   VIBRATE_MS: 12,
 
   AUTO_SPACE_AFTER_PUNCT: true,
-
-  // ✅ document path served by your node server
   DOCUMENT_URL: "/document.pdf"
 };
 
@@ -663,7 +680,6 @@ try{
 }catch{}
 
 const ninja = document.getElementById('ninjaOverlay');
-
 const rotateOverlay = document.getElementById('rotateOverlay');
 
 const menuBtn = document.getElementById('menuBtn');
@@ -682,8 +698,11 @@ const modalBackdrop = document.getElementById('modalBackdrop');
 const modal = document.getElementById('modal');
 const modalTitle = document.getElementById('modalTitle');
 const closeModalBtn = document.getElementById('closeModalBtn');
+const exitBtn2 = document.getElementById('exitBtn2');
+const sendBtn = document.getElementById('sendBtn');
 
 const uploadImgBtn = document.getElementById('uploadImgBtn');
+const imgPreviewRow = document.getElementById('imgPreviewRow');
 const imgPreview = document.getElementById('imgPreview');
 
 const textArea = document.getElementById('textArea');
@@ -706,9 +725,7 @@ let currentScene = 1;
 let mode = null;
 let selectedImageFile = null;
 
-/* =========================
-   VIEWPORT VARS
-========================= */
+/* viewport vars */
 function setViewportVars(){
   const vv = window.visualViewport;
   const w = Math.round((vv?.width || innerWidth));
@@ -725,9 +742,7 @@ if (visualViewport){
 addEventListener('orientationchange', ()=> setTimeout(setViewportVars,120));
 document.documentElement.style.setProperty('--fade-ms', CONFIG.FADE_MS + 'ms');
 
-/* =========================
-   LANDSCAPE ONLY
-========================= */
+/* landscape only */
 function isLandscape(){
   const w = window.visualViewport?.width || innerWidth;
   const h = window.visualViewport?.height || innerHeight;
@@ -736,22 +751,18 @@ function isLandscape(){
 function enforceLandscape(){
   const ok = isLandscape();
   rotateOverlay.classList.toggle('show', !ok);
-  // disable interactions when portrait
   document.body.style.pointerEvents = ok ? 'auto' : 'none';
   rotateOverlay.style.pointerEvents = 'auto';
-  // close any open modal if rotated
   if(!ok){
     closeMenu();
     closeModal(false);
-    closeDoc();
+    closeDoc(false);
   }
 }
 addEventListener('resize', enforceLandscape);
 addEventListener('orientationchange', ()=> setTimeout(enforceLandscape,100));
 
-/* =========================
-   CLICK + HAPTIC
-========================= */
+/* click+haptic */
 let audioCtx = null;
 function ensureAudio(){
   if(audioCtx) return audioCtx;
@@ -782,64 +793,40 @@ function clickBeep(){
 function haptic(){ try{ if(navigator.vibrate) navigator.vibrate(CONFIG.VIBRATE_MS); }catch{} }
 function feedback(){ clickBeep(); haptic(); }
 
-/* =========================
-   MENU
-========================= */
+/* menu */
 function openMenu(){ if(!isLandscape()) return; menuPanel.classList.remove('hidden'); }
 function closeMenu(){ menuPanel.classList.add('hidden'); }
-
 menuBtn.addEventListener('click', (e)=>{
   e.preventDefault(); feedback();
   if(menuPanel.classList.contains('hidden')) openMenu();
   else closeMenu();
 });
 closeMenuBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); closeMenu(); });
+homeBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); closeMenu(); goToScene(1,true); });
+docBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); closeMenu(); openDoc(); });
 
-homeBtn.addEventListener('click', (e)=>{
-  e.preventDefault(); feedback();
-  closeMenu();
-  goToScene(1, true);
-});
-
-docBtn.addEventListener('click', (e)=>{
-  e.preventDefault(); feedback();
-  closeMenu();
-  openDoc();
-});
-
-/* =========================
-   SCENES
-========================= */
+/* scenes */
 function setSceneActive(n){
   for(const s of scenes){
     const sn = Number(s.dataset.scene || 0);
     s.classList.toggle('active', sn === n);
   }
   currentScene = n;
-
-  if(n === 6){
-    bottomBar.classList.add('show');
-    loadNinja();
-  }else{
-    bottomBar.classList.remove('show');
-  }
+  if(n === 6){ bottomBar.classList.add('show'); loadNinja(); }
+  else{ bottomBar.classList.remove('show'); }
 }
-
 let sceneLock = false;
 function goToScene(n, immediate=false){
   if(sceneLock) return;
   sceneLock = true;
-
   const old = currentScene;
   if(immediate){
     setSceneActive(n);
     sceneLock = false;
     return;
   }
-
   const oldEl = scenes.find(x => Number(x.dataset.scene) === old);
   if(oldEl) oldEl.classList.remove('active');
-
   setTimeout(()=>{
     setSceneActive(n);
     setTimeout(()=>{ sceneLock = false; }, CONFIG.FADE_MS);
@@ -860,9 +847,7 @@ for(const s of scenes){
 }
 document.getElementById('scene5').addEventListener('click', ()=>{ if(currentScene === 5 && isLandscape()) goToScene(6); });
 
-/* =========================
-   VDO.NINJA
-========================= */
+/* ninja */
 const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 function applyNinjaStyle(){
   ninja.style.opacity = String(Math.max(0, Math.min(1, CONFIG.NINJA_OPACITY)));
@@ -898,10 +883,23 @@ function loadNinja(){
 setInterval(()=>{ if(currentScene === 6 && isLandscape()) ninja.src = ninjaUrl(); }, CONFIG.AUTO_REFRESH_MS);
 addEventListener('pageshow', ()=> setTimeout(()=>{ setViewportVars(); applyRezScale(); }, 60));
 
-/* =========================
-   SHARE MODAL
-   ✅ backdrop click no longer closes
-========================= */
+/* adaptive keyboard sizing so SEND never disappears */
+function setKeyboardCompact(compact){
+  const r = document.documentElement.style;
+  if(compact){
+    r.setProperty('--key-h', '28px');
+    r.setProperty('--key-pad-x', '14px');
+    r.setProperty('--kbd-pad-y', '6px');
+    r.setProperty('--kbd-gap', '5px');
+  }else{
+    r.setProperty('--key-h', '32px');
+    r.setProperty('--key-pad-x', '16px');
+    r.setProperty('--kbd-pad-y', '8px');
+    r.setProperty('--kbd-gap', '6px');
+  }
+}
+
+/* share modal */
 function hardClearInputs(){
   selectedImageFile = null;
   imgPreview.style.display = 'none';
@@ -909,6 +907,7 @@ function hardClearInputs(){
   imgInput.value = '';
   textArea.value = '';
   renderDisplay();
+  setKeyboardCompact(false);
 }
 
 function openModal(which){
@@ -917,11 +916,11 @@ function openModal(which){
 
   if(which === 'memory'){
     modalTitle.textContent = 'SHARE MY MEMORY';
-    document.getElementById('imgPreviewRow').classList.remove('hidden');
+    imgPreviewRow.classList.remove('hidden');
     uploadImgBtn.classList.remove('hidden');
   }else{
     modalTitle.textContent = 'SHARE MY FEELING';
-    document.getElementById('imgPreviewRow').classList.add('hidden');
+    imgPreviewRow.classList.add('hidden');
     selectedImageFile = null;
   }
 
@@ -935,7 +934,9 @@ function openModal(which){
 function closeModal(withFeedback=true){
   if(withFeedback) feedback();
   modal.classList.add('hidden');
-  modalBackdrop.classList.remove('show');
+  // if doc isn't open, drop backdrop
+  const docOpen = !docModal.classList.contains('hidden');
+  if(!docOpen) modalBackdrop.classList.remove('show');
   mode = null;
 }
 
@@ -943,8 +944,9 @@ memBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); openModa
 feelBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); openModal('feeling'); });
 
 closeModalBtn.addEventListener('click', (e)=>{ e.preventDefault(); closeModal(true); });
+exitBtn2.addEventListener('click', (e)=>{ e.preventDefault(); closeModal(true); });
 
-// ✅ DO NOT close when tapping backdrop
+// backdrop click should NOT close
 modalBackdrop.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); });
 
 uploadImgBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); imgInput.click(); });
@@ -962,31 +964,28 @@ imgInput.addEventListener('change', ()=>{
   statusLine.textContent = 'PHOTO SELECTED.';
   imgInput.value = '';
 
-  // ✅ after selecting photo, ensure layout vars updated (fix “keyboard cut” on some devices)
+  // ✅ when photo visible, shrink keyboard so SEND bar always remains visible
+  setKeyboardCompact(true);
   setTimeout(()=>{ setViewportVars(); applyRezScale(); }, 80);
 });
 
-/* =========================
-   DOCUMENT MODAL
-========================= */
+/* document modal */
 function openDoc(){
   if(!isLandscape()) return;
-  modalBackdrop.classList.add('show');     // reuse same backdrop
+  modalBackdrop.classList.add('show');
   docModal.classList.remove('hidden');
   docFrame.src = CONFIG.DOCUMENT_URL + '?ts=' + Date.now();
 }
-function closeDoc(){
+function closeDoc(withFeedback=true){
+  if(withFeedback) feedback();
   docModal.classList.add('hidden');
   docFrame.src = 'about:blank';
-  // if share modal is not open, remove backdrop
   const shareOpen = !modal.classList.contains('hidden');
   if(!shareOpen) modalBackdrop.classList.remove('show');
 }
-closeDocBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); closeDoc(); });
+closeDocBtn.addEventListener('click', (e)=>{ e.preventDefault(); closeDoc(true); });
 
-/* =========================
-   UPLOAD HELPERS
-========================= */
+/* upload helpers */
 async function fetchWithTimeout(url, options={}, timeoutMs=CONFIG.UPLOAD_TIMEOUT_MS){
   const controller = new AbortController();
   const id = setTimeout(()=>controller.abort(new Error("timeout")), timeoutMs);
@@ -1002,9 +1001,7 @@ async function postForm(url, formData){
   return res;
 }
 
-/* =========================
-   SEND (clear always)
-========================= */
+/* send (clear always) */
 async function sendNow(){
   const text = (textArea.value || '').trim();
   if(!text){
@@ -1015,8 +1012,7 @@ async function sendNow(){
   const sendingText = text;
   const sendingImage = selectedImageFile;
 
-  hardClearInputs();
-
+  hardClearInputs(); // ✅ clear immediately regardless of outcome
   feedback();
   statusLine.textContent = 'SENDING...';
 
@@ -1074,9 +1070,7 @@ async function sendNow(){
   }
 }
 
-/* =========================
-   PREVENT SYSTEM KEYBOARD
-========================= */
+/* prevent system keyboard */
 function preventSystemKeyboard(){
   const stop = (e)=>{ try{ e.preventDefault(); }catch{} try{ textArea.blur(); }catch{} };
   textArea.addEventListener('focus', stop, {passive:false});
@@ -1087,18 +1081,13 @@ function preventSystemKeyboard(){
 }
 preventSystemKeyboard();
 
-/* =========================
-   DISPLAY (show spaces)
-========================= */
+/* display */
 function renderDisplay(){
   const v = textArea.value || '';
-  const shown = v.replaceAll(' ', '·').replaceAll('\t', '⇥');
-  typeDisplay.textContent = shown;
+  typeDisplay.textContent = v.replaceAll(' ', '·').replaceAll('\t', '⇥');
 }
 
-/* =========================
-   INSERT + EDIT
-========================= */
+/* insert/edit */
 function insertText(s){
   const start = (typeof textArea.selectionStart === 'number') ? textArea.selectionStart : (textArea.value.length);
   const end   = (typeof textArea.selectionEnd === 'number') ? textArea.selectionEnd : (textArea.value.length);
@@ -1128,13 +1117,11 @@ function maybeAutoSpaceAfterPunct(ch){
   if([',','.','?','!'].includes(ch)){
     const v = textArea.value || '';
     const pos = (typeof textArea.selectionStart === 'number') ? textArea.selectionStart : v.length;
-    if(pos === v.length){
-      if(!v.endsWith(' ')) insertText(' ');
-    }
+    if(pos === v.length && !v.endsWith(' ')) insertText(' ');
   }
 }
 
-/* Keyboard click */
+/* keyboard click */
 kbd.addEventListener('click', (e)=>{
   const key = e.target.closest('.key');
   if(!key) return;
@@ -1152,9 +1139,12 @@ kbd.addEventListener('click', (e)=>{
   maybeAutoSpaceAfterPunct(k);
 });
 
-/* =========================
-   INIT
-========================= */
+/* SEND button in bottom bar */
+sendBtn.addEventListener('click', (e)=>{ e.preventDefault(); sendNow(); });
+/* EXIT button duplicates */
+closeModalBtn.addEventListener('click', (e)=>{ e.preventDefault(); closeModal(true); });
+
+/* init */
 setSceneActive(1);
 renderDisplay();
 enforceLandscape();
