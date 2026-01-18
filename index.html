@@ -93,6 +93,24 @@ button:active{ opacity:.75; transform: translateY(1px); }
   z-index:50;
 }
 
+/* ===== Orientation Lock Overlay ===== */
+#rotateOverlay{
+  position:fixed; inset:0;
+  background:#000;
+  z-index:9999;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding: calc(var(--frame) + var(--gap) + var(--safe-t))
+           calc(var(--frame) + var(--gap) + var(--safe-r))
+           calc(var(--frame) + var(--gap) + var(--safe-b))
+           calc(var(--frame) + var(--gap) + var(--safe-l));
+}
+#rotateOverlay.show{ display:flex; }
+#rotateOverlay .h1{ font-size:var(--fs-title); letter-spacing:.10em; line-height:1.35; }
+#rotateOverlay .p{ font-size:var(--fs-body); opacity:.95; line-height:1.6; }
+
 /* ===== Menu ===== */
 #menuWrap{
   position:fixed;
@@ -217,7 +235,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
   border:0 !important;
 }
 
-/* Modal */
+/* ===== Modal Backdrop (click should NOT close) ===== */
 #modalBackdrop{
   position:fixed; inset:0;
   background:rgba(0,0,0,.78);
@@ -243,7 +261,29 @@ button:active{ opacity:.75; transform: translateY(1px); }
   max-height: calc(var(--vhpx) - 2*(var(--frame) + var(--safe-t) + var(--safe-b)));
 }
 
-#modalHeader{
+/* Document viewer modal */
+#docModal{
+  position:fixed;
+  left:50%; top:50%;
+  transform:translate(-50%,-50%);
+  width:min(1100px, calc(100vw - 2*(max(8px,var(--frame)) + var(--safe-l) + var(--safe-r))));
+  height: calc(var(--vhpx) - 2*(var(--frame) + var(--safe-t) + var(--safe-b)));
+  border:1px solid rgba(255,255,255,.85);
+  background:rgba(0,0,0,.92);
+  z-index:420;
+  display:flex;
+  flex-direction:column;
+}
+#docModal.hidden{ display:none !important; }
+#docFrame{
+  border:0;
+  width:100%;
+  height:100%;
+  background:#000;
+}
+
+/* Modal headers */
+.modalHeader{
   display:flex;
   justify-content:space-between;
   align-items:center;
@@ -251,12 +291,12 @@ button:active{ opacity:.75; transform: translateY(1px); }
   border-bottom:1px solid rgba(255,255,255,.45);
   flex:0 0 auto;
 }
-#modalTitle{
+.modalTitle{
   font-size:var(--fs-small);
   letter-spacing:.12em;
   text-transform:uppercase;
 }
-#closeModalBtn{ padding:10px 14px; }
+.modalExitBtn{ padding:10px 14px; }
 
 #modalBody{
   padding:10px 12px 12px;
@@ -287,8 +327,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
   flex:1 1 auto;
 }
 
-/* ===== INPUT AREA ===== */
-/* ✅ we show a "display" line with visible spaces, and keep a hidden textarea as the actual buffer */
+/* Input display */
 #typeDisplayWrap{
   width:100%;
   border:1px solid rgba(255,255,255,.85);
@@ -302,10 +341,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
   display:flex;
   align-items:center;
 }
-#typePrefix{
-  flex:0 0 auto;
-  opacity:.9;
-}
+#typePrefix{ flex:0 0 auto; opacity:.9; }
 #typeDisplay{
   flex:1 1 auto;
   text-align:left;
@@ -314,7 +350,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
   text-overflow:ellipsis;
 }
 
-/* Hidden buffer (no system keyboard) */
+/* Hidden buffer */
 #textArea{
   position:fixed;
   left:-9999px;
@@ -323,8 +359,8 @@ button:active{ opacity:.75; transform: translateY(1px); }
   opacity:0;
 }
 
-/* ===== KEYBOARD (US-friendly) ===== */
-/* Wider keyboard + bigger hit targets + punctuation row */
+/* Keyboard: prevent cropping when photo row visible
+   ✅ solution: cap modal height, and make body internally scroll-free by shrinking keyboard slightly if needed */
 #kbd{
   width:calc(100% + 72px);
   margin-left:-36px;
@@ -346,8 +382,8 @@ button:active{ opacity:.75; transform: translateY(1px); }
 .key{
   flex:1 1 0;
   min-width:0;
-  height:44px;            /* ✅ a bit taller for fewer typos */
-  padding:0 18px;         /* ✅ wider finger landing */
+  height:44px;
+  padding:0 18px;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -361,15 +397,12 @@ button:active{ opacity:.75; transform: translateY(1px); }
 }
 .key.wide{ flex:3 1 0; }
 .key.space{ flex:7 1 0; }
-.key.sym{
-  letter-spacing:.02em;
-  text-transform:none;
-}
+.key.sym{ letter-spacing:.02em; text-transform:none; }
 
 /* Landscape compact */
 @media (orientation: landscape){
-  #modalHeader{ padding:8px 10px; }
-  #closeModalBtn{ padding:8px 12px; }
+  #modal .modalHeader{ padding:8px 10px; }
+  #modal .modalExitBtn{ padding:8px 12px; }
   #modalBody{ padding:8px 10px 10px; gap:7px; }
 
   #imgPreviewRow{ gap:8px; }
@@ -385,27 +418,25 @@ button:active{ opacity:.75; transform: translateY(1px); }
     gap:6px;
   }
   .krow{ gap:6px; }
-  .key{ height:34px; padding:0 16px; }
+  .key{ height:32px; padding:0 16px; } /* ✅ keep visible even with photo */
 }
 
-/* Extra short heights */
+/* Extra short heights: shrink keyboard further (fix cropping) */
 @media (max-height: 520px){
   :root{ --frame: clamp(8px, 2.0vmin, 18px); --gap: 8px; }
   #menuPanel{ top: calc(var(--frame) + 44px + var(--safe-t)); }
   .tapHint{ right:calc(var(--frame) + var(--safe-r) + 22px); bottom:calc(var(--frame) + var(--safe-b) + 16px); }
   #typeDisplayWrap{ min-height:34px; max-height:48px; }
-  #kbd{ padding:7px 16px 6px; }
-  .key{ height:30px; }
+  #kbd{ padding:6px 14px 6px; gap:5px; }
+  .key{ height:28px; padding:0 14px; }
 }
 
-.frameBox, #menuPanel, #modal { border-radius:0 !important; }
+.frameBox, #menuPanel, #modal, #docModal { border-radius:0 !important; }
 </style>
 </head>
 
 <body>
 <div id="root">
-
-  <!-- background removed ✅ -->
 
   <iframe id="ninjaOverlay"
     allow="autoplay; fullscreen; clipboard-read; clipboard-write"
@@ -414,6 +445,14 @@ button:active{ opacity:.75; transform: translateY(1px); }
     src="about:blank"></iframe>
 
   <div class="frameBox" aria-hidden="true"></div>
+
+  <!-- Orientation overlay -->
+  <div id="rotateOverlay" aria-hidden="true">
+    <div>
+      <div class="h1">PLEASE ROTATE YOUR PHONE</div>
+      <div class="p">This experience only works in <strong>LANDSCAPE</strong> mode.</div>
+    </div>
+  </div>
 
   <div id="menuWrap">
     <button id="menuBtn" aria-label="Menu">
@@ -426,6 +465,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
   <div id="menuPanel" class="hidden">
     <div class="note" style="text-align:left;">MENU</div>
     <button id="homeBtn">RETURN TO START</button>
+    <button id="docBtn">DOCUMENT</button>
     <button id="closeMenuBtn">CLOSE</button>
   </div>
 
@@ -518,11 +558,14 @@ button:active{ opacity:.75; transform: translateY(1px); }
     <button id="memBtn" class="barBtn">SHARE MY MEMORY</button>
   </div>
 
+  <!-- Share Modal Backdrop -->
   <div id="modalBackdrop"></div>
+
+  <!-- Share Modal -->
   <div id="modal" class="hidden" role="dialog" aria-modal="true" aria-label="Share dialog">
-    <div id="modalHeader">
-      <div id="modalTitle">SHARE</div>
-      <button id="closeModalBtn">EXIT</button>
+    <div class="modalHeader">
+      <div id="modalTitle" class="modalTitle">SHARE</div>
+      <button id="closeModalBtn" class="modalExitBtn">EXIT</button>
     </div>
 
     <div id="modalBody">
@@ -531,20 +574,17 @@ button:active{ opacity:.75; transform: translateY(1px); }
         <img id="imgPreview" alt="preview"/>
       </div>
 
-      <!-- ✅ Visible input preview with underscore -->
       <div id="typeDisplayWrap" aria-label="Typed text">
         <div id="typePrefix">_</div>
         <div id="typeDisplay"></div>
       </div>
 
-      <!-- hidden buffer -->
       <textarea id="textArea"
         readonly inputmode="none"
         autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
 
       <div id="statusLine"></div>
 
-      <!-- ✅ US-friendly keyboard with punctuation row -->
       <div id="kbd" aria-hidden="true">
         <div class="krow">
           <div class="key sym" data-k=",">,</div>
@@ -572,6 +612,17 @@ button:active{ opacity:.75; transform: translateY(1px); }
     </div>
   </div>
 
+  <!-- Document Modal -->
+  <div id="docModal" class="hidden" role="dialog" aria-modal="true" aria-label="Document viewer">
+    <div class="modalHeader">
+      <div class="modalTitle">DOCUMENT</div>
+      <button id="closeDocBtn" class="modalExitBtn">EXIT</button>
+    </div>
+    <div style="position:relative; flex:1 1 auto; overflow:hidden;">
+      <iframe id="docFrame" src="about:blank" title="document"></iframe>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -594,14 +645,15 @@ const CONFIG = {
 
   FADE_MS: 1500,
 
-  // feedback
   CLICK_HZ: 85,
   CLICK_MS: 70,
   CLICK_GAIN: 0.05,
   VIBRATE_MS: 12,
 
-  // typing helpers
-  AUTO_SPACE_AFTER_PUNCT: true
+  AUTO_SPACE_AFTER_PUNCT: true,
+
+  // ✅ document path served by your node server
+  DOCUMENT_URL: "/document.pdf"
 };
 
 try{
@@ -612,10 +664,13 @@ try{
 
 const ninja = document.getElementById('ninjaOverlay');
 
+const rotateOverlay = document.getElementById('rotateOverlay');
+
 const menuBtn = document.getElementById('menuBtn');
 const menuPanel = document.getElementById('menuPanel');
 const closeMenuBtn = document.getElementById('closeMenuBtn');
 const homeBtn = document.getElementById('homeBtn');
+const docBtn = document.getElementById('docBtn');
 
 const scenes = [...document.querySelectorAll('.scene')];
 const bottomBar = document.getElementById('bottomBar');
@@ -631,10 +686,14 @@ const closeModalBtn = document.getElementById('closeModalBtn');
 const uploadImgBtn = document.getElementById('uploadImgBtn');
 const imgPreview = document.getElementById('imgPreview');
 
-const textArea = document.getElementById('textArea');      // hidden buffer
-const typeDisplay = document.getElementById('typeDisplay'); // visible
+const textArea = document.getElementById('textArea');
+const typeDisplay = document.getElementById('typeDisplay');
 const kbd = document.getElementById('kbd');
 const statusLine = document.getElementById('statusLine');
+
+const docModal = document.getElementById('docModal');
+const docFrame = document.getElementById('docFrame');
+const closeDocBtn = document.getElementById('closeDocBtn');
 
 const imgInput = document.createElement('input');
 imgInput.type = 'file';
@@ -665,6 +724,30 @@ if (visualViewport){
 }
 addEventListener('orientationchange', ()=> setTimeout(setViewportVars,120));
 document.documentElement.style.setProperty('--fade-ms', CONFIG.FADE_MS + 'ms');
+
+/* =========================
+   LANDSCAPE ONLY
+========================= */
+function isLandscape(){
+  const w = window.visualViewport?.width || innerWidth;
+  const h = window.visualViewport?.height || innerHeight;
+  return w >= h;
+}
+function enforceLandscape(){
+  const ok = isLandscape();
+  rotateOverlay.classList.toggle('show', !ok);
+  // disable interactions when portrait
+  document.body.style.pointerEvents = ok ? 'auto' : 'none';
+  rotateOverlay.style.pointerEvents = 'auto';
+  // close any open modal if rotated
+  if(!ok){
+    closeMenu();
+    closeModal(false);
+    closeDoc();
+  }
+}
+addEventListener('resize', enforceLandscape);
+addEventListener('orientationchange', ()=> setTimeout(enforceLandscape,100));
 
 /* =========================
    CLICK + HAPTIC
@@ -702,15 +785,27 @@ function feedback(){ clickBeep(); haptic(); }
 /* =========================
    MENU
 ========================= */
-function openMenu(){ menuPanel.classList.remove('hidden'); }
+function openMenu(){ if(!isLandscape()) return; menuPanel.classList.remove('hidden'); }
 function closeMenu(){ menuPanel.classList.add('hidden'); }
+
 menuBtn.addEventListener('click', (e)=>{
   e.preventDefault(); feedback();
   if(menuPanel.classList.contains('hidden')) openMenu();
   else closeMenu();
 });
 closeMenuBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); closeMenu(); });
-homeBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); closeMenu(); goToScene(1, true); });
+
+homeBtn.addEventListener('click', (e)=>{
+  e.preventDefault(); feedback();
+  closeMenu();
+  goToScene(1, true);
+});
+
+docBtn.addEventListener('click', (e)=>{
+  e.preventDefault(); feedback();
+  closeMenu();
+  openDoc();
+});
 
 /* =========================
    SCENES
@@ -757,12 +852,13 @@ for(const s of scenes){
   if(sn >= 1 && sn <= 5){
     s.addEventListener('click', ()=>{
       if(!menuPanel.classList.contains('hidden')) return;
+      if(!isLandscape()) return;
       feedback();
       nextScene();
     });
   }
 }
-document.getElementById('scene5').addEventListener('click', ()=>{ if(currentScene === 5) goToScene(6); });
+document.getElementById('scene5').addEventListener('click', ()=>{ if(currentScene === 5 && isLandscape()) goToScene(6); });
 
 /* =========================
    VDO.NINJA
@@ -799,11 +895,12 @@ function loadNinja(){
   applyRezScale();
   if(!ninja.src || ninja.src === 'about:blank') ninja.src = ninjaUrl();
 }
-setInterval(()=>{ if(currentScene === 6) ninja.src = ninjaUrl(); }, CONFIG.AUTO_REFRESH_MS);
+setInterval(()=>{ if(currentScene === 6 && isLandscape()) ninja.src = ninjaUrl(); }, CONFIG.AUTO_REFRESH_MS);
 addEventListener('pageshow', ()=> setTimeout(()=>{ setViewportVars(); applyRezScale(); }, 60));
 
 /* =========================
-   MODAL
+   SHARE MODAL
+   ✅ backdrop click no longer closes
 ========================= */
 function hardClearInputs(){
   selectedImageFile = null;
@@ -815,6 +912,7 @@ function hardClearInputs(){
 }
 
 function openModal(which){
+  if(!isLandscape()) return;
   mode = which;
 
   if(which === 'memory'){
@@ -833,7 +931,9 @@ function openModal(which){
   modalBackdrop.classList.add('show');
   try{ textArea.blur(); }catch{}
 }
-function closeModal(){
+
+function closeModal(withFeedback=true){
+  if(withFeedback) feedback();
   modal.classList.add('hidden');
   modalBackdrop.classList.remove('show');
   mode = null;
@@ -841,8 +941,11 @@ function closeModal(){
 
 memBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); openModal('memory'); });
 feelBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); openModal('feeling'); });
-closeModalBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); closeModal(); });
-modalBackdrop.addEventListener('click', ()=>{ feedback(); closeModal(); });
+
+closeModalBtn.addEventListener('click', (e)=>{ e.preventDefault(); closeModal(true); });
+
+// ✅ DO NOT close when tapping backdrop
+modalBackdrop.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); });
 
 uploadImgBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); imgInput.click(); });
 imgInput.addEventListener('change', ()=>{
@@ -858,7 +961,28 @@ imgInput.addEventListener('change', ()=>{
 
   statusLine.textContent = 'PHOTO SELECTED.';
   imgInput.value = '';
+
+  // ✅ after selecting photo, ensure layout vars updated (fix “keyboard cut” on some devices)
+  setTimeout(()=>{ setViewportVars(); applyRezScale(); }, 80);
 });
+
+/* =========================
+   DOCUMENT MODAL
+========================= */
+function openDoc(){
+  if(!isLandscape()) return;
+  modalBackdrop.classList.add('show');     // reuse same backdrop
+  docModal.classList.remove('hidden');
+  docFrame.src = CONFIG.DOCUMENT_URL + '?ts=' + Date.now();
+}
+function closeDoc(){
+  docModal.classList.add('hidden');
+  docFrame.src = 'about:blank';
+  // if share modal is not open, remove backdrop
+  const shareOpen = !modal.classList.contains('hidden');
+  if(!shareOpen) modalBackdrop.classList.remove('show');
+}
+closeDocBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); closeDoc(); });
 
 /* =========================
    UPLOAD HELPERS
@@ -879,8 +1003,7 @@ async function postForm(url, formData){
 }
 
 /* =========================
-   SEND
-   ✅ always clear on SEND (success or fail)
+   SEND (clear always)
 ========================= */
 async function sendNow(){
   const text = (textArea.value || '').trim();
@@ -892,7 +1015,6 @@ async function sendNow(){
   const sendingText = text;
   const sendingImage = selectedImageFile;
 
-  // clear immediately
   hardClearInputs();
 
   feedback();
@@ -908,7 +1030,7 @@ async function sendNow(){
       });
       if(!res.ok){
         const t = await res.text().catch(()=> '');
-        statusLine.textContent = `FAILED (${res.status}) ${t ? '\\n'+t.slice(0,120) : ''}`;
+        statusLine.textContent = `FAILED (${res.status}) ${t ? '\n'+t.slice(0,120) : ''}`;
         return;
       }
       statusLine.textContent = 'SENT ✓';
@@ -927,7 +1049,7 @@ async function sendNow(){
         const resImg = await postForm(CONFIG.SERVER + '/upload', form);
         if(!resImg.ok){
           const t = await resImg.text().catch(()=> '');
-          statusLine.textContent = `PHOTO FAILED (${resImg.status}) ${t ? '\\n'+t.slice(0,120) : ''}`;
+          statusLine.textContent = `PHOTO FAILED (${resImg.status}) ${t ? '\n'+t.slice(0,120) : ''}`;
           return;
         }
       }
@@ -940,7 +1062,7 @@ async function sendNow(){
       });
       if(!res2.ok){
         const t = await res2.text().catch(()=> '');
-        statusLine.textContent = `TEXT FAILED (${res2.status}) ${t ? '\\n'+t.slice(0,120) : ''}`;
+        statusLine.textContent = `TEXT FAILED (${res2.status}) ${t ? '\n'+t.slice(0,120) : ''}`;
         return;
       }
       statusLine.textContent = 'SENT ✓';
@@ -957,7 +1079,6 @@ async function sendNow(){
 ========================= */
 function preventSystemKeyboard(){
   const stop = (e)=>{ try{ e.preventDefault(); }catch{} try{ textArea.blur(); }catch{} };
-  // no focus, no pointer down
   textArea.addEventListener('focus', stop, {passive:false});
   textArea.addEventListener('pointerdown', stop, {passive:false});
   textArea.addEventListener('touchstart', stop, {passive:false});
@@ -967,21 +1088,16 @@ function preventSystemKeyboard(){
 preventSystemKeyboard();
 
 /* =========================
-   DISPLAY RENDERING (shows spaces clearly)
-   - show spaces as "·" so americans see it
-   - prefix "_" always visible in UI
+   DISPLAY (show spaces)
 ========================= */
 function renderDisplay(){
   const v = textArea.value || '';
-  // show spaces & tabs
-  const shown = v
-    .replaceAll(' ', '·')
-    .replaceAll('\t', '⇥');
+  const shown = v.replaceAll(' ', '·').replaceAll('\t', '⇥');
   typeDisplay.textContent = shown;
 }
 
 /* =========================
-   INSERT + EDIT (buffer)
+   INSERT + EDIT
 ========================= */
 function insertText(s){
   const start = (typeof textArea.selectionStart === 'number') ? textArea.selectionStart : (textArea.value.length);
@@ -1007,32 +1123,24 @@ function backspace(){
   try{ textArea.setSelectionRange(start-1,start-1); }catch{}
   renderDisplay();
 }
-
 function maybeAutoSpaceAfterPunct(ch){
   if(!CONFIG.AUTO_SPACE_AFTER_PUNCT) return;
   if([',','.','?','!'].includes(ch)){
-    // if next char isn't space and we are at end, add a space
     const v = textArea.value || '';
     const pos = (typeof textArea.selectionStart === 'number') ? textArea.selectionStart : v.length;
     if(pos === v.length){
-      // avoid double space
       if(!v.endsWith(' ')) insertText(' ');
     }
   }
 }
 
-/* =========================
-   KEYBOARD CLICK
-   ✅ bigger hit targets already (CSS)
-   ✅ punctuation row added
-========================= */
+/* Keyboard click */
 kbd.addEventListener('click', (e)=>{
   const key = e.target.closest('.key');
   if(!key) return;
   const k = key.dataset.k;
   if(!k) return;
 
-  // do NOT focus anything (avoid system keyboard)
   try{ textArea.blur(); }catch{}
 
   if(k === 'SPACE'){ insertText(' '); feedback(); return; }
@@ -1047,22 +1155,9 @@ kbd.addEventListener('click', (e)=>{
 /* =========================
    INIT
 ========================= */
-function setSceneActive(n){
-  for(const s of scenes){
-    const sn = Number(s.dataset.scene || 0);
-    s.classList.toggle('active', sn === n);
-  }
-  currentScene = n;
-
-  if(n === 6){
-    bottomBar.classList.add('show');
-    loadNinja();
-  }else{
-    bottomBar.classList.remove('show');
-  }
-}
 setSceneActive(1);
 renderDisplay();
+enforceLandscape();
 
 })();
 </script>
