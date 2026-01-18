@@ -94,48 +94,20 @@ button:active{ opacity:.75; transform: translateY(1px); }
   z-index:50;
 }
 
-/* ✅ Orb (continuous wobble + subtle shape breathing) */
-#orbWrap{
-  position:fixed;
-  left:50%; top:50%;
-  width:min(66vmin, 580px);
-  height:min(66vmin, 580px);
-  transform:translate(-50%,-50%);
+/* ===========================
+   ✅ BACKGROUND GENERATIVE LINES (scenes 1~5)
+   - “dots gather → lines connect → space appears → disappears”
+   - reacts to ambient mic (if permission granted) or auto-pulses
+=========================== */
+#bgFX{
+  position:fixed; inset:0;
+  z-index:65;              /* between frame(50) and text(100) */
   pointer-events:none;
-  z-index:70;
   opacity:.95;
-  will-change: transform;
-  animation: orbWobble 40s ease-in-out infinite;
 }
-#orbSvg{ width:100%; height:100%; display:block; }
-#orbPath{
-  fill:none;
-  stroke:rgba(255,255,255,.78);
-  stroke-width:0.85;              /* thinner line */
-  vector-effect: non-scaling-stroke;
-  stroke-linecap:round;
-  stroke-linejoin:round;
-  will-change: d;
-}
-
-/* keep the photo-like contour; just gently “breathe” between 2 close variants */
-@keyframes orbMorph{
-  0%,100%{
-    d: path("M 255 135 C 170 190, 135 330, 150 480 C 170 690, 315 880, 520 900 C 705 918, 850 770, 875 590 C 896 440, 870 320, 825 235 C 780 150, 705 115, 615 105 C 555 98, 510 102, 470 112 C 430 122, 400 138, 360 150 C 315 164, 285 160, 255 135 Z");
-  }
-  50%{
-    d: path("M 260 140 C 175 200, 140 335, 155 485 C 176 690, 320 875, 520 895 C 705 910, 845 770, 868 592 C 888 450, 865 322, 820 242 C 776 160, 706 122, 618 112 C 560 105, 512 108, 472 118 C 432 128, 404 142, 364 155 C 320 170, 292 166, 260 140 Z");
-  }
-}
-#orbPath{
-  animation: orbMorph 18s ease-in-out infinite;
-}
-@keyframes orbWobble{
-  0%   { transform:translate(-50%,-50%) rotate(-1.0deg) scale(1.002, 0.998) translate(-0.5vmin, 0.2vmin); }
-  25%  { transform:translate(-50%,-50%) rotate( 0.5deg) scale(0.997, 1.003) translate( 0.3vmin,-0.3vmin); }
-  50%  { transform:translate(-50%,-50%) rotate(-0.3deg) scale(1.003, 0.997) translate( 0.4vmin, 0.2vmin); }
-  75%  { transform:translate(-50%,-50%) rotate( 0.9deg) scale(0.999, 1.001) translate(-0.2vmin, 0.4vmin); }
-  100% { transform:translate(-50%,-50%) rotate(-1.0deg) scale(1.002, 0.998) translate(-0.5vmin, 0.2vmin); }
+#bgCanvas{
+  position:absolute; inset:0;
+  width:100%; height:100%;
 }
 
 /* Menu */
@@ -332,14 +304,6 @@ button:active{ opacity:.75; transform: translateY(1px); }
   flex:1 1 auto;
 }
 
-/* ✅ NEW: reset button (same row, black button, no border) */
-#resetBtn{
-  min-width: 140px;
-  flex:0 0 auto;
-  background:#000;
-  border:0 !important;
-}
-
 /* Text area */
 #textArea{
   width:100%;
@@ -408,7 +372,6 @@ button:active{ opacity:.75; transform: translateY(1px); }
 
   #imgPreviewRow{ gap:8px; }
   #uploadImgBtn{ min-width: 140px; padding:7px 10px; }
-  #resetBtn{ min-width: 120px; padding:7px 10px; }
   #imgPreview{ width:78px; height:56px; }
 
   #textArea{ min-height:40px; max-height:58px; padding:7px 9px; }
@@ -423,7 +386,6 @@ button:active{ opacity:.75; transform: translateY(1px); }
   .key{ height:30px; padding:0 14px; }
 
   #statusLine{ min-height: 14px; }
-  #orbWrap{ width:min(58vmin, 480px); height:min(58vmin, 480px); }
 }
 
 /* Extra short heights */
@@ -443,6 +405,11 @@ button:active{ opacity:.75; transform: translateY(1px); }
 <body>
 <div id="root">
 
+  <!-- ✅ Background FX canvas (scenes 1~5) -->
+  <div id="bgFX" aria-hidden="true">
+    <canvas id="bgCanvas"></canvas>
+  </div>
+
   <iframe id="ninjaOverlay"
     allow="autoplay; fullscreen; clipboard-read; clipboard-write"
     allowtransparency="true"
@@ -450,24 +417,6 @@ button:active{ opacity:.75; transform: translateY(1px); }
     src="about:blank"></iframe>
 
   <div class="frameBox" aria-hidden="true"></div>
-
-  <!-- ✅ Orb stays wobbling (scene 1~5) -->
-  <div id="orbWrap" aria-hidden="true">
-    <svg id="orbSvg" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet">
-      <path id="orbPath" d="
-        M 255 135
-        C 170 190, 135 330, 150 480
-        C 170 690, 315 880, 520 900
-        C 705 918, 850 770, 875 590
-        C 896 440, 870 320, 825 235
-        C 780 150, 705 115, 615 105
-        C 555 98, 510 102, 470 112
-        C 430 122, 400 138, 360 150
-        C 315 164, 285 160, 255 135
-        Z
-      "></path>
-    </svg>
-  </div>
 
   <div id="menuWrap">
     <button id="menuBtn" aria-label="Menu">
@@ -582,7 +531,6 @@ button:active{ opacity:.75; transform: translateY(1px); }
     <div id="modalBody">
       <div id="imgPreviewRow">
         <button id="uploadImgBtn">UPLOAD A PHOTO</button>
-        <button id="resetBtn">NEW UPLOAD</button>
         <img id="imgPreview" alt="preview"/>
       </div>
 
@@ -617,6 +565,11 @@ button:active{ opacity:.75; transform: translateY(1px); }
 <script>
 (()=>{
 
+/* =========================
+   ✅ YES: Upload server + Ninja are active
+   - Upload server: CONFIG.SERVER + /upload  and /upload-text
+   - Ninja view: CONFIG.ROOM_ID loaded in scene #6
+========================= */
 const CONFIG = {
   SERVER: (location.origin && location.origin.startsWith('http')) ? location.origin : 'http://127.0.0.1:4000',
   UPLOAD_TIMEOUT_MS: 20000,
@@ -634,7 +587,16 @@ const CONFIG = {
   CLICK_HZ: 85,
   CLICK_MS: 70,
   CLICK_GAIN: 0.05,
-  VIBRATE_MS: 12
+  VIBRATE_MS: 12,
+
+  // BG FX
+  BG_POINTS: 140,
+  BG_MAX_LINK_DIST: 120,     // px (scaled)
+  BG_LINE_ALPHA: 0.22,
+  BG_POINT_ALPHA: 0.55,
+  BG_SPEED: 0.55,            // base speed
+  BG_PULSE_BOOST: 1.8,       // audio/pulse boost
+  BG_SMOOTH: 0.12            // energy smoothing
 };
 
 try{
@@ -662,14 +624,15 @@ const modalTitle = document.getElementById('modalTitle');
 const closeModalBtn = document.getElementById('closeModalBtn');
 
 const uploadImgBtn = document.getElementById('uploadImgBtn');
-const resetBtn = document.getElementById('resetBtn');
 const imgPreview = document.getElementById('imgPreview');
 
 const textArea = document.getElementById('textArea');
 const kbd = document.getElementById('kbd');
 const statusLine = document.getElementById('statusLine');
 
-const orbWrap = document.getElementById('orbWrap');
+const bgFX = document.getElementById('bgFX');
+const bgCanvas = document.getElementById('bgCanvas');
+const ctx2d = bgCanvas.getContext('2d', { alpha:true });
 
 const imgInput = document.createElement('input');
 imgInput.type = 'file';
@@ -682,12 +645,22 @@ let currentScene = 1;
 let mode = null;
 let selectedImageFile = null;
 
+/* =========================
+   VIEWPORT VARS
+========================= */
 function setViewportVars(){
   const vv = window.visualViewport;
   const w = Math.round((vv?.width || innerWidth));
   const h = Math.round((vv?.height || innerHeight));
   document.documentElement.style.setProperty('--vwpx', w + 'px');
   document.documentElement.style.setProperty('--vhpx', h + 'px');
+  // canvas backing store
+  const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+  bgCanvas.width = Math.round(w * dpr);
+  bgCanvas.height = Math.round(h * dpr);
+  bgCanvas.style.width = w + 'px';
+  bgCanvas.style.height = h + 'px';
+  ctx2d.setTransform(dpr,0,0,dpr,0,0);
 }
 setViewportVars();
 addEventListener('resize', setViewportVars);
@@ -698,7 +671,9 @@ if (visualViewport){
 addEventListener('orientationchange', ()=> setTimeout(setViewportVars,120));
 document.documentElement.style.setProperty('--fade-ms', CONFIG.FADE_MS + 'ms');
 
-/* click + haptic */
+/* =========================
+   CLICK + HAPTIC
+========================= */
 let audioCtx = null;
 function ensureAudio(){
   if(audioCtx) return audioCtx;
@@ -729,7 +704,9 @@ function clickBeep(){
 function haptic(){ try{ if(navigator.vibrate) navigator.vibrate(CONFIG.VIBRATE_MS); }catch{} }
 function feedback(){ clickBeep(); haptic(); }
 
-/* Menu */
+/* =========================
+   MENU
+========================= */
 function openMenu(){ menuPanel.classList.remove('hidden'); }
 function closeMenu(){ menuPanel.classList.add('hidden'); }
 menuBtn.addEventListener('click', (e)=>{
@@ -740,7 +717,9 @@ menuBtn.addEventListener('click', (e)=>{
 closeMenuBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); closeMenu(); });
 homeBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); closeMenu(); goToScene(1, true); });
 
-/* Scenes */
+/* =========================
+   SCENES
+========================= */
 function setSceneActive(n){
   for(const s of scenes){
     const sn = Number(s.dataset.scene || 0);
@@ -755,8 +734,8 @@ function setSceneActive(n){
     bottomBar.classList.remove('show');
   }
 
-  /* orb only scene 1~5, but it always keeps wobbling via CSS animation */
-  if(orbWrap) orbWrap.style.display = (n >= 1 && n <= 5) ? 'block' : 'none';
+  // ✅ BG FX only in scenes 1~5
+  if(bgFX) bgFX.style.display = (n >= 1 && n <= 5) ? 'block' : 'none';
 }
 
 let sceneLock = false;
@@ -793,7 +772,9 @@ for(const s of scenes){
 }
 document.getElementById('scene5').addEventListener('click', ()=>{ if(currentScene === 5) goToScene(6); });
 
-/* VDO.Ninja */
+/* =========================
+   VDO.NINJA
+========================= */
 const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 function applyNinjaStyle(){
   ninja.style.opacity = String(Math.max(0, Math.min(1, CONFIG.NINJA_OPACITY)));
@@ -829,13 +810,15 @@ function loadNinja(){
 setInterval(()=>{ if(currentScene === 6) ninja.src = ninjaUrl(); }, CONFIG.AUTO_REFRESH_MS);
 addEventListener('pageshow', ()=> setTimeout(()=>{ setViewportVars(); applyRezScale(); }, 60));
 
-/* Modal open/close */
+/* =========================
+   MODAL
+========================= */
 function resetComposerUI(){
   selectedImageFile = null;
   imgPreview.style.display = 'none';
   imgPreview.src = '';
   textArea.value = '';
-  statusLine.textContent = 'READY.';
+  statusLine.textContent = '';
 }
 function openModal(which){
   mode = which;
@@ -846,10 +829,7 @@ function openModal(which){
     uploadImgBtn.classList.remove('hidden');
   }else{
     modalTitle.textContent = 'SHARE MY FEELING';
-    /* keep row but hide image upload controls; still show NEW UPLOAD to clear text quickly */
-    document.getElementById('imgPreviewRow').classList.remove('hidden');
-    uploadImgBtn.classList.add('hidden');
-    imgPreview.style.display = 'none';
+    document.getElementById('imgPreviewRow').classList.add('hidden');
     selectedImageFile = null;
   }
 
@@ -869,13 +849,6 @@ feelBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); openMod
 closeModalBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); closeModal(); });
 modalBackdrop.addEventListener('click', ()=>{ feedback(); closeModal(); });
 
-/* ✅ NEW UPLOAD button: clears text + photo so user can keep submitting */
-resetBtn.addEventListener('click', (e)=>{
-  e.preventDefault();
-  feedback();
-  resetComposerUI();
-});
-
 /* Image pick */
 uploadImgBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); imgInput.click(); });
 imgInput.addEventListener('change', ()=>{
@@ -893,7 +866,9 @@ imgInput.addEventListener('change', ()=>{
   imgInput.value = '';
 });
 
-/* Upload helpers */
+/* =========================
+   UPLOAD HELPERS
+========================= */
 async function fetchWithTimeout(url, options={}, timeoutMs=CONFIG.UPLOAD_TIMEOUT_MS){
   const controller = new AbortController();
   const id = setTimeout(()=>controller.abort(new Error("timeout")), timeoutMs);
@@ -909,7 +884,10 @@ async function postForm(url, formData){
   return res;
 }
 
-/* Send */
+/* =========================
+   SEND
+   ✅ After SEND: clear everything so they can submit again immediately
+========================= */
 async function sendNow(){
   const text = (textArea.value || '').trim();
   if(!text){
@@ -918,7 +896,7 @@ async function sendNow(){
   }
   feedback();
 
-  // Feeling: text only
+  // Feeling: send text only
   if(mode === 'feeling'){
     statusLine.textContent = 'SENDING...';
     const payload = { text, clientTime: new Date().toISOString(), type:'feeling' };
@@ -933,7 +911,9 @@ async function sendNow(){
         statusLine.textContent = `FAILED (${res.status}) ${t ? '\\n'+t.slice(0,120) : ''}`;
         return;
       }
-      statusLine.textContent = 'SENT ✓ (PRESS NEW UPLOAD TO SEND AGAIN)';
+      // ✅ clear immediately
+      resetComposerUI();
+      statusLine.textContent = 'SENT ✓';
       return;
     }catch(err){
       statusLine.textContent = `ERROR: ${String(err && err.message ? err.message : err)}`;
@@ -973,7 +953,9 @@ async function sendNow(){
         statusLine.textContent = `TEXT FAILED (${res2.status}) ${t ? '\\n'+t.slice(0,120) : ''}`;
         return;
       }
-      statusLine.textContent = 'SENT ✓ (PRESS NEW UPLOAD TO SEND AGAIN)';
+      // ✅ clear immediately
+      resetComposerUI();
+      statusLine.textContent = 'SENT ✓';
       return;
     }catch(err){
       statusLine.textContent = `TEXT ERROR: ${String(err && err.message ? err.message : err)}`;
@@ -982,7 +964,9 @@ async function sendNow(){
   }
 }
 
-/* Prevent system keyboard */
+/* =========================
+   PREVENT SYSTEM KEYBOARD
+========================= */
 function preventSystemKeyboard(){
   const blurIt = ()=>{ try{ textArea.blur(); }catch{} };
   const stop = (e)=>{ try{ e.preventDefault(); }catch{} blurIt(); };
@@ -995,7 +979,9 @@ function preventSystemKeyboard(){
 }
 preventSystemKeyboard();
 
-/* Custom keyboard input */
+/* =========================
+   CUSTOM KEYBOARD INPUT
+========================= */
 function insertText(s){
   const start = (typeof textArea.selectionStart === 'number') ? textArea.selectionStart : (textArea.value.length);
   const end   = (typeof textArea.selectionEnd === 'number') ? textArea.selectionEnd : (textArea.value.length);
@@ -1032,7 +1018,179 @@ kbd.addEventListener('click', (e)=>{
   feedback();
 });
 
-/* Init */
+/* =========================
+   ✅ BACKGROUND FX ENGINE
+   - tries mic; if denied, uses auto pulse
+========================= */
+let energy = 0;         // smoothed 0..1
+let targetEnergy = 0;   // target 0..1
+let micReady = false;
+
+let analyser = null;
+let micData = null;
+let micCtx = null;
+
+function clamp01(x){ return Math.max(0, Math.min(1, x)); }
+
+async function initMic(){
+  try{
+    if(!navigator.mediaDevices?.getUserMedia) return;
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation:true, noiseSuppression:true, autoGainControl:true }
+    });
+    micCtx = ensureAudio() || new (window.AudioContext||window.webkitAudioContext)();
+    const src = micCtx.createMediaStreamSource(stream);
+    analyser = micCtx.createAnalyser();
+    analyser.fftSize = 512;
+    analyser.smoothingTimeConstant = 0.85;
+    src.connect(analyser);
+    micData = new Uint8Array(analyser.frequencyBinCount);
+    micReady = true;
+  }catch{
+    micReady = false;
+  }
+}
+// try once on first user gesture (required on iOS)
+let micArmed = false;
+function armMicOnce(){
+  if(micArmed) return;
+  micArmed = true;
+  initMic();
+}
+document.addEventListener('pointerdown', armMicOnce, { once:true, passive:true });
+
+const pts = [];
+function initPoints(){
+  pts.length = 0;
+  const w = (window.visualViewport?.width || innerWidth);
+  const h = (window.visualViewport?.height || innerHeight);
+  const n = CONFIG.BG_POINTS;
+  for(let i=0;i<n;i++){
+    pts.push({
+      x: Math.random()*w,
+      y: Math.random()*h,
+      vx: (Math.random()*2-1) * CONFIG.BG_SPEED,
+      vy: (Math.random()*2-1) * CONFIG.BG_SPEED,
+      phase: Math.random()*Math.PI*2
+    });
+  }
+}
+initPoints();
+
+function sampleEnergyAuto(t){
+  // slow “breathing” when mic not allowed
+  const a = 0.35 + 0.25*Math.sin(t*0.0007);
+  const b = 0.18 + 0.18*Math.sin(t*0.0013 + 1.2);
+  return clamp01(a+b);
+}
+
+function sampleEnergyMic(){
+  if(!micReady || !analyser || !micData) return null;
+  analyser.getByteTimeDomainData(micData);
+  let sum = 0;
+  for(let i=0;i<micData.length;i++){
+    const v = (micData[i]-128)/128;
+    sum += v*v;
+  }
+  const rms = Math.sqrt(sum/micData.length); // ~0..1
+  // emphasize quiet changes
+  return clamp01(rms*2.6);
+}
+
+let lastT = performance.now();
+function tick(t){
+  const w = (window.visualViewport?.width || innerWidth);
+  const h = (window.visualViewport?.height || innerHeight);
+
+  const micE = sampleEnergyMic();
+  targetEnergy = (micE === null) ? sampleEnergyAuto(t) : micE;
+
+  // smooth
+  energy += (targetEnergy - energy) * CONFIG.BG_SMOOTH;
+  const e = energy;
+
+  // clear
+  ctx2d.clearRect(0,0,w,h);
+
+  // density & reach controlled by energy
+  const maxDist = CONFIG.BG_MAX_LINK_DIST * (0.65 + e*CONFIG.BG_PULSE_BOOST);
+  const lineA = CONFIG.BG_LINE_ALPHA * (0.45 + e*1.2);
+  const ptA   = CONFIG.BG_POINT_ALPHA * (0.45 + e*1.0);
+
+  // move points (a bit more when louder)
+  const dt = Math.max(0.016, Math.min(0.05, (t-lastT)/1000));
+  lastT = t;
+  const speedMul = (0.65 + e*1.7);
+
+  for(const p of pts){
+    p.phase += dt*(0.6 + e*2.0);
+    p.x += p.vx * speedMul;
+    p.y += p.vy * speedMul;
+
+    // gentle wandering
+    p.x += Math.cos(p.phase)*0.12*(0.5+e);
+    p.y += Math.sin(p.phase)*0.12*(0.5+e);
+
+    // wrap
+    if(p.x < -30) p.x = w+30;
+    if(p.x > w+30) p.x = -30;
+    if(p.y < -30) p.y = h+30;
+    if(p.y > h+30) p.y = -30;
+  }
+
+  // draw lines
+  ctx2d.lineWidth = 0.75; // thin
+  ctx2d.strokeStyle = `rgba(255,255,255,${lineA})`;
+
+  for(let i=0;i<pts.length;i++){
+    const aP = pts[i];
+    for(let j=i+1;j<pts.length;j++){
+      const bP = pts[j];
+      const dx = aP.x - bP.x;
+      const dy = aP.y - bP.y;
+      const d2 = dx*dx + dy*dy;
+      if(d2 > maxDist*maxDist) continue;
+
+      // alpha falloff with distance
+      const d = Math.sqrt(d2);
+      const k = 1 - (d / maxDist);
+      const alpha = lineA * (k*k);
+
+      ctx2d.strokeStyle = `rgba(255,255,255,${alpha})`;
+      ctx2d.beginPath();
+      ctx2d.moveTo(aP.x, aP.y);
+      ctx2d.lineTo(bP.x, bP.y);
+      ctx2d.stroke();
+    }
+  }
+
+  // draw points (dots gather feeling)
+  ctx2d.fillStyle = `rgba(255,255,255,${ptA})`;
+  const r = 1.2 + e*1.1;
+  for(const p of pts){
+    ctx2d.beginPath();
+    ctx2d.arc(p.x, p.y, r, 0, Math.PI*2);
+    ctx2d.fill();
+  }
+
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+// re-init points on big resize/orientation
+let resizeTO = null;
+addEventListener('resize', ()=>{
+  clearTimeout(resizeTO);
+  resizeTO = setTimeout(()=> initPoints(), 120);
+});
+addEventListener('orientationchange', ()=>{
+  clearTimeout(resizeTO);
+  resizeTO = setTimeout(()=> initPoints(), 180);
+});
+
+/* =========================
+   INIT
+========================= */
 setSceneActive(1);
 
 })();
