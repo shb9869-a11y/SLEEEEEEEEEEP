@@ -24,9 +24,10 @@
   --fg:#fff;
   --red:#ff2b2b;
 
-  --fs-title: clamp(12.5px, 2.45vmin, 18.5px);
-  --fs-body:  clamp(11px,   1.95vmin, 15px);
-  --fs-small: clamp(10.2px, 1.65vmin, 13px);
+  /* slightly reduced overall (for landscape no-scroll) */
+  --fs-title: clamp(12px, 2.35vmin, 18px);
+  --fs-body:  clamp(10.6px, 1.85vmin, 14.6px);
+  --fs-small: clamp(10px, 1.55vmin, 12.8px);
 
   --btn-pad-y: clamp(8px, 0.9vmin, 11px);
   --btn-pad-x: clamp(11px, 1.6vmin, 17px);
@@ -93,14 +94,14 @@ button:active{ opacity:.75; transform: translateY(1px); }
   z-index:50;
 }
 
-/* ✅ BG: 38-point connected "orb" that wiggles with audio (scenes 1~5) */
-#orbFX{
+/* ✅ SLEEEEEP “wobble ring” (scenes 1~5): clean thin line, slow organic motion */
+#sleepFX{
   position:fixed; inset:0;
   z-index:65;
   pointer-events:none;
   opacity:.98;
 }
-#orbCanvas{
+#sleepCanvas{
   position:absolute; inset:0;
   width:100%; height:100%;
 }
@@ -225,7 +226,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
 .barBtn{
   flex:1 1 160px;
   min-width: 0;
-  background:#000;     /* ✅ perfect black */
+  background:#000;
   border:0 !important;
 }
 
@@ -299,11 +300,11 @@ button:active{ opacity:.75; transform: translateY(1px); }
   flex:1 1 auto;
 }
 
-/* Text area */
+/* Text area (kept small so everything fits landscape) */
 #textArea{
   width:100%;
-  min-height:54px;
-  max-height:86px;
+  min-height:46px;
+  max-height:72px;
   resize:none;
   padding:10px 12px;
   background:rgba(0,0,0,.35);
@@ -311,7 +312,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
   color:var(--fg);
   border-radius:0;
   letter-spacing:.02em;
-  line-height:1.45;
+  line-height:1.42;
 }
 
 /* Keyboard wider + keys wider */
@@ -342,7 +343,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
   align-items:center;
   justify-content:center;
   border:1px solid rgba(255,255,255,.75);
-  background:#000;   /* ✅ perfect black */
+  background:#000;
   border-radius:0;
   user-select:none;
   -webkit-user-select:none;
@@ -369,7 +370,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
   #uploadImgBtn{ min-width: 140px; padding:7px 10px; }
   #imgPreview{ width:78px; height:56px; }
 
-  #textArea{ min-height:40px; max-height:58px; padding:7px 9px; }
+  #textArea{ min-height:38px; max-height:54px; padding:7px 9px; }
 
   #kbd{
     width:calc(100% + 56px);
@@ -388,7 +389,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
   :root{ --frame: clamp(8px, 2.0vmin, 18px); --gap: 8px; }
   #menuPanel{ top: calc(var(--frame) + 44px + var(--safe-t)); }
   .tapHint{ right:calc(var(--frame) + var(--safe-r) + 22px); bottom:calc(var(--frame) + var(--safe-b) + 16px); }
-  #textArea{ min-height:38px; max-height:54px; }
+  #textArea{ min-height:34px; max-height:48px; }
   #kbd{ padding:7px 16px 6px; }
   .key{ height:28px; }
 }
@@ -400,9 +401,9 @@ button:active{ opacity:.75; transform: translateY(1px); }
 <body>
 <div id="root">
 
-  <!-- ✅ 38-point connected orb canvas (scenes 1~5) -->
-  <div id="orbFX" aria-hidden="true">
-    <canvas id="orbCanvas"></canvas>
+  <!-- ✅ SLEEEEEP wobble ring (scenes 1~5) -->
+  <div id="sleepFX" aria-hidden="true">
+    <canvas id="sleepCanvas"></canvas>
   </div>
 
   <iframe id="ninjaOverlay"
@@ -436,15 +437,6 @@ button:active{ opacity:.75; transform: translateY(1px); }
         When added, it can run in full screen.
       </div>
       <div class="p">We recommend using <strong>LANDSCAPE</strong> mode.</div>
-
-      <!-- ✅ Mic hint goes here -->
-      <div class="p">
-        If you allow microphone access, the background will subtly move with sound.
-        <br/>
-        You can enable it when you begin the experience.
-      </div>
-
-      <div class="note">Microphone is optional.</div>
     </div>
     <div class="tapHint" aria-hidden="true">
       <div class="tapHintText">Tap here to go to the next page.</div>
@@ -573,14 +565,10 @@ button:active{ opacity:.75; transform: translateY(1px); }
    CONFIG
 ========================= */
 const CONFIG = {
-  // ✅ Upload server endpoints still active:
-  //   POST  /upload       (multipart form image)
-  //   POST  /upload-text  (json text)
   SERVER: (location.origin && location.origin.startsWith('http')) ? location.origin : 'http://127.0.0.1:4000',
   UPLOAD_TIMEOUT_MS: 20000,
   UPLOAD_RETRY: 1,
 
-  // ✅ VDO.Ninja still active (scene #6)
   ROOM_ID: "YOURROOMID",
   REZ_SCALE: 1.0,
   NINJA_OPACITY: 1.0,
@@ -596,20 +584,15 @@ const CONFIG = {
   CLICK_GAIN: 0.05,
   VIBRATE_MS: 12,
 
-  // orb
-  ORB_N: 38,
-  ORB_RADIUS: 155,         // base radius (px; auto scales per screen)
-  ORB_LINE_ALPHA: 0.40,
-  ORB_POINT_ALPHA: 0.78,
-  ORB_POINT_R: 1.35,       // not big
-  ORB_STROKE_W: 0.85,      // thin-ish
-  ORB_WOBBLE_BASE: 1.6,    // px
-  ORB_WOBBLE_AUDIO: 12.0,  // px
-  ORB_SMOOTH: 0.14,        // energy smoothing
-  ORB_ROT_SPEED: 0.00006   // very slow rotation
+  // SLEEEEEP wobble
+  SLEEP_PTS: 220,           // enough to look smooth but not “mushy”
+  SLEEP_LINE_W: 0.7,        // thinner line
+  SLEEP_ALPHA: 0.58,
+  SLEEP_SPEED: 0.00024,     // very slow
+  SLEEP_WOBBLE: 0.010,      // subtle wobble amount (normalized)
+  SLEEP_WOBBLE2: 0.006      // secondary wobble
 };
 
-// allow ?room=xxxx
 try{
   const qs = new URLSearchParams(location.search);
   const roomFromUrl = (qs.get('room') || '').trim();
@@ -641,9 +624,9 @@ const textArea = document.getElementById('textArea');
 const kbd = document.getElementById('kbd');
 const statusLine = document.getElementById('statusLine');
 
-const orbFX = document.getElementById('orbFX');
-const orbCanvas = document.getElementById('orbCanvas');
-const octx = orbCanvas.getContext('2d', { alpha:true });
+const sleepFX = document.getElementById('sleepFX');
+const sleepCanvas = document.getElementById('sleepCanvas');
+const sctx = sleepCanvas.getContext('2d', { alpha:true });
 
 const imgInput = document.createElement('input');
 imgInput.type = 'file';
@@ -659,7 +642,6 @@ let selectedImageFile = null;
 /* =========================
    VIEWPORT VARS + CANVAS
 ========================= */
-let DPR = 1;
 function setViewportVars(){
   const vv = window.visualViewport;
   const w = Math.round((vv?.width || innerWidth));
@@ -667,12 +649,12 @@ function setViewportVars(){
   document.documentElement.style.setProperty('--vwpx', w + 'px');
   document.documentElement.style.setProperty('--vhpx', h + 'px');
 
-  DPR = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
-  orbCanvas.width = Math.round(w * DPR);
-  orbCanvas.height = Math.round(h * DPR);
-  orbCanvas.style.width = w + 'px';
-  orbCanvas.style.height = h + 'px';
-  octx.setTransform(DPR,0,0,DPR,0,0);
+  const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+  sleepCanvas.width = Math.round(w * dpr);
+  sleepCanvas.height = Math.round(h * dpr);
+  sleepCanvas.style.width = w + 'px';
+  sleepCanvas.style.height = h + 'px';
+  sctx.setTransform(dpr,0,0,dpr,0,0);
 }
 setViewportVars();
 addEventListener('resize', setViewportVars);
@@ -746,8 +728,8 @@ function setSceneActive(n){
     bottomBar.classList.remove('show');
   }
 
-  // orb only in scenes 1~5
-  if(orbFX) orbFX.style.display = (n >= 1 && n <= 5) ? 'block' : 'none';
+  // sleep wobble only in scenes 1~5
+  if(sleepFX) sleepFX.style.display = (n >= 1 && n <= 5) ? 'block' : 'none';
 }
 
 let sceneLock = false;
@@ -825,13 +807,15 @@ addEventListener('pageshow', ()=> setTimeout(()=>{ setViewportVars(); applyRezSc
 /* =========================
    MODAL
 ========================= */
-function resetComposerUI(){
+function hardClearInputs(){
   selectedImageFile = null;
   imgPreview.style.display = 'none';
   imgPreview.src = '';
   textArea.value = '';
-  statusLine.textContent = '';
+  // also clear file input
+  imgInput.value = '';
 }
+
 function openModal(which){
   mode = which;
 
@@ -845,7 +829,8 @@ function openModal(which){
     selectedImageFile = null;
   }
 
-  resetComposerUI();
+  hardClearInputs();
+  statusLine.textContent = '';
   modal.classList.remove('hidden');
   modalBackdrop.classList.add('show');
   try{ textArea.blur(); }catch{}
@@ -898,7 +883,7 @@ async function postForm(url, formData){
 
 /* =========================
    SEND
-   ✅ After SEND: clear photo+text immediately, so they can upload again.
+   ✅ SUCCESS or FAIL: clear inputs immediately on SEND press.
 ========================= */
 async function sendNow(){
   const text = (textArea.value || '').trim();
@@ -906,11 +891,18 @@ async function sendNow(){
     statusLine.textContent = 'TYPE SOMETHING FIRST.';
     return;
   }
-  feedback();
 
+  // ✅ clear instantly (regardless of outcome)
+  const sendingText = text;
+  const sendingImage = selectedImageFile;
+  hardClearInputs();
+
+  feedback();
+  statusLine.textContent = 'SENDING...';
+
+  // feeling
   if(mode === 'feeling'){
-    statusLine.textContent = 'SENDING...';
-    const payload = { text, clientTime: new Date().toISOString(), type:'feeling' };
+    const payload = { text: sendingText, clientTime: new Date().toISOString(), type:'feeling' };
     try{
       const res = await fetchWithTimeout(CONFIG.SERVER + '/upload-text', {
         method:'POST',
@@ -922,7 +914,6 @@ async function sendNow(){
         statusLine.textContent = `FAILED (${res.status}) ${t ? '\\n'+t.slice(0,120) : ''}`;
         return;
       }
-      resetComposerUI();
       statusLine.textContent = 'SENT ✓';
       return;
     }catch(err){
@@ -931,27 +922,21 @@ async function sendNow(){
     }
   }
 
+  // memory
   if(mode === 'memory'){
-    statusLine.textContent = 'SENDING...';
-
-    if(selectedImageFile){
-      const form = new FormData();
-      form.append('image', selectedImageFile, `image_${Date.now()}.jpg`);
-      try{
-        const res = await postForm(CONFIG.SERVER + '/upload', form);
-        if(!res.ok){
-          const t = await res.text().catch(()=> '');
-          statusLine.textContent = `PHOTO FAILED (${res.status}) ${t ? '\\n'+t.slice(0,120) : ''}`;
+    try{
+      if(sendingImage){
+        const form = new FormData();
+        form.append('image', sendingImage, `image_${Date.now()}.jpg`);
+        const resImg = await postForm(CONFIG.SERVER + '/upload', form);
+        if(!resImg.ok){
+          const t = await resImg.text().catch(()=> '');
+          statusLine.textContent = `PHOTO FAILED (${resImg.status}) ${t ? '\\n'+t.slice(0,120) : ''}`;
           return;
         }
-      }catch(err){
-        statusLine.textContent = `PHOTO ERROR: ${String(err && err.message ? err.message : err)}`;
-        return;
       }
-    }
 
-    const payload = { text, clientTime: new Date().toISOString(), type:'memory' };
-    try{
+      const payload = { text: sendingText, clientTime: new Date().toISOString(), type:'memory' };
       const res2 = await fetchWithTimeout(CONFIG.SERVER + '/upload-text', {
         method:'POST',
         headers:{ 'Content-Type':'application/json' },
@@ -962,11 +947,10 @@ async function sendNow(){
         statusLine.textContent = `TEXT FAILED (${res2.status}) ${t ? '\\n'+t.slice(0,120) : ''}`;
         return;
       }
-      resetComposerUI();
       statusLine.textContent = 'SENT ✓';
       return;
     }catch(err){
-      statusLine.textContent = `TEXT ERROR: ${String(err && err.message ? err.message : err)}`;
+      statusLine.textContent = `ERROR: ${String(err && err.message ? err.message : err)}`;
       return;
     }
   }
@@ -1027,168 +1011,71 @@ kbd.addEventListener('click', (e)=>{
 });
 
 /* =========================
-   ✅ ORB (38 points, all connected)
-   - base ring points
-   - each point has its own audio-react envelope + phase
+   ✅ SLEEEEEP WOBBLE RING
+   - clean line (not too bumpy)
+   - slow organic motion
 ========================= */
-let micReady = false;
-let analyser = null;
-let micData = null;
-let micCtx = null;
-let energy = 0;           // global energy (0..1)
-let targetEnergy = 0;
-
-function clamp01(x){ return Math.max(0, Math.min(1, x)); }
-
-async function initMic(){
-  try{
-    if(!navigator.mediaDevices?.getUserMedia) return;
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation:true, noiseSuppression:true, autoGainControl:true }
-    });
-    micCtx = ensureAudio() || new (window.AudioContext||window.webkitAudioContext)();
-    const src = micCtx.createMediaStreamSource(stream);
-    analyser = micCtx.createAnalyser();
-    analyser.fftSize = 512;
-    analyser.smoothingTimeConstant = 0.85;
-    src.connect(analyser);
-    micData = new Uint8Array(analyser.frequencyBinCount);
-    micReady = true;
-  }catch{
-    micReady = false;
-  }
-}
-
-// arm mic on first user gesture
-let micArmed = false;
-function armMicOnce(){
-  if(micArmed) return;
-  micArmed = true;
-  initMic();
-}
-document.addEventListener('pointerdown', armMicOnce, { once:true, passive:true });
-
-function sampleEnergyAuto(t){
-  // slow breathing (no mic)
-  const a = 0.18 + 0.14*Math.sin(t*0.00065);
-  const b = 0.10 + 0.10*Math.sin(t*0.0012 + 1.3);
-  return clamp01(a+b);
-}
-function sampleEnergyMic(){
-  if(!micReady || !analyser || !micData) return null;
-  analyser.getByteTimeDomainData(micData);
-  let sum = 0;
-  for(let i=0;i<micData.length;i++){
-    const v = (micData[i]-128)/128;
-    sum += v*v;
-  }
-  const rms = Math.sqrt(sum/micData.length);
-  return clamp01(rms*2.8);
-}
-
-const orbPts = [];
-function initOrb(){
-  orbPts.length = 0;
-  for(let i=0;i<CONFIG.ORB_N;i++){
-    orbPts.push({
-      // stable per-point params
-      a: Math.random()*Math.PI*2,
-      ph: Math.random()*Math.PI*2,
-      sp: 0.6 + Math.random()*0.9,
-      // per-point audio response multiplier
-      gain: 0.4 + Math.random()*1.1,
-      // a tiny drift vector so points can move slightly apart
-      driftX: (Math.random()*2-1),
-      driftY: (Math.random()*2-1)
-    });
-  }
-}
-initOrb();
-
-function drawOrb(t){
+function drawSleep(t){
   const w = (window.visualViewport?.width || innerWidth);
   const h = (window.visualViewport?.height || innerHeight);
 
-  // clear
-  octx.clearRect(0,0,w,h);
+  sctx.clearRect(0,0,w,h);
 
-  // center & base radius scales with screen
-  const cx = w * 0.5;
-  const cy = h * 0.5;
-  const rBase = Math.min(w,h) * 0.22; // responsive
-  const rot = t * CONFIG.ORB_ROT_SPEED;
+  const cx = w*0.5;
+  const cy = h*0.5;
+  const baseR = Math.min(w,h) * 0.235;
 
-  // global energy
-  const micE = sampleEnergyMic();
-  targetEnergy = (micE === null) ? sampleEnergyAuto(t) : micE;
-  energy += (targetEnergy - energy) * CONFIG.ORB_SMOOTH;
-  const e = energy;
+  // super slow time
+  const tt = t * CONFIG.SLEEP_SPEED;
 
-  // compute points
-  const ptsXY = new Array(CONFIG.ORB_N);
-  for(let i=0;i<orbPts.length;i++){
-    const p = orbPts[i];
-    const ang = (i/CONFIG.ORB_N) * Math.PI*2 + rot;
+  // thin white line
+  sctx.lineWidth = CONFIG.SLEEP_LINE_W;
+  sctx.strokeStyle = `rgba(255,255,255,${CONFIG.SLEEP_ALPHA})`;
 
-    // each point reacts a bit differently
-    const indiv = (0.45 + 0.55*Math.sin(t*0.0012*p.sp + p.ph));
-    const wob = CONFIG.ORB_WOBBLE_BASE + (CONFIG.ORB_WOBBLE_AUDIO * e * p.gain * indiv);
+  sctx.beginPath();
+  for(let i=0;i<=CONFIG.SLEEP_PTS;i++){
+    const a = (i/CONFIG.SLEEP_PTS) * Math.PI*2;
 
-    // subtle non-uniform radius + drift so not "spacey"
-    const rr = rBase + wob + 3.0*Math.sin(ang*2 + p.ph)* (0.3 + e);
-    const dx = (p.driftX) * (0.6 + e*1.2);
-    const dy = (p.driftY) * (0.6 + e*1.2);
+    // Two gentle wobble layers (keeps the “SLEEEEEP” feel, not mushy)
+    const wob1 = Math.sin(a*3.0 + tt*2.0) * CONFIG.SLEEP_WOBBLE;
+    const wob2 = Math.sin(a*7.0 - tt*1.3) * CONFIG.SLEEP_WOBBLE2;
 
-    const x = cx + Math.cos(ang)*rr + dx;
-    const y = cy + Math.sin(ang)*rr + dy;
+    // tiny drift so it "breathes"
+    const drift = 0.006*Math.sin(tt*1.1) + 0.004*Math.sin(tt*0.7 + 1.2);
 
-    ptsXY[i] = {x,y};
+    const rr = baseR * (1 + wob1 + wob2 + drift);
+
+    const x = cx + Math.cos(a) * rr;
+    const y = cy + Math.sin(a) * rr;
+
+    if(i===0) sctx.moveTo(x,y);
+    else sctx.lineTo(x,y);
   }
+  sctx.stroke();
 
-  // lines: all connected (ring + diagonals lightly)
-  const lineA = CONFIG.ORB_LINE_ALPHA * (0.65 + e*0.9);
-  octx.lineWidth = CONFIG.ORB_STROKE_W;
-  octx.strokeStyle = `rgba(255,255,255,${lineA})`;
-  octx.beginPath();
-  for(let i=0;i<ptsXY.length;i++){
-    const p = ptsXY[i];
-    if(i===0) octx.moveTo(p.x,p.y);
-    else octx.lineTo(p.x,p.y);
-  }
-  // close ring
-  octx.closePath();
-  octx.stroke();
-
-  // add sparse chords (still "all connected" feel, but not a web)
-  // connect i -> i+5 and i -> i+9 (wrap), very thin
-  octx.lineWidth = Math.max(0.6, CONFIG.ORB_STROKE_W * 0.75);
-  for(let i=0;i<ptsXY.length;i++){
-    const a = ptsXY[i];
-    const b = ptsXY[(i+5)%ptsXY.length];
-    const c = ptsXY[(i+9)%ptsXY.length];
-
-    octx.strokeStyle = `rgba(255,255,255,${lineA*0.42})`;
-    octx.beginPath(); octx.moveTo(a.x,a.y); octx.lineTo(b.x,b.y); octx.stroke();
-    octx.beginPath(); octx.moveTo(a.x,a.y); octx.lineTo(c.x,c.y); octx.stroke();
-  }
-
-  // points
-  const ptA = CONFIG.ORB_POINT_ALPHA * (0.72 + e*0.6);
-  octx.fillStyle = `rgba(255,255,255,${ptA})`;
-  const pr = CONFIG.ORB_POINT_R;
-  for(const p of ptsXY){
-    octx.beginPath();
-    octx.arc(p.x,p.y, pr, 0, Math.PI*2);
-    octx.fill();
-  }
-
-  requestAnimationFrame(drawOrb);
+  requestAnimationFrame(drawSleep);
 }
-requestAnimationFrame(drawOrb);
+requestAnimationFrame(drawSleep);
 
 /* =========================
    INIT
 ========================= */
+function setSceneActive(n){
+  for(const s of scenes){
+    const sn = Number(s.dataset.scene || 0);
+    s.classList.toggle('active', sn === n);
+  }
+  currentScene = n;
+
+  if(n === 6){
+    bottomBar.classList.add('show');
+    loadNinja();
+  }else{
+    bottomBar.classList.remove('show');
+  }
+
+  if(sleepFX) sleepFX.style.display = (n >= 1 && n <= 5) ? 'block' : 'none';
+}
 setSceneActive(1);
 
 })();
