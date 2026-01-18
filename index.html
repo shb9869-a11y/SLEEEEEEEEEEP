@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<title>SCREEN PUSH — CULTUREHUB</title>
+<title>VDO VIEW — CULTUREHUB</title>
 <meta name="theme-color" content="#000000">
 <style>
   html,body{margin:0;height:100%;background:#000;overflow:hidden}
@@ -11,23 +11,19 @@
 </style>
 </head>
 <body>
-
 <script>
-  // ✅ 룸 아이디 고정
   const ROOM_ID = "CULTUREHUB";
 
-  // ✅ VDO.Ninja가 "카메라" 대신 "화면공유"를 바로 요청하게 하는 핵심: &screenshare
-  // clean/autostart/noaudio 등은 취향 옵션
+  // 받는 화면(view)
   const SRC =
-    `https://vdo.ninja/?push=${encodeURIComponent(ROOM_ID)}` +
-    `&screenshare&clean&autostart&noaudio&codec=vp8`;
+    `https://vdo.ninja/?view=${encodeURIComponent(ROOM_ID)}` +
+    `&clean&autostart&noaudio&codec=vp8`;
 
   const f = document.createElement('iframe');
-  f.allow = "display-capture; autoplay; camera; microphone; fullscreen";
+  f.allow = "autoplay; fullscreen";
   f.referrerPolicy = "no-referrer";
   f.src = SRC;
   document.body.appendChild(f);
 </script>
-
 </body>
 </html>
