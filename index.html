@@ -7,83 +7,77 @@
 <meta name="theme-color" content="#000000">
 <style>
   html,body{margin:0;height:100%;background:#000;color:#fff;font-family:Courier New,monospace;overflow:hidden}
-  .wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;text-align:center;padding:24px}
-  button{border:1px solid #fff;background:transparent;color:#fff;padding:.7em 1.1em;text-transform:uppercase;cursor:pointer}
-  .small{opacity:.8;font-size:12px;line-height:1.5;max-width:900px;word-break:break-all}
-  video{position:fixed;inset:0;width:100%;height:100%;object-fit:contain;background:#000;display:none}
-  .topbar{position:fixed;left:12px;top:12px;right:12px;display:flex;justify-content:space-between;gap:10px;align-items:center;pointer-events:none}
-  .pill{pointer-events:none;border:1px solid rgba(255,255,255,.6);padding:6px 10px;border-radius:8px;background:rgba(0,0,0,.35);font-size:12px;opacity:.95}
-  .danger{border-color:rgba(255,80,80,.8)}
+  video{position:fixed;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
+  .hud{
+    position:fixed;left:12px;top:12px;right:12px;display:flex;gap:10px;justify-content:space-between;align-items:center;
+    pointer-events:none
+  }
+  .pill{
+    border:1px solid rgba(255,255,255,.6);
+    padding:6px 10px;border-radius:8px;background:rgba(0,0,0,.35);
+    font-size:12px;opacity:.95;pointer-events:none;word-break:break-all
+  }
+  .center{
+    position:fixed;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;
+    padding:24px;line-height:1.6;font-size:14px;opacity:.95
+  }
+  .center.hidden{display:none}
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <div class="pill" id="statusPill">READY</div>
-  <div class="pill danger" id="roomPill">PUSH: CULTUREHUB</div>
+<div class="hud">
+  <div class="pill" id="statusPill">INIT…</div>
+  <div class="pill" id="roomPill">PUSH: CULTUREHUB</div>
 </div>
 
-<div class="wrap" id="ui">
-  <div style="font-size:18px;letter-spacing:.08em;font-weight:700">SCREEN STREAM (PUSH)</div>
-
-  <button id="startBtn">START SCREEN SHARE</button>
-  <button id="stopBtn" style="display:none">STOP</button>
-
-  <div class="small" id="info">
-    이 페이지는 <b>화면 공유</b>를 VDO.Ninja로 송출합니다.<br>
-    송출 키: <b>CULTUREHUB</b><br><br>
-    <b>받는 쪽(view) 주소</b><br>
-    https://vdo.ninja/?view=CULTUREHUB
-  </div>
-
-  <div class="small" style="opacity:.65">
-    ⚠️ iOS Safari는 화면공유(getDisplayMedia)가 제한될 수 있어요.<br>
-    맥/윈도 크롬(또는 엣지)에서 테스트하는 걸 추천.
-  </div>
+<div class="center" id="fallback">
+  자동으로 화면 공유를 시작하려 했는데 브라우저가 막았어.<br><br>
+  <b>화면 아무데나 한 번 탭</b>하면 바로 시작됨.
+  <br><br>
+  (iOS Safari는 화면공유가 제한될 수 있음. 크롬/엣지/데스크탑 권장)
 </div>
 
 <video id="preview" autoplay muted playsinline></video>
 
 <script>
 (() => {
-  // ✅ 여기만 바꾸면 송출 키 바뀜
   const ROOM_ID = "CULTUREHUB";
+  const VDO_PUSH_URL = `https://vdo.ninja/?push=${encodeURIComponent(ROOM_ID)}&clean&autostart&noaudio&codec=vp8`;
 
-  // VDO.Ninja PUSH URL (screen capture를 우리가 붙여서 "push"로 송출)
-  const VDO_PUSH = `https://vdo.ninja/?push=${encodeURIComponent(ROOM_ID)}&clean&autostart&noaudio&codec=vp8`;
-
-  const ui = document.getElementById('ui');
   const preview = document.getElementById('preview');
-  const startBtn = document.getElementById('startBtn');
-  const stopBtn = document.getElementById('stopBtn');
   const statusPill = document.getElementById('statusPill');
+  const fallback = document.getElementById('fallback');
 
   let screenStream = null;
   let vdoFrame = null;
+  let started = false;
 
-  function setStatus(txt){
-    statusPill.textContent = txt;
-  }
+  function setStatus(t){ statusPill.textContent = t; }
 
-  async function start(){
+  async function startScreenShare() {
+    if(started) return;
+    started = true;
+
     try{
       setStatus("REQUESTING SCREEN…");
-      // 화면 공유 스트림
+
+      // 화면 공유
       screenStream = await navigator.mediaDevices.getDisplayMedia({
         video: { frameRate: { ideal: 30, max: 30 } },
         audio: false
       });
 
-      // 로컬 미리보기
-      preview.srcObject = screenStream;
-      preview.style.display = 'block';
-      ui.style.display = 'none';
-      stopBtn.style.display = 'inline-block';
-      setStatus("STREAMING…");
+      fallback.classList.add('hidden');
 
-      // VDO.Ninja iFrame 생성 (우리 화면 스트림을 VDO로 푸시)
+      // 로컬 프리뷰
+      preview.srcObject = screenStream;
+      try { await preview.play(); } catch {}
+      setStatus("SCREEN CAPTURE OK");
+
+      // VDO.Ninja push 페이지를 백그라운드 iframe으로 띄워서 동일 키로 송출
       vdoFrame = document.createElement('iframe');
-      vdoFrame.allow = "autoplay; microphone; camera; display-capture; fullscreen";
+      vdoFrame.allow = "autoplay; camera; microphone; display-capture; fullscreen";
       vdoFrame.referrerPolicy = "no-referrer";
       vdoFrame.style.position = "fixed";
       vdoFrame.style.inset = "0";
@@ -91,25 +85,46 @@
       vdoFrame.style.height = "1px";
       vdoFrame.style.opacity = "0.001";
       vdoFrame.style.pointerEvents = "none";
-      vdoFrame.src = VDO_PUSH;
+      vdoFrame.src = VDO_PUSH_URL;
       document.body.appendChild(vdoFrame);
 
-      // 트랙 종료 시 자동 stop
+      setStatus("PUSHING TO VDO…");
+
+      // 화면 공유가 사용자가 "중지"하면 자동 정리
       const [track] = screenStream.getVideoTracks();
       if(track){
-        track.onended = () => stop();
+        track.onended = () => {
+          setStatus("STOPPED");
+          try{ if(vdoFrame) vdoFrame.remove(); }catch{}
+          vdoFrame = null;
+          started = false;
+          fallback.classList.remove('hidden');
+        };
       }
 
-      // VDO iframe 로딩 후: postMessage로 화면 스트림을 전달 시도
-      // (VDO.Ninja는 iframe 내부에서 getUserMedia를 쓰는데, 여기서는 "가시적인" 화면 공유를 유지하면서
-      //  안정적으로 같은 키로 송출되는지만 확인하는 목적이 큼)
-      //
-      // 만약 이 방식이 환경에 따라 제한되면, 아래 "더 확실한 방식"을 써야 해:
-      // → 그냥 브라우저에서 VDO_PUSH 주소를 직접 열고(한 페이지), 거기서 화면 공유 선택하는 방식.
-      //
-      // 여기서는 최소 구성으로: VDO 프레임은 백그라운드로 유지, 화면 공유는 이 페이지가 유지.
+      // 참고: 일부 환경에서는 iframe 방식이 제한될 수 있음.
+      // 그 경우 가장 확실한 방법은 VDO_PUSH_URL을 "직접" 브라우저에서 열고,
+      // 거기서 화면 공유를 선택하는 방식임.
+      setStatus("STREAMING (IFRAME)");
     }catch(e){
       console.error(e);
-      setStatus("FAILED");
-      alert("화면 공유 시작 실패: 브라우저/권한을 확인해줘.\n(특히 iOS Safari는 화면 공유가 제한될 수 있어)");
+      started = false;
+      setStatus("BLOCKED / FAILED");
+      fallback.classList.remove('hidden');
     }
+  }
+
+  // 1) 페이지 로드 즉시 자동 시도
+  Promise.resolve().then(startScreenShare);
+
+  // 2) 자동이 막히면: 아무데나 한번 탭하면 시작 (버튼 없음)
+  function tapStart(){
+    startScreenShare();
+  }
+  window.addEventListener('touchend', tapStart, {passive:true});
+  window.addEventListener('click', tapStart);
+
+})();
+</script>
+</body>
+</html>
