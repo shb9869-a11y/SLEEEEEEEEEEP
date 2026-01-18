@@ -258,7 +258,11 @@ button:active{ opacity:.75; transform: translateY(1px); }
 
   display:flex;
   flex-direction:column;
+
+  /* ✅ 핵심: 사진 선택 등으로 모달이 아래로 밀리면, 모달 자체를 스크롤 가능하게 */
   max-height: calc(var(--vhpx) - 2*(var(--frame) + var(--safe-t) + var(--safe-b)));
+  overflow:auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Document viewer modal */
@@ -303,7 +307,9 @@ button:active{ opacity:.75; transform: translateY(1px); }
   display:flex;
   flex-direction:column;
   gap:10px;
-  overflow:hidden;
+
+  /* ✅ 모달이 스크롤을 담당하므로 body는 overflow 숨김 유지 */
+  overflow:visible;
   flex:1 1 auto;
 }
 
@@ -359,8 +365,7 @@ button:active{ opacity:.75; transform: translateY(1px); }
   opacity:0;
 }
 
-/* Keyboard: prevent cropping when photo row visible
-   ✅ solution: cap modal height, and make body internally scroll-free by shrinking keyboard slightly if needed */
+/* Keyboard */
 #kbd{
   width:calc(100% + 72px);
   margin-left:-36px;
@@ -372,6 +377,11 @@ button:active{ opacity:.75; transform: translateY(1px); }
   flex-direction:column;
   gap:8px;
   flex:0 0 auto;
+
+  /* ✅ 스크롤 중에도 SEND 영역이 항상 보이게 */
+  position: sticky;
+  bottom: 0;
+  background: rgba(0,0,0,.92);
 }
 .krow{
   display:flex;
@@ -418,10 +428,10 @@ button:active{ opacity:.75; transform: translateY(1px); }
     gap:6px;
   }
   .krow{ gap:6px; }
-  .key{ height:32px; padding:0 16px; } /* ✅ keep visible even with photo */
+  .key{ height:32px; padding:0 16px; }
 }
 
-/* Extra short heights: shrink keyboard further (fix cropping) */
+/* Extra short heights */
 @media (max-height: 520px){
   :root{ --frame: clamp(8px, 2.0vmin, 18px); --gap: 8px; }
   #menuPanel{ top: calc(var(--frame) + 44px + var(--safe-t)); }
@@ -627,7 +637,6 @@ button:active{ opacity:.75; transform: translateY(1px); }
 
 <script>
 (()=>{
-
 /* =========================
    CONFIG
 ========================= */
@@ -736,10 +745,8 @@ function isLandscape(){
 function enforceLandscape(){
   const ok = isLandscape();
   rotateOverlay.classList.toggle('show', !ok);
-  // disable interactions when portrait
   document.body.style.pointerEvents = ok ? 'auto' : 'none';
   rotateOverlay.style.pointerEvents = 'auto';
-  // close any open modal if rotated
   if(!ok){
     closeMenu();
     closeModal(false);
@@ -900,7 +907,6 @@ addEventListener('pageshow', ()=> setTimeout(()=>{ setViewportVars(); applyRezSc
 
 /* =========================
    SHARE MODAL
-   ✅ backdrop click no longer closes
 ========================= */
 function hardClearInputs(){
   selectedImageFile = null;
@@ -944,7 +950,6 @@ feelBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); openMod
 
 closeModalBtn.addEventListener('click', (e)=>{ e.preventDefault(); closeModal(true); });
 
-// ✅ DO NOT close when tapping backdrop
 modalBackdrop.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); });
 
 uploadImgBtn.addEventListener('click', (e)=>{ e.preventDefault(); feedback(); imgInput.click(); });
@@ -962,7 +967,7 @@ imgInput.addEventListener('change', ()=>{
   statusLine.textContent = 'PHOTO SELECTED.';
   imgInput.value = '';
 
-  // ✅ after selecting photo, ensure layout vars updated (fix “keyboard cut” on some devices)
+  // ✅ after selecting photo, update layout vars (plus: if modal overflows, user can scroll modal now)
   setTimeout(()=>{ setViewportVars(); applyRezScale(); }, 80);
 });
 
@@ -971,14 +976,13 @@ imgInput.addEventListener('change', ()=>{
 ========================= */
 function openDoc(){
   if(!isLandscape()) return;
-  modalBackdrop.classList.add('show');     // reuse same backdrop
+  modalBackdrop.classList.add('show');
   docModal.classList.remove('hidden');
   docFrame.src = CONFIG.DOCUMENT_URL + '?ts=' + Date.now();
 }
 function closeDoc(){
   docModal.classList.add('hidden');
   docFrame.src = 'about:blank';
-  // if share modal is not open, remove backdrop
   const shareOpen = !modal.classList.contains('hidden');
   if(!shareOpen) modalBackdrop.classList.remove('show');
 }
