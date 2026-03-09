@@ -1,29 +1,297 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<title>VDO VIEW — CULTUREHUB</title>
-<meta name="theme-color" content="#000000">
-<style>
-  html,body{margin:0;height:100%;background:#000;overflow:hidden}
-  iframe{position:fixed;inset:0;width:100%;height:100%;border:0;background:#000}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UTIC Real-time Traffic Box Detection</title>
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-bottom: 12px;
+      font-size: 22px;
+    }
+
+    .wrap {
+      position: relative;
+      width: min(1100px, 95vw);
+      aspect-ratio: 16 / 9;
+      background: #000;
+      overflow: hidden;
+      border: 1px solid #333;
+    }
+
+    video, img, canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .controls {
+      margin-top: 16px;
+      width: min(1100px, 95vw);
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      min-width: 300px;
+      padding: 10px;
+      border: 1px solid #444;
+      background: #1b1b1b;
+      color: #fff;
+    }
+
+    button {
+      padding: 10px 14px;
+      border: 1px solid #555;
+      background: #222;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .status {
+      width: min(1100px, 95vw);
+      margin-top: 10px;
+      color: #aaa;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+  </style>
 </head>
 <body>
-<script>
-  const ROOM_ID = "CULTUREHUB";
+  <h1>UTIC 실시간 교통정보 박스 디텍팅</h1>
 
-  // 받는 화면(view)
-  const SRC =
-    `https://vdo.ninja/?view=${encodeURIComponent(ROOM_ID)}` +
-    `&clean&autostart&noaudio&codec=vp8`;
+  <div class="wrap">
+    <!-- 비디오 스트림이면 video 사용 -->
+    <video id="video" autoplay muted playsinline crossorigin="anonymous"></video>
 
-  const f = document.createElement('iframe');
-  f.allow = "autoplay; fullscreen";
-  f.referrerPolicy = "no-referrer";
-  f.src = SRC;
-  document.body.appendChild(f);
-</script>
+    <!-- 이미지 스냅샷이면 img 사용 -->
+    <img id="image" style="display:none;" crossorigin="anonymous" />
+
+    <!-- 박스 그리는 캔버스 -->
+    <canvas id="overlay"></canvas>
+  </div>
+
+  <div class="controls">
+    <input id="sourceInput" type="text" placeholder="UTIC 실시간 영상/이미지 URL 넣기" />
+    <button id="loadVideoBtn">비디오 로드</button>
+    <button id="loadImageBtn">이미지 로드</button>
+  </div>
+
+  <div class="status" id="status">
+    상태: 모델 로딩 전
+  </div>
+
+  <!-- TensorFlow.js -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+  <!-- COCO-SSD -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+
+  <script>
+    const DEFAULT_SOURCE_URL = ""; // 여기에 UTIC 실제 URL 넣어도 됨
+
+    const video = document.getElementById("video");
+    const image = document.getElementById("image");
+    const canvas = document.getElementById("overlay");
+    const ctx = canvas.getContext("2d");
+    const sourceInput = document.getElementById("sourceInput");
+    const loadVideoBtn = document.getElementById("loadVideoBtn");
+    const loadImageBtn = document.getElementById("loadImageBtn");
+    const statusEl = document.getElementById("status");
+
+    let model = null;
+    let animationId = null;
+    let currentMode = null; // "video" | "image"
+
+    sourceInput.value = DEFAULT_SOURCE_URL;
+
+    function setStatus(msg) {
+      statusEl.textContent = "상태: " + msg;
+    }
+
+    function resizeCanvasToElement(el) {
+      const rect = el.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+    }
+
+    function drawPredictions(predictions, displayWidth, displayHeight, naturalWidth, naturalHeight) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const scaleX = displayWidth / naturalWidth;
+      const scaleY = displayHeight / naturalHeight;
+
+      ctx.lineWidth = 2;
+      ctx.font = "16px Arial";
+      ctx.textBaseline = "top";
+
+      predictions.forEach(pred => {
+        const [x, y, w, h] = pred.bbox;
+        const sx = x * scaleX;
+        const sy = y * scaleY;
+        const sw = w * scaleX;
+        const sh = h * scaleY;
+
+        ctx.strokeStyle = "#00ff88";
+        ctx.fillStyle = "#00ff88";
+        ctx.strokeRect(sx, sy, sw, sh);
+
+        const label = `${pred.class} ${(pred.score * 100).toFixed(1)}%`;
+        const textWidth = ctx.measureText(label).width;
+        const textHeight = 18;
+
+        ctx.fillRect(sx, Math.max(0, sy - textHeight), textWidth + 8, textHeight);
+        ctx.fillStyle = "#000";
+        ctx.fillText(label, sx + 4, Math.max(0, sy - textHeight + 2));
+      });
+    }
+
+    async function detectOnVideo() {
+      if (!model || video.readyState < 2 || currentMode !== "video") {
+        animationId = requestAnimationFrame(detectOnVideo);
+        return;
+      }
+
+      resizeCanvasToElement(video);
+
+      try {
+        const predictions = await model.detect(video);
+
+        drawPredictions(
+          predictions,
+          video.clientWidth,
+          video.clientHeight,
+          video.videoWidth,
+          video.videoHeight
+        );
+
+        setStatus(`비디오 감지 중 / 객체 수: ${predictions.length}`);
+      } catch (err) {
+        console.error(err);
+        setStatus("비디오 감지 중 오류: " + err.message);
+      }
+
+      animationId = requestAnimationFrame(detectOnVideo);
+    }
+
+    async function detectOnImageOnce() {
+      if (!model || !image.complete || currentMode !== "image") return;
+
+      resizeCanvasToElement(image);
+
+      try {
+        const predictions = await model.detect(image);
+
+        drawPredictions(
+          predictions,
+          image.clientWidth,
+          image.clientHeight,
+          image.naturalWidth,
+          image.naturalHeight
+        );
+
+        setStatus(`이미지 감지 완료 / 객체 수: ${predictions.length}`);
+      } catch (err) {
+        console.error(err);
+        setStatus("이미지 감지 오류: " + err.message);
+      }
+    }
+
+    async function loadModel() {
+      setStatus("COCO-SSD 모델 로딩 중...");
+      model = await cocoSsd.load();
+      setStatus("모델 로딩 완료");
+    }
+
+    async function startVideo(url) {
+      cancelAnimationFrame(animationId);
+      currentMode = "video";
+
+      image.style.display = "none";
+      video.style.display = "block";
+
+      video.src = url;
+      video.crossOrigin = "anonymous";
+
+      try {
+        await video.play();
+        setStatus("비디오 재생 시작");
+        detectOnVideo();
+      } catch (err) {
+        console.error(err);
+        setStatus("비디오 재생 실패. CORS 또는 스트림 형식 문제일 수 있음.");
+      }
+    }
+
+    async function startImage(url) {
+      cancelAnimationFrame(animationId);
+      currentMode = "image";
+
+      video.pause();
+      video.removeAttribute("src");
+      video.load();
+
+      video.style.display = "none";
+      image.style.display = "block";
+
+      image.onload = () => {
+        detectOnImageOnce();
+      };
+
+      image.onerror = () => {
+        setStatus("이미지 로드 실패. CORS 또는 URL 문제일 수 있음.");
+      };
+
+      image.src = url + (url.includes("?") ? "&" : "?") + "t=" + Date.now();
+      setStatus("이미지 로딩 중...");
+    }
+
+    loadVideoBtn.addEventListener("click", () => {
+      const url = sourceInput.value.trim();
+      if (!url) {
+        setStatus("비디오 URL을 입력해줘");
+        return;
+      }
+      startVideo(url);
+    });
+
+    loadImageBtn.addEventListener("click", () => {
+      const url = sourceInput.value.trim();
+      if (!url) {
+        setStatus("이미지 URL을 입력해줘");
+        return;
+      }
+      startImage(url);
+    });
+
+    window.addEventListener("resize", () => {
+      if (currentMode === "video") resizeCanvasToElement(video);
+      if (currentMode === "image") resizeCanvasToElement(image);
+    });
+
+    (async function init() {
+      await loadModel();
+
+      if (DEFAULT_SOURCE_URL) {
+        // 기본값이 이미지인지 비디오인지 모르니까 일단 비디오 시도
+        startVideo(DEFAULT_SOURCE_URL);
+      }
+    })();
+  </script>
 </body>
 </html>
