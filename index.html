@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>UTIC Real-time Traffic Box Detection</title>
+  <title>Object + Person Skeleton Tracker</title>
   <style>
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       background: #111;
@@ -17,281 +18,401 @@
     }
 
     h1 {
-      margin-bottom: 12px;
+      margin: 0 0 12px;
       font-size: 22px;
     }
 
-    .wrap {
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 15px;
+      cursor: pointer;
+      background: #2b2b2b;
+      color: white;
+    }
+
+    button:hover {
+      background: #3b3b3b;
+    }
+
+    #status {
+      margin-bottom: 12px;
+      font-size: 14px;
+      color: #ccc;
+    }
+
+    .stage {
       position: relative;
-      width: min(1100px, 95vw);
+      width: min(92vw, 960px);
       aspect-ratio: 16 / 9;
       background: #000;
+      border-radius: 14px;
       overflow: hidden;
       border: 1px solid #333;
     }
 
-    video, img, canvas {
+    video, canvas {
       position: absolute;
       inset: 0;
       width: 100%;
       height: 100%;
-      object-fit: contain;
+      object-fit: cover;
     }
 
-    .controls {
-      margin-top: 16px;
-      width: min(1100px, 95vw);
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
+    video {
+      transform: scaleX(-1); /* 거울 모드 */
     }
 
-    input[type="text"] {
-      flex: 1;
-      min-width: 300px;
-      padding: 10px;
-      border: 1px solid #444;
-      background: #1b1b1b;
-      color: #fff;
+    canvas {
+      pointer-events: none;
     }
 
-    button {
-      padding: 10px 14px;
-      border: 1px solid #555;
-      background: #222;
-      color: #fff;
-      cursor: pointer;
-    }
-
-    .status {
-      width: min(1100px, 95vw);
-      margin-top: 10px;
+    .hint {
+      margin-top: 12px;
+      font-size: 13px;
       color: #aaa;
-      font-size: 14px;
+      text-align: center;
       line-height: 1.5;
     }
   </style>
 </head>
 <body>
-  <h1>UTIC 실시간 교통정보 박스 디텍팅</h1>
-
-  <div class="wrap">
-    <!-- 비디오 스트림이면 video 사용 -->
-    <video id="video" autoplay muted playsinline crossorigin="anonymous"></video>
-
-    <!-- 이미지 스냅샷이면 img 사용 -->
-    <img id="image" style="display:none;" crossorigin="anonymous" />
-
-    <!-- 박스 그리는 캔버스 -->
-    <canvas id="overlay"></canvas>
-  </div>
+  <h1>웹캠 물체 감지 + 사람 스켈레톤</h1>
 
   <div class="controls">
-    <input id="sourceInput" type="text" placeholder="UTIC 실시간 영상/이미지 URL 넣기" />
-    <button id="loadVideoBtn">비디오 로드</button>
-    <button id="loadImageBtn">이미지 로드</button>
+    <button id="startBtn">카메라 시작</button>
+    <button id="stopBtn">정지</button>
   </div>
 
-  <div class="status" id="status">
-    상태: 모델 로딩 전
+  <div id="status">대기 중</div>
+
+  <div class="stage">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <div class="hint">
+    파란 박스 = 물체 감지 / 노란 스켈레톤 = 사람 포즈<br />
+    사람이 여러 명이면 각 사람마다 스켈레톤을 시도함
   </div>
 
   <!-- TensorFlow.js -->
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+
   <!-- COCO-SSD -->
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+
+  <!-- Pose Detection -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.3/dist/pose-detection.min.js"></script>
 
   <script>
-    const DEFAULT_SOURCE_URL = ""; // 여기에 UTIC 실제 URL 넣어도 됨
-
     const video = document.getElementById("video");
-    const image = document.getElementById("image");
-    const canvas = document.getElementById("overlay");
+    const canvas = document.getElementById("canvas");
     const ctx = canvas.getContext("2d");
-    const sourceInput = document.getElementById("sourceInput");
-    const loadVideoBtn = document.getElementById("loadVideoBtn");
-    const loadImageBtn = document.getElementById("loadImageBtn");
     const statusEl = document.getElementById("status");
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
 
-    let model = null;
+    let stream = null;
+    let objectDetector = null;
+    let poseDetector = null;
     let animationId = null;
-    let currentMode = null; // "video" | "image"
+    let running = false;
+    let busy = false;
 
-    sourceInput.value = DEFAULT_SOURCE_URL;
+    const BLUE = "#00A8FF";
+    const YELLOW = "#FFD400";
+
+    const KEYPOINT_THRESHOLD = 0.25;
+    const PERSON_SCORE_THRESHOLD = 0.5;
+    const OBJECT_SCORE_THRESHOLD = 0.55;
+
+    // MoveNet keypoint 연결쌍
+    const skeletonPairs = [
+      ["left_eye", "right_eye"],
+      ["left_eye", "left_ear"],
+      ["right_eye", "right_ear"],
+      ["left_shoulder", "right_shoulder"],
+      ["left_shoulder", "left_elbow"],
+      ["left_elbow", "left_wrist"],
+      ["right_shoulder", "right_elbow"],
+      ["right_elbow", "right_wrist"],
+      ["left_shoulder", "left_hip"],
+      ["right_shoulder", "right_hip"],
+      ["left_hip", "right_hip"],
+      ["left_hip", "left_knee"],
+      ["left_knee", "left_ankle"],
+      ["right_hip", "right_knee"],
+      ["right_knee", "right_ankle"]
+    ];
 
     function setStatus(msg) {
-      statusEl.textContent = "상태: " + msg;
+      statusEl.textContent = msg;
     }
 
-    function resizeCanvasToElement(el) {
-      const rect = el.getBoundingClientRect();
-      canvas.width = rect.width;
-      canvas.height = rect.height;
+    function resizeCanvasToVideo() {
+      const width = video.videoWidth;
+      const height = video.videoHeight;
+      if (!width || !height) return;
+      canvas.width = width;
+      canvas.height = height;
     }
 
-    function drawPredictions(predictions, displayWidth, displayHeight, naturalWidth, naturalHeight) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      const scaleX = displayWidth / naturalWidth;
-      const scaleY = displayHeight / naturalHeight;
-
-      ctx.lineWidth = 2;
-      ctx.font = "16px Arial";
-      ctx.textBaseline = "top";
-
-      predictions.forEach(pred => {
-        const [x, y, w, h] = pred.bbox;
-        const sx = x * scaleX;
-        const sy = y * scaleY;
-        const sw = w * scaleX;
-        const sh = h * scaleY;
-
-        ctx.strokeStyle = "#00ff88";
-        ctx.fillStyle = "#00ff88";
-        ctx.strokeRect(sx, sy, sw, sh);
-
-        const label = `${pred.class} ${(pred.score * 100).toFixed(1)}%`;
-        const textWidth = ctx.measureText(label).width;
-        const textHeight = 18;
-
-        ctx.fillRect(sx, Math.max(0, sy - textHeight), textWidth + 8, textHeight);
-        ctx.fillStyle = "#000";
-        ctx.fillText(label, sx + 4, Math.max(0, sy - textHeight + 2));
+    async function setupCamera() {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "user",
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
       });
+
+      video.srcObject = stream;
+
+      await new Promise((resolve) => {
+        video.onloadedmetadata = () => {
+          video.play();
+          resolve();
+        };
+      });
+
+      resizeCanvasToVideo();
+      window.addEventListener("resize", resizeCanvasToVideo);
     }
 
-    async function detectOnVideo() {
-      if (!model || video.readyState < 2 || currentMode !== "video") {
-        animationId = requestAnimationFrame(detectOnVideo);
-        return;
-      }
+    async function loadModels() {
+      setStatus("모델 로딩 중...");
 
-      resizeCanvasToElement(video);
+      await tf.ready();
 
-      try {
-        const predictions = await model.detect(video);
+      objectDetector = await cocoSsd.load({
+        base: "lite_mobilenet_v2"
+      });
 
-        drawPredictions(
-          predictions,
-          video.clientWidth,
-          video.clientHeight,
-          video.videoWidth,
-          video.videoHeight
-        );
+      poseDetector = await poseDetection.createDetector(
+        poseDetection.SupportedModels.MoveNet,
+        {
+          modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
+          enableSmoothing: true
+        }
+      );
 
-        setStatus(`비디오 감지 중 / 객체 수: ${predictions.length}`);
-      } catch (err) {
-        console.error(err);
-        setStatus("비디오 감지 중 오류: " + err.message);
-      }
-
-      animationId = requestAnimationFrame(detectOnVideo);
-    }
-
-    async function detectOnImageOnce() {
-      if (!model || !image.complete || currentMode !== "image") return;
-
-      resizeCanvasToElement(image);
-
-      try {
-        const predictions = await model.detect(image);
-
-        drawPredictions(
-          predictions,
-          image.clientWidth,
-          image.clientHeight,
-          image.naturalWidth,
-          image.naturalHeight
-        );
-
-        setStatus(`이미지 감지 완료 / 객체 수: ${predictions.length}`);
-      } catch (err) {
-        console.error(err);
-        setStatus("이미지 감지 오류: " + err.message);
-      }
-    }
-
-    async function loadModel() {
-      setStatus("COCO-SSD 모델 로딩 중...");
-      model = await cocoSsd.load();
       setStatus("모델 로딩 완료");
     }
 
-    async function startVideo(url) {
-      cancelAnimationFrame(animationId);
-      currentMode = "video";
+    function drawLabel(text, x, y) {
+      ctx.font = "bold 18px Arial";
+      const paddingX = 8;
+      const h = 26;
+      const textWidth = ctx.measureText(text).width;
+      const w = textWidth + paddingX * 2;
+      const boxX = x;
+      const boxY = Math.max(0, y - h - 4);
 
-      image.style.display = "none";
-      video.style.display = "block";
+      ctx.fillStyle = "rgba(0, 168, 255, 0.92)";
+      ctx.fillRect(boxX, boxY, w, h);
 
-      video.src = url;
-      video.crossOrigin = "anonymous";
+      ctx.fillStyle = "#fff";
+      ctx.fillText(text, boxX + paddingX, boxY + 18);
+    }
+
+    function drawBoundingBox(pred) {
+      const [x, y, w, h] = pred.bbox;
+
+      ctx.strokeStyle = BLUE;
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x, y, w, h);
+
+      const label = `${pred.class} ${(pred.score * 100).toFixed(0)}%`;
+      drawLabel(label, x, y);
+    }
+
+    function drawPoint(x, y, r = 4, color = YELLOW) {
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+
+    function drawLine(x1, y1, x2, y2, color = YELLOW, width = 3) {
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      ctx.stroke();
+    }
+
+    function keypointsToMap(keypoints) {
+      const map = {};
+      for (const kp of keypoints) {
+        map[kp.name] = kp;
+      }
+      return map;
+    }
+
+    function drawSkeletonForPose(pose) {
+      if (!pose || !pose.keypoints) return;
+
+      const kpMap = keypointsToMap(pose.keypoints);
+
+      for (const [aName, bName] of skeletonPairs) {
+        const a = kpMap[aName];
+        const b = kpMap[bName];
+
+        if (!a || !b) continue;
+        if ((a.score ?? 0) < KEYPOINT_THRESHOLD) continue;
+        if ((b.score ?? 0) < KEYPOINT_THRESHOLD) continue;
+
+        drawLine(a.x, a.y, b.x, b.y);
+      }
+
+      for (const kp of pose.keypoints) {
+        if ((kp.score ?? 0) < KEYPOINT_THRESHOLD) continue;
+        drawPoint(kp.x, kp.y, 4);
+      }
+    }
+
+    function isPointInsideBox(px, py, box, margin = 20) {
+      const [x, y, w, h] = box;
+      return (
+        px >= x - margin &&
+        px <= x + w + margin &&
+        py >= y - margin &&
+        py <= y + h + margin
+      );
+    }
+
+    function poseBelongsToPersonBox(pose, personBox) {
+      if (!pose?.keypoints?.length) return false;
+
+      let insideCount = 0;
+      let validCount = 0;
+
+      for (const kp of pose.keypoints) {
+        const score = kp.score ?? 0;
+        if (score < KEYPOINT_THRESHOLD) continue;
+        validCount++;
+        if (isPointInsideBox(kp.x, kp.y, personBox)) insideCount++;
+      }
+
+      if (validCount === 0) return false;
+      return insideCount / validCount > 0.35;
+    }
+
+    async function detectFrame() {
+      if (!running) return;
+
+      if (busy) {
+        animationId = requestAnimationFrame(detectFrame);
+        return;
+      }
+
+      if (!video.videoWidth || !video.videoHeight) {
+        animationId = requestAnimationFrame(detectFrame);
+        return;
+      }
+
+      busy = true;
 
       try {
-        await video.play();
-        setStatus("비디오 재생 시작");
-        detectOnVideo();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 캔버스도 영상처럼 좌우 반전해서 박스가 맞게 보이게 처리
+        ctx.save();
+        ctx.scale(-1, 1);
+        ctx.translate(-canvas.width, 0);
+
+        const predictions = await objectDetector.detect(video);
+
+        const filtered = predictions.filter(p => p.score >= OBJECT_SCORE_THRESHOLD);
+
+        // 모든 감지 물체 파란 박스
+        for (const pred of filtered) {
+          drawBoundingBox(pred);
+        }
+
+        // 사람 박스만 별도로 수집
+        const people = filtered.filter(
+          p => p.class === "person" && p.score >= PERSON_SCORE_THRESHOLD
+        );
+
+        if (people.length > 0) {
+          // MoveNet 멀티포즈 대신 singlepose를 여러 번 돌리지 않고,
+          // 전체 화면에서 여러 포즈 추정을 시도
+          // 일부 환경에서는 여러 명 중 1명만 잘 잡힐 수 있음
+          const poses = await poseDetector.estimatePoses(video, {
+            flipHorizontal: false
+          });
+
+          for (const person of people) {
+            // person 박스에 가장 잘 들어맞는 pose 찾기
+            const matchedPose = poses.find(pose => poseBelongsToPersonBox(pose, person.bbox));
+            if (matchedPose) {
+              drawSkeletonForPose(matchedPose);
+            }
+          }
+        }
+
+        ctx.restore();
       } catch (err) {
         console.error(err);
-        setStatus("비디오 재생 실패. CORS 또는 스트림 형식 문제일 수 있음.");
+        setStatus("감지 중 오류 발생: " + err.message);
+      } finally {
+        busy = false;
+        animationId = requestAnimationFrame(detectFrame);
       }
     }
 
-    async function startImage(url) {
-      cancelAnimationFrame(animationId);
-      currentMode = "image";
+    async function startApp() {
+      try {
+        startBtn.disabled = true;
+        setStatus("카메라 준비 중...");
 
-      video.pause();
-      video.removeAttribute("src");
-      video.load();
+        await setupCamera();
+        await loadModels();
 
-      video.style.display = "none";
-      image.style.display = "block";
-
-      image.onload = () => {
-        detectOnImageOnce();
-      };
-
-      image.onerror = () => {
-        setStatus("이미지 로드 실패. CORS 또는 URL 문제일 수 있음.");
-      };
-
-      image.src = url + (url.includes("?") ? "&" : "?") + "t=" + Date.now();
-      setStatus("이미지 로딩 중...");
+        running = true;
+        setStatus("실행 중");
+        detectFrame();
+      } catch (err) {
+        console.error(err);
+        setStatus("시작 실패: " + err.message);
+        startBtn.disabled = false;
+      }
     }
 
-    loadVideoBtn.addEventListener("click", () => {
-      const url = sourceInput.value.trim();
-      if (!url) {
-        setStatus("비디오 URL을 입력해줘");
-        return;
+    function stopApp() {
+      running = false;
+
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
       }
-      startVideo(url);
-    });
 
-    loadImageBtn.addEventListener("click", () => {
-      const url = sourceInput.value.trim();
-      if (!url) {
-        setStatus("이미지 URL을 입력해줘");
-        return;
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
       }
-      startImage(url);
-    });
 
-    window.addEventListener("resize", () => {
-      if (currentMode === "video") resizeCanvasToElement(video);
-      if (currentMode === "image") resizeCanvasToElement(image);
-    });
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      video.srcObject = null;
+      setStatus("정지됨");
+      startBtn.disabled = false;
+    }
 
-    (async function init() {
-      await loadModel();
-
-      if (DEFAULT_SOURCE_URL) {
-        // 기본값이 이미지인지 비디오인지 모르니까 일단 비디오 시도
-        startVideo(DEFAULT_SOURCE_URL);
-      }
-    })();
+    startBtn.addEventListener("click", startApp);
+    stopBtn.addEventListener("click", stopApp);
   </script>
 </body>
 </html>
