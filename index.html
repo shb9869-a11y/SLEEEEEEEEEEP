@@ -20,10 +20,12 @@
       --panelBorder:rgba(255,255,255,0.12);
       --text:#f3f3f3;
       --muted:#a6a6a6;
-      --blue:#0066ff;
-      --blueFill:rgba(0,102,255,0.16);
-      --blueLine:rgba(0,102,255,0.98);
-      --blueSoft:rgba(0,102,255,0.30);
+
+      --blue:#173BFF;
+      --blueFill:rgba(23,59,255,0.14);
+      --blueLine:rgba(23,59,255,0.98);
+      --blueSoft:rgba(23,59,255,0.24);
+      --blueSoft2:rgba(23,59,255,0.52);
     }
 
     *{
@@ -309,9 +311,10 @@
   <aside id="sidebar" class="sidebar open">
     <div class="title">인기척: 파동 시스템</div>
     <div class="subtitle">
-      사람만 파란 박스로 감지하고, ID를 기억해 넘버링합니다.
-      움직임 세기가 기준을 넘을 때만 파동이 발생합니다.
-      박스는 디텍션 값을 바로 찍지 않고, 부드럽게 따라가도록 보정됩니다.
+      사람만 파란 박스로 감지하고 ID를 기억합니다.
+      사물 오검출을 줄이기 위해 박스 형태를 추가 필터링하며,
+      3프레임 이상 연속 확인된 대상만 실제 사람으로 표시합니다.
+      박스는 디텍션 값을 바로 찍지 않고 부드럽게 따라갑니다.
     </div>
 
     <div class="section">
@@ -332,7 +335,7 @@
     </div>
 
     <div class="section">
-      <div class="label">파동 파라미터</div>
+      <div class="label">파라미터</div>
       <div class="sliderWrap">
         <span>강도</span>
         <input id="energyRange" type="range" min="0.4" max="3.0" step="0.1" value="1.4">
@@ -345,8 +348,8 @@
       </div>
       <div class="sliderWrap">
         <span>문턱</span>
-        <input id="thresholdRange" type="range" min="0.35" max="0.85" step="0.01" value="0.55">
-        <span id="thresholdVal">0.55</span>
+        <input id="thresholdRange" type="range" min="0.35" max="0.90" step="0.01" value="0.68">
+        <span id="thresholdVal">0.68</span>
       </div>
       <div class="sliderWrap">
         <span>움직임</span>
@@ -375,10 +378,10 @@
     <div class="section">
       <div class="label">설명</div>
       <div style="font-size:13px; line-height:1.55; color:var(--muted);">
-        • 오직 <span style="color:#0066ff;">사람</span>만 인식<br/>
-        • 같은 사람은 nearest-neighbor 기반으로 ID 유지<br/>
+        • 오직 <span style="color:#173BFF;">사람</span>만 인식 시도<br/>
+        • 사물처럼 보이는 박스는 추가 규칙으로 제거<br/>
+        • 3프레임 이상 연속 관측된 대상만 표시<br/>
         • 박스와 라벨은 찐 파랑 계열로 표시<br/>
-        • 박스는 보간되어 부드럽게 따라감<br/>
         • 가로 모드에서는 디텍팅 + 3D 파동 동시 표시
       </div>
     </div>
@@ -398,11 +401,11 @@
 
 <script>
 (() => {
-  const BLUE = "#0066ff";
-  const BLUE_LINE = "rgba(0,102,255,0.98)";
-  const BLUE_FILL = "rgba(0,102,255,0.16)";
-  const BLUE_SOFT = "rgba(0,102,255,0.30)";
-  const BLUE_SOFT_2 = "rgba(0,102,255,0.50)";
+  const BLUE = "#173BFF";
+  const BLUE_LINE = "rgba(23,59,255,0.98)";
+  const BLUE_FILL = "rgba(23,59,255,0.14)";
+  const BLUE_SOFT = "rgba(23,59,255,0.24)";
+  const BLUE_SOFT_2 = "rgba(23,59,255,0.52)";
 
   const GRID_W = 10;
   const GRID_H = 10;
@@ -432,7 +435,7 @@
 
     energy: 1.4,
     damping: 0.968,
-    detectThreshold: 0.55,
+    detectThreshold: 0.68,
     motionThreshold: 0.018,
     trackingSmoothness: 0.22,
 
@@ -555,11 +558,13 @@
     ui.landscapeDualCheck.checked = state.landscapeDual;
     ui.floatingInfo.style.display = state.showStatus ? "block" : "none";
 
-    const movingCount = state.tracks.filter(t => (t.motion || 0) >= state.motionThreshold).length;
+    const confirmedTracks = state.tracks.filter(t => t.confirmed);
+    const movingCount = confirmedTracks.filter(t => (t.motion || 0) >= state.motionThreshold).length;
+
     ui.statusText.textContent =
       `모델 ${state.modelReady ? "준비" : "로딩중"} / ` +
       `카메라 ${state.cameraOn ? "켜짐" : "꺼짐"} / ` +
-      `사람 ${state.tracks.length}명 / ` +
+      `사람 ${confirmedTracks.length}명 / ` +
       `활성 움직임 ${movingCount}명 / ` +
       `FPS ${Math.round(state.fps)}`;
   }
@@ -574,12 +579,12 @@
     const count = Math.floor(rand(2, 6));
     for (let i = 0; i < count; i++) {
       state.mockPeople.push({
-        x: rand(0.15, 0.85),
-        y: rand(0.20, 0.82),
-        w: rand(0.08, 0.13),
-        h: rand(0.17, 0.27),
-        vx: rand(-0.004, 0.004),
-        vy: rand(-0.003, 0.003),
+        x: rand(0.18, 0.82),
+        y: rand(0.22, 0.78),
+        w: rand(0.08, 0.12),
+        h: rand(0.20, 0.29),
+        vx: rand(-0.0035, 0.0035),
+        vy: rand(-0.0028, 0.0028),
         twitch: rand(0.6, 1.4)
       });
     }
@@ -596,12 +601,12 @@
       p.y += p.vy;
 
       if (Math.random() < 0.04 * p.twitch) {
-        p.x += rand(-0.01, 0.01);
-        p.y += rand(-0.01, 0.01);
+        p.x += rand(-0.008, 0.008);
+        p.y += rand(-0.008, 0.008);
       }
 
-      if (p.x < 0.08 || p.x > 0.92) p.vx *= -1;
-      if (p.y < 0.12 || p.y > 0.88) p.vy *= -1;
+      if (p.x < 0.10 || p.x > 0.90) p.vx *= -1;
+      if (p.y < 0.14 || p.y > 0.86) p.vy *= -1;
 
       state.lastDetections.push({
         bbox: [
@@ -625,6 +630,33 @@
     const dx = a.x - b.x;
     const dy = a.y - b.y;
     return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  function isLikelyHumanBox(det, videoW, videoH) {
+    const [x, y, w, h] = det.bbox;
+
+    if (w <= 0 || h <= 0) return false;
+
+    const area = w * h;
+    const aspect = h / Math.max(1, w);
+
+    if (area < videoW * videoH * 0.015) return false;
+    if (aspect < 1.15) return false;
+    if (w > videoW * 0.72) return false;
+    if (h > videoH * 0.95) return false;
+
+    const edgeMarginX = videoW * 0.02;
+    const edgeMarginY = videoH * 0.02;
+
+    const touchesEdge =
+      x <= edgeMarginX ||
+      y <= edgeMarginY ||
+      (x + w) >= videoW - edgeMarginX ||
+      (y + h) >= videoH - edgeMarginY;
+
+    if (touchesEdge && area < videoW * videoH * 0.05) return false;
+
+    return true;
   }
 
   function updateTracks(detections) {
@@ -662,6 +694,9 @@
       t.h = c.h;
       t.missed = 0;
 
+      t.seenCount = (t.seenCount || 0) + 1;
+      if (t.seenCount >= 3) t.confirmed = true;
+
       const motionPx = Math.sqrt((t.x - prevX) ** 2 + (t.y - prevY) ** 2);
       const norm = motionPx / Math.max(1, Math.min(canvas.clientWidth, canvas.clientHeight));
       t.motion = t.motion ? (t.motion * 0.65 + norm * 0.35) : norm;
@@ -686,6 +721,9 @@
         displayH: c.h,
 
         missed: 0,
+        seenCount: 1,
+        confirmed: false,
+
         motion: 0,
         pulse: 0
       });
@@ -777,7 +815,15 @@
       state.detecting = true;
       try {
         const preds = await state.model.detect(video);
-        state.lastDetections = preds.filter(p => p.class === "person" && p.score >= state.detectThreshold);
+        const vw = video.videoWidth || 1280;
+        const vh = video.videoHeight || 720;
+
+        state.lastDetections = preds.filter(p => {
+          if (p.class !== "person") return false;
+          if (p.score < Math.max(state.detectThreshold, 0.68)) return false;
+          if (!isLikelyHumanBox(p, vw, vh)) return false;
+          return true;
+        });
       } catch (err) {
         console.error(err);
       } finally {
@@ -801,6 +847,7 @@
 
   function injectMotionRipples() {
     for (const track of state.tracks) {
+      if (!track.confirmed) continue;
       if ((track.motion || 0) < state.motionThreshold) continue;
 
       const p = normalizeTrackToGrid(track);
@@ -923,6 +970,8 @@
     }
 
     for (const track of state.tracks) {
+      if (!track.confirmed) continue;
+
       let x = track.displayX - track.displayW / 2;
       let y = track.displayY - track.displayH / 2;
       let w = track.displayW;
@@ -934,7 +983,7 @@
       }
 
       ctx.strokeStyle = BLUE_LINE;
-      ctx.lineWidth = 2.4;
+      ctx.lineWidth = 2.6;
       ctx.strokeRect(x, y, w, h);
 
       ctx.fillStyle = BLUE_FILL;
@@ -944,9 +993,10 @@
       ctx.font = "bold 14px sans-serif";
       const tw = ctx.measureText(label).width;
 
-      ctx.fillStyle = "rgba(0,0,0,0.86)";
+      ctx.fillStyle = "rgba(8,12,30,0.88)";
       ctx.fillRect(x, y - 24, tw + 16, 20);
       ctx.strokeStyle = BLUE_LINE;
+      ctx.lineWidth = 1.8;
       ctx.strokeRect(x, y - 24, tw + 16, 20);
 
       ctx.fillStyle = BLUE;
@@ -1067,6 +1117,8 @@
     }
 
     for (const track of state.tracks) {
+      if (!track.confirmed) continue;
+
       const p = normalizeTrackToGrid(track);
       const sx = centerX + (p.gx - p.gy) * tileW * 0.5;
       const sy = startY + (p.gx + p.gy) * tileH * 0.5 - 98;
