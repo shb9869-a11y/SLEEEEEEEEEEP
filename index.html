@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-  <title>인기척: GitHub Ripple Viewer</title>
+  <title>인기척: Camera Ripple Tracker</title>
 
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -14,7 +14,7 @@
       --bg:#000;
       --text:#f2f2f2;
       --muted:#9a9a9a;
-      --panel:rgba(8,8,8,0.94);
+      --panel:rgba(8,8,8,0.92);
       --line:rgba(255,255,255,0.12);
       --blue:#0047FF;
       --blueSoft:rgba(0,71,255,0.16);
@@ -48,6 +48,10 @@
       width:100vw;
       height:100vh;
       overflow:hidden;
+    }
+
+    video{
+      display:none;
     }
 
     canvas{
@@ -133,6 +137,12 @@
       border-color:#fff;
     }
 
+    .small{
+      font-size:11px;
+      color:var(--muted);
+      line-height:1.45;
+    }
+
     .hint{
       position:absolute;
       right:10px;
@@ -149,7 +159,6 @@
     }
 
     .hint strong{ color:#fff; }
-    .small{ font-size:11px; color:var(--muted); line-height:1.45; }
 
     @media (max-width: 799px){
       .hint{
@@ -168,12 +177,17 @@
       <div id="modeChip" class="chip">관객 디텍팅</div>
     </div>
     <div class="right">
-      <div id="sourceChip" class="chip">Mock</div>
+      <div id="cameraChip" class="chip">카메라 대기</div>
       <div id="fullscreenBtn" class="btn">⤢</div>
     </div>
   </div>
 
   <div id="menu" class="menu">
+    <div class="row">
+      <button id="startCameraBtn" class="smbtn">카메라 시작</button>
+      <button id="toggleMenuBtn" class="smbtn">메뉴 숨기기</button>
+    </div>
+
     <div class="row">
       <button id="modeDetectBtn" class="smbtn active">1. 디텍팅</button>
       <button id="modeRippleBtn" class="smbtn">2. 파동</button>
@@ -186,54 +200,48 @@
 
     <div class="row">
       <button id="toggleDualBtn" class="smbtn active">가로 동시 보기</button>
-      <button id="toggleMenuBtn" class="smbtn">메뉴 숨기기</button>
-    </div>
-
-    <div class="row">
-      <button id="mockSourceBtn" class="smbtn active">Mock 소스</button>
-      <button id="remoteSourceBtn" class="smbtn">Remote 소스</button>
-      <button id="reconnectBtn" class="smbtn">재연결</button>
     </div>
 
     <div class="small">
-      GitHub Pages에서는 이 파일만 올리면 바로 동작한다.<br/>
-      기본은 Mock 모드다.<br/>
-      원격 서버를 붙이려면 URL에 <code>?ws=wss://your-server</code> 를 넣어라.
+      • 폰 카메라 직접 사용<br/>
+      • 사람이 사라져도 최대 3초간 번호 기억<br/>
+      • 근처 검출 박스가 나타나면 같은 번호로 재연결<br/>
+      • 움직임 세기가 기준 이상일 때만 파동 발생
     </div>
   </div>
 
   <div class="hint">
-    <strong>GitHub Pages용 구조</strong><br/>
-    서버가 없으면 Mock 데이터로 즉시 실행<br/>
-    서버가 있으면 <code>wss://</code> 로 연결 가능<br/>
-    파동은 움직임 강도가 기준을 넘을 때만 발생
+    <strong>트래킹 로직</strong><br/>
+    사람 검출 → ID 부여 → 3초 메모리 유지 → 근처 재등장 시 같은 번호 유지 → 움직임 기반 파동 발화
   </div>
 
+  <video id="video" autoplay playsinline muted></video>
   <canvas id="canvas"></canvas>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+
 <script>
 (() => {
-  const params = new URLSearchParams(location.search);
-  const WS_URL = params.get("ws") || "";
+  const MEMORY_MS = 3000;
+  const DETECT_INTERVAL_MS = 220;
+  const PERSON_SCORE_THRESHOLD = 0.45;
+  const REASSIGN_DISTANCE_RATIO = 0.18;
+  const MATCH_DISTANCE_RATIO = 0.12;
 
   const state = {
+    model: null,
+    modelReady: false,
+    cameraOn: false,
+
     mode: "detect",
     view: "2d",
     dualLandscape: true,
     menuOpen: true,
 
-    sourceMode: WS_URL ? "remote" : "mock",
-    wsConnected: false,
-    wsRetryTimer: null,
-    ws: null,
-
-    sourceW: 1280,
-    sourceH: 720,
     tracks: [],
-
-    mockTracks: [],
-    nextMockId: 1,
+    nextTrackId: 1,
 
     gridW: 10,
     gridH: 10,
@@ -242,12 +250,16 @@
 
     motionThreshold: 0.010,
     damping: 0.968,
-    pulseScale: 1.5,
+    pulseScale: 1.55,
+
+    lastDetectTime: 0,
+    runningDetection: false,
 
     fps: 0,
     lastFrameTime: performance.now()
   };
 
+  const video = document.getElementById("video");
   const canvas = document.getElementById("canvas");
   const ctx = canvas.getContext("2d");
 
@@ -256,18 +268,16 @@
     menuBtn: document.getElementById("menuBtn"),
     toggleMenuBtn: document.getElementById("toggleMenuBtn"),
     fullscreenBtn: document.getElementById("fullscreenBtn"),
-    modeChip: document.getElementById("modeChip"),
-    sourceChip: document.getElementById("sourceChip"),
 
+    startCameraBtn: document.getElementById("startCameraBtn"),
     modeDetectBtn: document.getElementById("modeDetectBtn"),
     modeRippleBtn: document.getElementById("modeRippleBtn"),
     view2DBtn: document.getElementById("view2DBtn"),
     view3DBtn: document.getElementById("view3DBtn"),
     toggleDualBtn: document.getElementById("toggleDualBtn"),
 
-    mockSourceBtn: document.getElementById("mockSourceBtn"),
-    remoteSourceBtn: document.getElementById("remoteSourceBtn"),
-    reconnectBtn: document.getElementById("reconnectBtn")
+    modeChip: document.getElementById("modeChip"),
+    cameraChip: document.getElementById("cameraChip")
   };
 
   function initField(){
@@ -284,160 +294,229 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
-  function isLandscape(){
-    return window.innerWidth > window.innerHeight;
-  }
-
   function clamp(v, a, b){
     return Math.max(a, Math.min(b, v));
   }
 
-  function rand(min, max){
-    return Math.random() * (max - min) + min;
+  function isLandscape(){
+    return window.innerWidth > window.innerHeight;
   }
 
   function updateUI(){
     ui.menu.style.display = state.menuOpen ? "flex" : "none";
     ui.modeChip.textContent = state.mode === "detect" ? "관객 디텍팅" : "파동 시각화";
-
-    let sourceText = "Mock";
-    if (state.sourceMode === "remote") {
-      sourceText = state.wsConnected ? "Remote 연결됨" : "Remote 대기중";
-    }
-    ui.sourceChip.textContent = sourceText;
+    ui.cameraChip.textContent = state.cameraOn
+      ? (state.modelReady ? "카메라 ON" : "모델 로딩중")
+      : "카메라 대기";
 
     ui.modeDetectBtn.classList.toggle("active", state.mode === "detect");
     ui.modeRippleBtn.classList.toggle("active", state.mode === "ripple");
     ui.view2DBtn.classList.toggle("active", state.view === "2d");
     ui.view3DBtn.classList.toggle("active", state.view === "3d");
     ui.toggleDualBtn.classList.toggle("active", state.dualLandscape);
-
-    ui.mockSourceBtn.classList.toggle("active", state.sourceMode === "mock");
-    ui.remoteSourceBtn.classList.toggle("active", state.sourceMode === "remote");
   }
 
-  function buildMockTracks() {
-    state.mockTracks = [];
-    const count = Math.floor(rand(2, 5));
-    for (let i = 0; i < count; i++) {
-      state.mockTracks.push({
-        id: state.nextMockId++,
-        cx: rand(160, state.sourceW - 160),
-        cy: rand(160, state.sourceH - 160),
-        w: rand(100, 160),
-        h: rand(180, 260),
-        vx: rand(-3.2, 3.2),
-        vy: rand(-2.8, 2.8),
-        motion: 0
+  async function startCamera(){
+    try{
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: "environment" },
+          width: { ideal: 960 },
+          height: { ideal: 540 }
+        },
+        audio: false
       });
-    }
-  }
-
-  function updateMockTracks() {
-    if (!state.mockTracks.length) buildMockTracks();
-
-    for (const t of state.mockTracks) {
-      const px = t.cx;
-      const py = t.cy;
-
-      t.cx += t.vx;
-      t.cy += t.vy;
-
-      if (Math.random() < 0.035) {
-        t.cx += rand(-16, 16);
-        t.cy += rand(-14, 14);
-      }
-
-      if (t.cx < 100 || t.cx > state.sourceW - 100) t.vx *= -1;
-      if (t.cy < 120 || t.cy > state.sourceH - 120) t.vy *= -1;
-
-      const dist = Math.hypot(t.cx - px, t.cy - py);
-      const norm = dist / Math.min(state.sourceW, state.sourceH);
-      t.motion = t.motion * 0.72 + norm * 0.28;
-    }
-
-    state.tracks = state.mockTracks.map(t => ({
-      id: t.id,
-      cx: t.cx,
-      cy: t.cy,
-      w: t.w,
-      h: t.h,
-      motion: t.motion
-    }));
-  }
-
-  function connectWS() {
-    if (!WS_URL) return;
-    if (state.sourceMode !== "remote") return;
-
-    try {
-      if (state.ws) {
-        state.ws.close();
-        state.ws = null;
-      }
-
-      const ws = new WebSocket(WS_URL);
-      state.ws = ws;
-
-      ws.onopen = () => {
-        state.wsConnected = true;
-        updateUI();
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type !== "tracks") return;
-
-          state.sourceW = data.width || 1280;
-          state.sourceH = data.height || 720;
-          state.tracks = Array.isArray(data.tracks) ? data.tracks : [];
-        } catch (err) {
-          console.error(err);
-        }
-      };
-
-      ws.onerror = () => {
-        ws.close();
-      };
-
-      ws.onclose = () => {
-        state.wsConnected = false;
-        updateUI();
-        if (state.sourceMode === "remote") {
-          clearTimeout(state.wsRetryTimer);
-          state.wsRetryTimer = setTimeout(connectWS, 1500);
-        }
-      };
-    } catch (err) {
+      video.srcObject = stream;
+      await video.play();
+      state.cameraOn = true;
+      updateUI();
+    }catch(err){
+      alert("카메라 접근 실패");
       console.error(err);
     }
   }
 
-  function mapTrackToRect(track, rect){
-    const x = (track.cx / state.sourceW) * rect.w;
-    const y = (track.cy / state.sourceH) * rect.h;
-    const w = (track.w / state.sourceW) * rect.w;
-    const h = (track.h / state.sourceH) * rect.h;
+  async function loadModel(){
+    try{
+      state.model = await cocoSsd.load({ base: "lite_mobilenet_v2" });
+      state.modelReady = true;
+      updateUI();
+    }catch(err){
+      console.error(err);
+    }
+  }
+
+  function distance(a, b){
+    return Math.hypot(a.cx - b.cx, a.cy - b.cy);
+  }
+
+  function createTrack(det, now){
+    const [x,y,w,h] = det.bbox;
     return {
-      cx: rect.x + x,
-      cy: rect.y + y,
-      w,
-      h
+      id: state.nextTrackId++,
+      className: det.class || "person",
+      x, y, w, h,
+      cx: x + w/2,
+      cy: y + h/2,
+      lastSeen: now,
+      missingSince: null,
+      life: 0,
+      motion: 0,
+      active: true
     };
   }
 
+  function updateTrack(track, det, now){
+    const [x,y,w,h] = det.bbox;
+    const cx = x + w/2;
+    const cy = y + h/2;
+
+    const dist = Math.hypot(cx - track.cx, cy - track.cy);
+    const normMotion = dist / Math.max(1, Math.min(video.videoWidth || 1280, video.videoHeight || 720));
+
+    track.motion = track.motion * 0.72 + normMotion * 0.28;
+    track.x = x;
+    track.y = y;
+    track.w = w;
+    track.h = h;
+    track.cx = cx;
+    track.cy = cy;
+    track.className = det.class || track.className;
+    track.lastSeen = now;
+    track.missingSince = null;
+    track.life += 1;
+    track.active = true;
+  }
+
+  function cleanupTracks(now){
+    state.tracks = state.tracks.filter(t => {
+      if (t.active) return true;
+      if (!t.missingSince) return true;
+      return (now - t.missingSince) <= MEMORY_MS;
+    });
+
+    for (const t of state.tracks) {
+      if (!t.active) {
+        t.motion *= 0.92;
+      }
+    }
+  }
+
+  function assignDetections(preds, now){
+    const vw = video.videoWidth || 1280;
+    const vh = video.videoHeight || 720;
+    const matchDist = Math.min(vw, vh) * MATCH_DISTANCE_RATIO;
+    const reassignDist = Math.min(vw, vh) * REASSIGN_DISTANCE_RATIO;
+
+    // 사람 우선
+    const people = preds.filter(p => p.class === "person" && p.score >= PERSON_SCORE_THRESHOLD);
+    // 사라진 뒤 주변 객체 이어붙이기용
+    const nearbyObjects = preds.filter(p => p.score >= 0.45);
+
+    // 기존 트랙 모두 일단 inactive 처리
+    for (const t of state.tracks) {
+      t.active = false;
+    }
+
+    const unmatchedTrackIds = new Set(state.tracks.map((t, i) => i));
+    const unmatchedPeople = new Set(people.map((_, i) => i));
+
+    // 1차: 사람과 기존 트랙 매칭
+    const pairs = [];
+    for (let ti = 0; ti < state.tracks.length; ti++) {
+      const t = state.tracks[ti];
+      for (let pi = 0; pi < people.length; pi++) {
+        const p = people[pi];
+        const [x,y,w,h] = p.bbox;
+        const cx = x + w/2;
+        const cy = y + h/2;
+        const d = Math.hypot(cx - t.cx, cy - t.cy);
+        pairs.push({ ti, pi, d });
+      }
+    }
+
+    pairs.sort((a,b) => a.d - b.d);
+
+    for (const pair of pairs) {
+      if (!unmatchedTrackIds.has(pair.ti) || !unmatchedPeople.has(pair.pi)) continue;
+      if (pair.d > matchDist) continue;
+      updateTrack(state.tracks[pair.ti], people[pair.pi], now);
+      unmatchedTrackIds.delete(pair.ti);
+      unmatchedPeople.delete(pair.pi);
+    }
+
+    // 2차: 남은 사람은 새 트랙
+    for (const pi of unmatchedPeople) {
+      state.tracks.push(createTrack(people[pi], now));
+    }
+
+    // 3차: 사람이 사라진 트랙은 missing 처리
+    for (const ti of unmatchedTrackIds) {
+      const t = state.tracks[ti];
+      if (!t.missingSince) t.missingSince = now;
+      t.active = false;
+    }
+
+    // 4차: 3초 안에 사라진 사람 주변의 객체를 같은 번호로 붙이기
+    for (const t of state.tracks) {
+      if (t.active) continue;
+      if (!t.missingSince) continue;
+      if ((now - t.missingSince) > MEMORY_MS) continue;
+
+      let bestObj = null;
+      let bestDist = Infinity;
+
+      for (const obj of nearbyObjects) {
+        const [x,y,w,h] = obj.bbox;
+        const cx = x + w/2;
+        const cy = y + h/2;
+        const d = Math.hypot(cx - t.cx, cy - t.cy);
+
+        if (d < bestDist && d < reassignDist) {
+          bestObj = obj;
+          bestDist = d;
+        }
+      }
+
+      if (bestObj) {
+        updateTrack(t, bestObj, now);
+      }
+    }
+
+    cleanupTracks(now);
+  }
+
+  async function runDetection(now){
+    if (!state.cameraOn || !state.modelReady) return;
+    if (state.runningDetection) return;
+    if (now - state.lastDetectTime < DETECT_INTERVAL_MS) return;
+    if (video.readyState < 2) return;
+
+    state.runningDetection = true;
+    state.lastDetectTime = now;
+
+    try{
+      const preds = await state.model.detect(video, undefined, 12);
+      assignDetections(preds, now);
+    }catch(err){
+      console.error(err);
+    }finally{
+      state.runningDetection = false;
+    }
+  }
+
   function normalizeTrackToGrid(track){
+    const vw = video.videoWidth || 1280;
+    const vh = video.videoHeight || 720;
     return {
-      gx: (track.cx / state.sourceW) * (state.gridW - 1),
-      gy: (track.cy / state.sourceH) * (state.gridH - 1)
+      gx: (track.cx / vw) * (state.gridW - 1),
+      gy: (track.cy / vh) * (state.gridH - 1)
     };
   }
 
   function injectRipples(){
     for (const t of state.tracks) {
       if ((t.motion || 0) < state.motionThreshold) continue;
-
       const p = normalizeTrackToGrid(t);
       const gx = Math.round(p.gx);
       const gy = Math.round(p.gy);
@@ -476,29 +555,61 @@
     ctx.save();
     ctx.strokeStyle = "rgba(255,255,255,0.05)";
     ctx.lineWidth = 1;
-
-    for(let x = 0; x <= rect.w; x += 44){
+    for (let x = 0; x <= rect.w; x += 44) {
       ctx.beginPath();
       ctx.moveTo(rect.x + x, rect.y);
       ctx.lineTo(rect.x + x, rect.y + rect.h);
       ctx.stroke();
     }
-
-    for(let y = 0; y <= rect.h; y += 44){
+    for (let y = 0; y <= rect.h; y += 44) {
       ctx.beginPath();
       ctx.moveTo(rect.x, rect.y + y);
       ctx.lineTo(rect.x + rect.w, rect.y + y);
       ctx.stroke();
     }
-
     ctx.restore();
   }
 
-  function drawDetect(rect){
+  function getContainRect(targetRect){
+    const vw = video.videoWidth || 1280;
+    const vh = video.videoHeight || 720;
+    const scale = Math.min(targetRect.w / vw, targetRect.h / vh);
+    const dw = vw * scale;
+    const dh = vh * scale;
+    const dx = targetRect.x + (targetRect.w - dw) / 2;
+    const dy = targetRect.y + (targetRect.h - dh) / 2;
+    return { dx, dy, dw, dh, vw, vh };
+  }
+
+  function mapTrackToRect(track, rect){
+    const r = getContainRect(rect);
+    return {
+      cx: r.dx + (track.cx / r.vw) * r.dw,
+      cy: r.dy + (track.cy / r.vh) * r.dh,
+      w: (track.w / r.vw) * r.dw,
+      h: (track.h / r.vh) * r.dh
+    };
+  }
+
+  function drawVideo(rect){
     ctx.save();
     ctx.fillStyle = "rgba(0,0,0,0.92)";
     ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
     drawGridBackground(rect);
+
+    if (state.cameraOn && video.readyState >= 2) {
+      const r = getContainRect(rect);
+      ctx.drawImage(video, r.dx, r.dy, r.dw, r.dh);
+      ctx.strokeStyle = "rgba(255,255,255,0.08)";
+      ctx.strokeRect(r.dx, r.dy, r.dw, r.dh);
+    }
+    ctx.restore();
+  }
+
+  function drawDetect(rect){
+    drawVideo(rect);
+
+    ctx.save();
 
     for (const t of state.tracks) {
       const m = mapTrackToRect(t, rect);
@@ -533,11 +644,19 @@
 
       ctx.fillStyle = "#0047FF";
       ctx.fillRect(x, y + m.h + 8, motionBarW * motionNorm, 4);
+
+      if (!t.active && t.missingSince) {
+        ctx.strokeStyle = "rgba(255,255,255,0.35)";
+        ctx.setLineDash([6,6]);
+        ctx.strokeRect(x - 4, y - 4, m.w + 8, m.h + 8);
+        ctx.setLineDash([]);
+      }
     }
 
     ctx.fillStyle = "#fff";
     ctx.font = "bold 16px sans-serif";
-    ctx.fillText("관객 디텍팅 / Track ID", rect.x + 18, rect.y + rect.h - 18);
+    ctx.fillText("관객 디텍팅 / 3초 번호 기억", rect.x + 18, rect.y + rect.h - 18);
+
     ctx.restore();
   }
 
@@ -577,11 +696,11 @@
       const p = normalizeTrackToGrid(t);
       const px = rect.x + leftPad + (p.gx + 0.5) * cellW;
       const py = rect.y + topPad + (p.gy + 0.5) * cellH;
-      const active = (t.motion || 0) >= state.motionThreshold;
+      const activePulse = (t.motion || 0) >= state.motionThreshold;
 
       ctx.beginPath();
-      ctx.arc(px, py, active ? 7 : 5, 0, Math.PI * 2);
-      ctx.fillStyle = active ? "#0047FF" : "rgba(255,255,255,0.45)";
+      ctx.arc(px, py, activePulse ? 7 : 5, 0, Math.PI * 2);
+      ctx.fillStyle = activePulse ? "#0047FF" : "rgba(255,255,255,0.45)";
       ctx.fill();
 
       const label = `ID ${t.id}`;
@@ -591,7 +710,7 @@
       ctx.fillStyle = "rgba(0,0,0,0.92)";
       ctx.fillRect(px - tw/2 - 7, py - 28, tw + 14, 18);
 
-      ctx.strokeStyle = active ? "#0047FF" : "rgba(255,255,255,0.25)";
+      ctx.strokeStyle = activePulse ? "#0047FF" : "rgba(255,255,255,0.25)";
       ctx.strokeRect(px - tw/2 - 7, py - 28, tw + 14, 18);
 
       ctx.fillStyle = "#fff";
@@ -600,7 +719,7 @@
 
     ctx.fillStyle = "#fff";
     ctx.font = "bold 16px sans-serif";
-    ctx.fillText("파동 / motion-triggered ripple", rect.x + 18, rect.y + 28);
+    ctx.fillText("파동 / 움직임 기준 발화", rect.x + 18, rect.y + 28);
     ctx.restore();
   }
 
@@ -673,11 +792,11 @@
       const p = normalizeTrackToGrid(t);
       const sx = centerX + (p.gx - p.gy) * tileW * 0.5;
       const sy = startY + (p.gx + p.gy) * tileH * 0.5 - 98;
-      const active = (t.motion || 0) >= state.motionThreshold;
+      const activePulse = (t.motion || 0) >= state.motionThreshold;
 
       ctx.beginPath();
-      ctx.arc(sx, sy, active ? 7 : 5, 0, Math.PI * 2);
-      ctx.fillStyle = active ? "#0047FF" : "rgba(255,255,255,0.45)";
+      ctx.arc(sx, sy, activePulse ? 7 : 5, 0, Math.PI * 2);
+      ctx.fillStyle = activePulse ? "#0047FF" : "rgba(255,255,255,0.45)";
       ctx.fill();
     }
 
@@ -687,16 +806,14 @@
     ctx.restore();
   }
 
-  function render(now){
+  async function render(now){
     const dt = now - state.lastFrameTime;
     state.lastFrameTime = now;
     state.fps = 1000 / Math.max(1, dt);
 
-    if (state.sourceMode === "mock") {
-      updateMockTracks();
-    }
-
+    await runDetection(now);
     updateWave();
+
     ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
 
     if (state.mode === "detect") {
@@ -736,7 +853,7 @@
       if (document.documentElement.requestFullscreen) {
         await document.documentElement.requestFullscreen();
       }
-    } catch(e) {}
+    }catch(e){}
   }
 
   ui.menuBtn.onclick = () => {
@@ -750,6 +867,10 @@
   };
 
   ui.fullscreenBtn.onclick = tryFullscreen;
+
+  ui.startCameraBtn.onclick = async () => {
+    await startCamera();
+  };
 
   ui.modeDetectBtn.onclick = () => {
     state.mode = "detect";
@@ -776,40 +897,13 @@
     updateUI();
   };
 
-  ui.mockSourceBtn.onclick = () => {
-    state.sourceMode = "mock";
-    state.wsConnected = false;
-    if (state.ws) {
-      state.ws.close();
-      state.ws = null;
-    }
-    updateUI();
-  };
-
-  ui.remoteSourceBtn.onclick = () => {
-    state.sourceMode = "remote";
-    updateUI();
-    connectWS();
-  };
-
-  ui.reconnectBtn.onclick = () => {
-    if (state.sourceMode === "remote") {
-      connectWS();
-    }
-  };
-
   window.addEventListener("resize", resize);
   window.addEventListener("orientationchange", () => setTimeout(resize, 150));
 
   initField();
   resize();
-  buildMockTracks();
   updateUI();
-
-  if (state.sourceMode === "remote") {
-    connectWS();
-  }
-
+  loadModel();
   requestAnimationFrame(render);
 })();
 </script>
