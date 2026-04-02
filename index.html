@@ -3,22 +3,38 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-  <title>인기척: YOLO Ripple Viewer</title>
+  <title>인기척: GitHub Ripple Viewer</title>
+
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="theme-color" content="#000000" />
+
   <style>
     :root{
       --bg:#000;
       --text:#f2f2f2;
       --muted:#9a9a9a;
-      --line:rgba(255,255,255,0.06);
       --panel:rgba(8,8,8,0.94);
+      --line:rgba(255,255,255,0.12);
       --blue:#0047FF;
-      --blueSoft:rgba(0,71,255,0.18);
+      --blueSoft:rgba(0,71,255,0.16);
     }
-    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-    html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR",sans-serif;}
+
+    *{
+      box-sizing:border-box;
+      -webkit-tap-highlight-color:transparent;
+    }
+
+    html,body{
+      margin:0;
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      background:#000;
+      color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR",sans-serif;
+    }
+
     body{
       background:
         linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px),
@@ -26,40 +42,122 @@
         #000;
       background-size:44px 44px,44px 44px,auto;
     }
-    #app{position:relative;width:100vw;height:100vh;overflow:hidden;}
-    canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
+
+    #app{
+      position:relative;
+      width:100vw;
+      height:100vh;
+      overflow:hidden;
+    }
+
+    canvas{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      display:block;
+    }
+
     .topbar{
-      position:absolute;left:10px;right:10px;top:calc(env(safe-area-inset-top,0px) + 10px);
-      z-index:20;display:flex;justify-content:space-between;align-items:center;
+      position:absolute;
+      left:10px;
+      right:10px;
+      top:calc(env(safe-area-inset-top,0px) + 10px);
+      z-index:20;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      pointer-events:none;
     }
-    .left,.right{display:flex;gap:8px;align-items:center;}
+
+    .left,.right{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      pointer-events:auto;
+    }
+
     .btn,.chip{
-      min-height:44px;padding:0 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.12);
-      background:rgba(8,8,8,0.9);color:#fff;display:flex;align-items:center;justify-content:center;
-      backdrop-filter:blur(8px);font-size:13px;
+      min-height:44px;
+      padding:0 14px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:rgba(8,8,8,0.9);
+      color:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      backdrop-filter:blur(8px);
+      font-size:13px;
     }
-    .btn{cursor:pointer}
+
+    .btn{ cursor:pointer; }
+
     .menu{
-      position:absolute;left:10px;top:calc(env(safe-area-inset-top,0px) + 62px);
-      z-index:20;width:min(320px, calc(100vw - 20px));
-      background:rgba(8,8,8,0.94);border:1px solid rgba(255,255,255,0.12);
-      border-radius:16px;padding:14px;
-      display:flex;flex-direction:column;gap:10px;
+      position:absolute;
+      left:10px;
+      top:calc(env(safe-area-inset-top,0px) + 62px);
+      z-index:20;
+      width:min(330px, calc(100vw - 20px));
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:14px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
       backdrop-filter:blur(10px);
     }
-    .row{display:flex;gap:8px;flex-wrap:wrap;}
-    .smbtn{
-      min-height:40px;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.12);
-      background:#151515;color:#fff;cursor:pointer;font-size:13px;font-weight:600;
+
+    .row{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
     }
-    .smbtn.active{background:#fff;color:#000;border-color:#fff;}
+
+    .smbtn{
+      min-height:40px;
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid var(--line);
+      background:#151515;
+      color:#fff;
+      cursor:pointer;
+      font-size:13px;
+      font-weight:600;
+    }
+
+    .smbtn.active{
+      background:#fff;
+      color:#000;
+      border-color:#fff;
+    }
+
     .hint{
-      position:absolute;right:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);z-index:20;
-      background:rgba(8,8,8,0.86);border:1px solid rgba(255,255,255,0.12);border-radius:16px;
-      padding:12px 14px;font-size:12px;color:var(--muted);max-width:min(360px, calc(100vw - 20px));
+      position:absolute;
+      right:10px;
+      bottom:calc(env(safe-area-inset-bottom,0px) + 10px);
+      z-index:20;
+      background:rgba(8,8,8,0.86);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px 14px;
+      font-size:12px;
+      color:var(--muted);
+      max-width:min(360px, calc(100vw - 20px));
       line-height:1.5;
     }
-    .hint strong{color:#fff;}
+
+    .hint strong{ color:#fff; }
+    .small{ font-size:11px; color:var(--muted); line-height:1.45; }
+
+    @media (max-width: 799px){
+      .hint{
+        left:10px;
+        right:10px;
+        max-width:none;
+      }
+    }
   </style>
 </head>
 <body>
@@ -70,6 +168,7 @@
       <div id="modeChip" class="chip">관객 디텍팅</div>
     </div>
     <div class="right">
+      <div id="sourceChip" class="chip">Mock</div>
       <div id="fullscreenBtn" class="btn">⤢</div>
     </div>
   </div>
@@ -79,22 +178,35 @@
       <button id="modeDetectBtn" class="smbtn active">1. 디텍팅</button>
       <button id="modeRippleBtn" class="smbtn">2. 파동</button>
     </div>
+
     <div class="row">
       <button id="view2DBtn" class="smbtn active">2D Grid</button>
       <button id="view3DBtn" class="smbtn">3D Module</button>
     </div>
+
     <div class="row">
       <button id="toggleDualBtn" class="smbtn active">가로 동시 보기</button>
+      <button id="toggleMenuBtn" class="smbtn">메뉴 숨기기</button>
     </div>
-    <div style="font-size:12px;color:#9a9a9a;line-height:1.5;">
-      웹소켓 주소는 코드 안의 <code>WS_URL</code> 에서 바꿔.
-      맥북 서버가 YOLO 추적 결과를 보내고, 이 화면은 그리기만 한다.
+
+    <div class="row">
+      <button id="mockSourceBtn" class="smbtn active">Mock 소스</button>
+      <button id="remoteSourceBtn" class="smbtn">Remote 소스</button>
+      <button id="reconnectBtn" class="smbtn">재연결</button>
+    </div>
+
+    <div class="small">
+      GitHub Pages에서는 이 파일만 올리면 바로 동작한다.<br/>
+      기본은 Mock 모드다.<br/>
+      원격 서버를 붙이려면 URL에 <code>?ws=wss://your-server</code> 를 넣어라.
     </div>
   </div>
 
   <div class="hint">
-    <strong>로직</strong><br/>
-    YOLO + ByteTrack ID → 움직임 강도 계산 → 기준 넘으면 파동 발화 → 확산 + 감쇠
+    <strong>GitHub Pages용 구조</strong><br/>
+    서버가 없으면 Mock 데이터로 즉시 실행<br/>
+    서버가 있으면 <code>wss://</code> 로 연결 가능<br/>
+    파동은 움직임 강도가 기준을 넘을 때만 발생
   </div>
 
   <canvas id="canvas"></canvas>
@@ -102,27 +214,35 @@
 
 <script>
 (() => {
-  // 네 맥북 IP로 바꿔
-  const WS_URL = "ws://192.168.0.10:8765";
+  const params = new URLSearchParams(location.search);
+  const WS_URL = params.get("ws") || "";
 
   const state = {
-    mode: "detect", // detect | ripple
-    view: "2d",     // 2d | 3d
+    mode: "detect",
+    view: "2d",
     dualLandscape: true,
     menuOpen: true,
+
+    sourceMode: WS_URL ? "remote" : "mock",
+    wsConnected: false,
+    wsRetryTimer: null,
+    ws: null,
 
     sourceW: 1280,
     sourceH: 720,
     tracks: [],
+
+    mockTracks: [],
+    nextMockId: 1,
 
     gridW: 10,
     gridH: 10,
     grid: [],
     vel: [],
 
-    motionThreshold: 0.012,
+    motionThreshold: 0.010,
     damping: 0.968,
-    pulseScale: 1.6,
+    pulseScale: 1.5,
 
     fps: 0,
     lastFrameTime: performance.now()
@@ -134,13 +254,20 @@
   const ui = {
     menu: document.getElementById("menu"),
     menuBtn: document.getElementById("menuBtn"),
+    toggleMenuBtn: document.getElementById("toggleMenuBtn"),
     fullscreenBtn: document.getElementById("fullscreenBtn"),
     modeChip: document.getElementById("modeChip"),
+    sourceChip: document.getElementById("sourceChip"),
+
     modeDetectBtn: document.getElementById("modeDetectBtn"),
     modeRippleBtn: document.getElementById("modeRippleBtn"),
     view2DBtn: document.getElementById("view2DBtn"),
     view3DBtn: document.getElementById("view3DBtn"),
-    toggleDualBtn: document.getElementById("toggleDualBtn")
+    toggleDualBtn: document.getElementById("toggleDualBtn"),
+
+    mockSourceBtn: document.getElementById("mockSourceBtn"),
+    remoteSourceBtn: document.getElementById("remoteSourceBtn"),
+    reconnectBtn: document.getElementById("reconnectBtn")
   };
 
   function initField(){
@@ -165,38 +292,126 @@
     return Math.max(a, Math.min(b, v));
   }
 
+  function rand(min, max){
+    return Math.random() * (max - min) + min;
+  }
+
   function updateUI(){
     ui.menu.style.display = state.menuOpen ? "flex" : "none";
     ui.modeChip.textContent = state.mode === "detect" ? "관객 디텍팅" : "파동 시각화";
+
+    let sourceText = "Mock";
+    if (state.sourceMode === "remote") {
+      sourceText = state.wsConnected ? "Remote 연결됨" : "Remote 대기중";
+    }
+    ui.sourceChip.textContent = sourceText;
+
     ui.modeDetectBtn.classList.toggle("active", state.mode === "detect");
     ui.modeRippleBtn.classList.toggle("active", state.mode === "ripple");
     ui.view2DBtn.classList.toggle("active", state.view === "2d");
     ui.view3DBtn.classList.toggle("active", state.view === "3d");
     ui.toggleDualBtn.classList.toggle("active", state.dualLandscape);
+
+    ui.mockSourceBtn.classList.toggle("active", state.sourceMode === "mock");
+    ui.remoteSourceBtn.classList.toggle("active", state.sourceMode === "remote");
   }
 
-  function connectWS(){
-    const ws = new WebSocket(WS_URL);
+  function buildMockTracks() {
+    state.mockTracks = [];
+    const count = Math.floor(rand(2, 5));
+    for (let i = 0; i < count; i++) {
+      state.mockTracks.push({
+        id: state.nextMockId++,
+        cx: rand(160, state.sourceW - 160),
+        cy: rand(160, state.sourceH - 160),
+        w: rand(100, 160),
+        h: rand(180, 260),
+        vx: rand(-3.2, 3.2),
+        vy: rand(-2.8, 2.8),
+        motion: 0
+      });
+    }
+  }
 
-    ws.onmessage = (event) => {
-      try{
-        const data = JSON.parse(event.data);
-        if(data.type !== "tracks") return;
-        state.sourceW = data.width || 1280;
-        state.sourceH = data.height || 720;
-        state.tracks = Array.isArray(data.tracks) ? data.tracks : [];
-      }catch(err){
-        console.error(err);
+  function updateMockTracks() {
+    if (!state.mockTracks.length) buildMockTracks();
+
+    for (const t of state.mockTracks) {
+      const px = t.cx;
+      const py = t.cy;
+
+      t.cx += t.vx;
+      t.cy += t.vy;
+
+      if (Math.random() < 0.035) {
+        t.cx += rand(-16, 16);
+        t.cy += rand(-14, 14);
       }
-    };
 
-    ws.onclose = () => {
-      setTimeout(connectWS, 1200);
-    };
+      if (t.cx < 100 || t.cx > state.sourceW - 100) t.vx *= -1;
+      if (t.cy < 120 || t.cy > state.sourceH - 120) t.vy *= -1;
 
-    ws.onerror = () => {
-      ws.close();
-    };
+      const dist = Math.hypot(t.cx - px, t.cy - py);
+      const norm = dist / Math.min(state.sourceW, state.sourceH);
+      t.motion = t.motion * 0.72 + norm * 0.28;
+    }
+
+    state.tracks = state.mockTracks.map(t => ({
+      id: t.id,
+      cx: t.cx,
+      cy: t.cy,
+      w: t.w,
+      h: t.h,
+      motion: t.motion
+    }));
+  }
+
+  function connectWS() {
+    if (!WS_URL) return;
+    if (state.sourceMode !== "remote") return;
+
+    try {
+      if (state.ws) {
+        state.ws.close();
+        state.ws = null;
+      }
+
+      const ws = new WebSocket(WS_URL);
+      state.ws = ws;
+
+      ws.onopen = () => {
+        state.wsConnected = true;
+        updateUI();
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type !== "tracks") return;
+
+          state.sourceW = data.width || 1280;
+          state.sourceH = data.height || 720;
+          state.tracks = Array.isArray(data.tracks) ? data.tracks : [];
+        } catch (err) {
+          console.error(err);
+        }
+      };
+
+      ws.onerror = () => {
+        ws.close();
+      };
+
+      ws.onclose = () => {
+        state.wsConnected = false;
+        updateUI();
+        if (state.sourceMode === "remote") {
+          clearTimeout(state.wsRetryTimer);
+          state.wsRetryTimer = setTimeout(connectWS, 1500);
+        }
+      };
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   function mapTrackToRect(track, rect){
@@ -220,51 +435,62 @@
   }
 
   function injectRipples(){
-    for(const t of state.tracks){
-      if((t.motion || 0) < state.motionThreshold) continue;
+    for (const t of state.tracks) {
+      if ((t.motion || 0) < state.motionThreshold) continue;
+
       const p = normalizeTrackToGrid(t);
       const gx = Math.round(p.gx);
       const gy = Math.round(p.gy);
-      if(gx < 0 || gx >= state.gridW || gy < 0 || gy >= state.gridH) continue;
+
+      if (gx < 0 || gx >= state.gridW || gy < 0 || gy >= state.gridH) continue;
+
       const pulse = clamp((t.motion - state.motionThreshold) / 0.05, 0, 1.5);
-      state.vel[gy][gx] += 0.20 + pulse * state.pulseScale;
+      state.vel[gy][gx] += 0.18 + pulse * state.pulseScale;
     }
   }
 
   function updateWave(){
     injectRipples();
+
     const next = Array.from({length: state.gridH}, () => Array(state.gridW).fill(0));
-    for(let y=0;y<state.gridH;y++){
-      for(let x=0;x<state.gridW;x++){
+
+    for (let y = 0; y < state.gridH; y++) {
+      for (let x = 0; x < state.gridW; x++) {
         const c = state.grid[y][x];
-        const l = x>0 ? state.grid[y][x-1] : 0;
-        const r = x<state.gridW-1 ? state.grid[y][x+1] : 0;
-        const u = y>0 ? state.grid[y-1][x] : 0;
-        const d = y<state.gridH-1 ? state.grid[y+1][x] : 0;
-        const lap = (l+r+u+d - 4*c);
+        const l = x > 0 ? state.grid[y][x - 1] : 0;
+        const r = x < state.gridW - 1 ? state.grid[y][x + 1] : 0;
+        const u = y > 0 ? state.grid[y - 1][x] : 0;
+        const d = y < state.gridH - 1 ? state.grid[y + 1][x] : 0;
+
+        const lap = (l + r + u + d - 4 * c);
         state.vel[y][x] += lap * 0.22;
         state.vel[y][x] *= state.damping;
         next[y][x] = c + state.vel[y][x];
       }
     }
+
     state.grid = next;
   }
 
   function drawGridBackground(rect){
     ctx.save();
     ctx.strokeStyle = "rgba(255,255,255,0.05)";
-    for(let x=0; x<=rect.w; x+=44){
+    ctx.lineWidth = 1;
+
+    for(let x = 0; x <= rect.w; x += 44){
       ctx.beginPath();
       ctx.moveTo(rect.x + x, rect.y);
       ctx.lineTo(rect.x + x, rect.y + rect.h);
       ctx.stroke();
     }
-    for(let y=0; y<=rect.h; y+=44){
+
+    for(let y = 0; y <= rect.h; y += 44){
       ctx.beginPath();
       ctx.moveTo(rect.x, rect.y + y);
       ctx.lineTo(rect.x + rect.w, rect.y + y);
       ctx.stroke();
     }
+
     ctx.restore();
   }
 
@@ -274,10 +500,10 @@
     ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
     drawGridBackground(rect);
 
-    for(const t of state.tracks){
+    for (const t of state.tracks) {
       const m = mapTrackToRect(t, rect);
-      const x = m.cx - m.w/2;
-      const y = m.cy - m.h/2;
+      const x = m.cx - m.w / 2;
+      const y = m.cy - m.h / 2;
 
       ctx.strokeStyle = "#0047FF";
       ctx.lineWidth = 2;
@@ -289,24 +515,29 @@
       const label = `ID ${t.id}`;
       ctx.font = "bold 14px sans-serif";
       const tw = ctx.measureText(label).width;
+
       ctx.fillStyle = "rgba(0,0,0,0.92)";
       ctx.fillRect(x, y - 24, tw + 16, 20);
+
       ctx.strokeStyle = "#0047FF";
       ctx.strokeRect(x, y - 24, tw + 16, 20);
+
       ctx.fillStyle = "#fff";
       ctx.fillText(label, x + 8, y - 9);
 
       const motionBarW = Math.max(24, m.w);
       const motionNorm = clamp((t.motion || 0) / 0.05, 0, 1);
+
       ctx.fillStyle = "rgba(255,255,255,0.10)";
       ctx.fillRect(x, y + m.h + 8, motionBarW, 4);
+
       ctx.fillStyle = "#0047FF";
       ctx.fillRect(x, y + m.h + 8, motionBarW * motionNorm, 4);
     }
 
     ctx.fillStyle = "#fff";
     ctx.font = "bold 16px sans-serif";
-    ctx.fillText("관객 디텍팅 / YOLO Track ID", rect.x + 18, rect.y + rect.h - 18);
+    ctx.fillText("관객 디텍팅 / Track ID", rect.x + 18, rect.y + rect.h - 18);
     ctx.restore();
   }
 
@@ -328,19 +559,21 @@
     const cellW = gw / state.gridW;
     const cellH = gh / state.gridH;
 
-    for(let y=0;y<state.gridH;y++){
-      for(let x=0;x<state.gridW;x++){
+    for (let y = 0; y < state.gridH; y++) {
+      for (let x = 0; x < state.gridW; x++) {
         const px = rect.x + leftPad + x * cellW;
         const py = rect.y + topPad + y * cellH;
         const v = state.grid[y][x];
+
         ctx.fillStyle = waveGray(v);
         ctx.fillRect(px + 4, py + 4, cellW - 8, cellH - 8);
+
         ctx.strokeStyle = "rgba(255,255,255,0.08)";
         ctx.strokeRect(px + 4, py + 4, cellW - 8, cellH - 8);
       }
     }
 
-    for(const t of state.tracks){
+    for (const t of state.tracks) {
       const p = normalizeTrackToGrid(t);
       const px = rect.x + leftPad + (p.gx + 0.5) * cellW;
       const py = rect.y + topPad + (p.gy + 0.5) * cellH;
@@ -354,10 +587,13 @@
       const label = `ID ${t.id}`;
       ctx.font = "bold 12px sans-serif";
       const tw = ctx.measureText(label).width;
+
       ctx.fillStyle = "rgba(0,0,0,0.92)";
       ctx.fillRect(px - tw/2 - 7, py - 28, tw + 14, 18);
+
       ctx.strokeStyle = active ? "#0047FF" : "rgba(255,255,255,0.25)";
       ctx.strokeRect(px - tw/2 - 7, py - 28, tw + 14, 18);
+
       ctx.fillStyle = "#fff";
       ctx.fillText(label, px - tw/2, py - 15);
     }
@@ -379,8 +615,8 @@
     const tileH = tileW * 0.55;
     const baseHeight = Math.min(18, rect.h / 30);
 
-    for(let gy=0; gy<state.gridH; gy++){
-      for(let gx=0; gx<state.gridW; gx++){
+    for (let gy = 0; gy < state.gridH; gy++) {
+      for (let gx = 0; gx < state.gridW; gx++) {
         const v = clamp(Math.abs(state.grid[gy][gx]), 0, 2.0);
         const h = baseHeight + v * 34;
 
@@ -411,24 +647,34 @@
         const lg = Math.floor(14 + v * 36);
 
         ctx.beginPath();
-        ctx.moveTo(top[0][0], top[0][1]); top.slice(1).forEach(p => ctx.lineTo(p[0], p[1])); ctx.closePath();
-        ctx.fillStyle = `rgba(${tg},${tg},${tg},0.96)`; ctx.fill();
+        ctx.moveTo(top[0][0], top[0][1]);
+        top.slice(1).forEach(p => ctx.lineTo(p[0], p[1]));
+        ctx.closePath();
+        ctx.fillStyle = `rgba(${tg},${tg},${tg},0.96)`;
+        ctx.fill();
 
         ctx.beginPath();
-        ctx.moveTo(right[0][0], right[0][1]); right.slice(1).forEach(p => ctx.lineTo(p[0], p[1])); ctx.closePath();
-        ctx.fillStyle = `rgba(${rg},${rg},${rg},0.92)`; ctx.fill();
+        ctx.moveTo(right[0][0], right[0][1]);
+        right.slice(1).forEach(p => ctx.lineTo(p[0], p[1]));
+        ctx.closePath();
+        ctx.fillStyle = `rgba(${rg},${rg},${rg},0.92)`;
+        ctx.fill();
 
         ctx.beginPath();
-        ctx.moveTo(left[0][0], left[0][1]); left.slice(1).forEach(p => ctx.lineTo(p[0], p[1])); ctx.closePath();
-        ctx.fillStyle = `rgba(${lg},${lg},${lg},0.94)`; ctx.fill();
+        ctx.moveTo(left[0][0], left[0][1]);
+        left.slice(1).forEach(p => ctx.lineTo(p[0], p[1]));
+        ctx.closePath();
+        ctx.fillStyle = `rgba(${lg},${lg},${lg},0.94)`;
+        ctx.fill();
       }
     }
 
-    for(const t of state.tracks){
+    for (const t of state.tracks) {
       const p = normalizeTrackToGrid(t);
       const sx = centerX + (p.gx - p.gy) * tileW * 0.5;
       const sy = startY + (p.gx + p.gy) * tileH * 0.5 - 98;
       const active = (t.motion || 0) >= state.motionThreshold;
+
       ctx.beginPath();
       ctx.arc(sx, sy, active ? 7 : 5, 0, Math.PI * 2);
       ctx.fillStyle = active ? "#0047FF" : "rgba(255,255,255,0.45)";
@@ -446,18 +692,28 @@
     state.lastFrameTime = now;
     state.fps = 1000 / Math.max(1, dt);
 
-    updateWave();
+    if (state.sourceMode === "mock") {
+      updateMockTracks();
+    }
 
+    updateWave();
     ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
 
-    if(state.mode === "detect"){
-      drawDetect({x:0,y:0,w:canvas.clientWidth,h:canvas.clientHeight});
+    if (state.mode === "detect") {
+      drawDetect({x:0, y:0, w:canvas.clientWidth, h:canvas.clientHeight});
     } else {
-      if(isLandscape() && state.dualLandscape){
+      if (isLandscape() && state.dualLandscape) {
         const leftW = Math.max(280, canvas.clientWidth * 0.34);
-        drawDetect({x:0,y:0,w:leftW,h:canvas.clientHeight});
-        const rr = {x:leftW,y:0,w:canvas.clientWidth-leftW,h:canvas.clientHeight};
-        if(state.view === "2d") drawRipple2D(rr);
+        drawDetect({x:0, y:0, w:leftW, h:canvas.clientHeight});
+
+        const rr = {
+          x:leftW,
+          y:0,
+          w:canvas.clientWidth - leftW,
+          h:canvas.clientHeight
+        };
+
+        if (state.view === "2d") drawRipple2D(rr);
         else drawRipple3D(rr);
 
         ctx.strokeStyle = "rgba(255,255,255,0.08)";
@@ -466,8 +722,8 @@
         ctx.lineTo(leftW, canvas.clientHeight);
         ctx.stroke();
       } else {
-        const rr = {x:0,y:0,w:canvas.clientWidth,h:canvas.clientHeight};
-        if(state.view === "2d") drawRipple2D(rr);
+        const rr = {x:0, y:0, w:canvas.clientWidth, h:canvas.clientHeight};
+        if (state.view === "2d") drawRipple2D(rr);
         else drawRipple3D(rr);
       }
     }
@@ -477,27 +733,83 @@
 
   async function tryFullscreen(){
     try{
-      if(document.documentElement.requestFullscreen){
+      if (document.documentElement.requestFullscreen) {
         await document.documentElement.requestFullscreen();
       }
-    }catch(e){}
+    } catch(e) {}
   }
 
-  ui.menuBtn.onclick = () => { state.menuOpen = !state.menuOpen; updateUI(); };
+  ui.menuBtn.onclick = () => {
+    state.menuOpen = !state.menuOpen;
+    updateUI();
+  };
+
+  ui.toggleMenuBtn.onclick = () => {
+    state.menuOpen = false;
+    updateUI();
+  };
+
   ui.fullscreenBtn.onclick = tryFullscreen;
-  ui.modeDetectBtn.onclick = () => { state.mode = "detect"; updateUI(); };
-  ui.modeRippleBtn.onclick = () => { state.mode = "ripple"; updateUI(); };
-  ui.view2DBtn.onclick = () => { state.view = "2d"; updateUI(); };
-  ui.view3DBtn.onclick = () => { state.view = "3d"; updateUI(); };
-  ui.toggleDualBtn.onclick = () => { state.dualLandscape = !state.dualLandscape; updateUI(); };
+
+  ui.modeDetectBtn.onclick = () => {
+    state.mode = "detect";
+    updateUI();
+  };
+
+  ui.modeRippleBtn.onclick = () => {
+    state.mode = "ripple";
+    updateUI();
+  };
+
+  ui.view2DBtn.onclick = () => {
+    state.view = "2d";
+    updateUI();
+  };
+
+  ui.view3DBtn.onclick = () => {
+    state.view = "3d";
+    updateUI();
+  };
+
+  ui.toggleDualBtn.onclick = () => {
+    state.dualLandscape = !state.dualLandscape;
+    updateUI();
+  };
+
+  ui.mockSourceBtn.onclick = () => {
+    state.sourceMode = "mock";
+    state.wsConnected = false;
+    if (state.ws) {
+      state.ws.close();
+      state.ws = null;
+    }
+    updateUI();
+  };
+
+  ui.remoteSourceBtn.onclick = () => {
+    state.sourceMode = "remote";
+    updateUI();
+    connectWS();
+  };
+
+  ui.reconnectBtn.onclick = () => {
+    if (state.sourceMode === "remote") {
+      connectWS();
+    }
+  };
 
   window.addEventListener("resize", resize);
   window.addEventListener("orientationchange", () => setTimeout(resize, 150));
 
   initField();
   resize();
+  buildMockTracks();
   updateUI();
-  connectWS();
+
+  if (state.sourceMode === "remote") {
+    connectWS();
+  }
+
   requestAnimationFrame(render);
 })();
 </script>
