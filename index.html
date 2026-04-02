@@ -20,7 +20,10 @@
       --panelBorder:rgba(255,255,255,0.12);
       --text:#f3f3f3;
       --muted:#a6a6a6;
-      --blue:#4f8cff;
+      --blue:#0066ff;
+      --blueFill:rgba(0,102,255,0.16);
+      --blueLine:rgba(0,102,255,0.98);
+      --blueSoft:rgba(0,102,255,0.30);
     }
 
     *{
@@ -294,7 +297,7 @@
   <div class="topbar">
     <div class="topbarLeft">
       <button id="menuBtn" class="iconBtn" aria-label="메뉴">☰</button>
-      <div id="modeChip" class="chip">관객 디텍팅</div>
+      <div id="modeChip" class="chip">사람 디텍팅</div>
     </div>
     <div class="topbarRight">
       <button id="fullscreenBtn" class="iconBtn" aria-label="전체화면">⤢</button>
@@ -306,9 +309,9 @@
   <aside id="sidebar" class="sidebar open">
     <div class="title">인기척: 파동 시스템</div>
     <div class="subtitle">
-      인물은 파란 박스로 감지하고, ID를 기억해 넘버링합니다.
-      움직임의 세기가 일정 기준을 넘을 때만 파동이 발생하며,
-      파동은 퍼져나가면서 점차 소멸합니다.
+      사람만 파란 박스로 감지하고, ID를 기억해 넘버링합니다.
+      움직임 세기가 기준을 넘을 때만 파동이 발생합니다.
+      박스는 디텍션 값을 바로 찍지 않고, 부드럽게 따라가도록 보정됩니다.
     </div>
 
     <div class="section">
@@ -316,10 +319,6 @@
       <div class="row">
         <button id="modeDetectBtn" class="btn active">1. 디텍팅</button>
         <button id="modeRippleBtn" class="btn">2. 파동</button>
-      </div>
-      <div class="row">
-        <button id="view2DBtn" class="btn active">2D Grid</button>
-        <button id="view3DBtn" class="btn">3D Module</button>
       </div>
     </div>
 
@@ -354,6 +353,11 @@
         <input id="motionRange" type="range" min="0.002" max="0.08" step="0.001" value="0.018">
         <span id="motionVal">0.018</span>
       </div>
+      <div class="sliderWrap">
+        <span>트래킹</span>
+        <input id="smoothRange" type="range" min="0.08" max="0.45" step="0.01" value="0.22">
+        <span id="smoothVal">0.22</span>
+      </div>
     </div>
 
     <div class="section">
@@ -361,10 +365,6 @@
       <label class="checkRow">
         <span>상태 정보 표시</span>
         <input id="showStatusCheck" type="checkbox">
-      </label>
-      <label class="checkRow">
-        <span>파동 화면에 디텍팅 미리보기</span>
-        <input id="showMiniDetectCheck" type="checkbox" checked>
       </label>
       <label class="checkRow">
         <span>가로 모드 동시 보기 허용</span>
@@ -375,11 +375,11 @@
     <div class="section">
       <div class="label">설명</div>
       <div style="font-size:13px; line-height:1.55; color:var(--muted);">
-        • 인물은 <span style="color:#4f8cff;">파란 박스</span>로 디텍팅됨<br/>
-        • 같은 사람은 nearest-neighbor 기반으로 ID를 유지<br/>
-        • 움직임 세기가 기준보다 클 때만 파동이 발화됨<br/>
-        • 파동은 위치에서 시작해 주변으로 확산되고 감쇠됨<br/>
-        • 가로 모드에서는 디텍팅 + 파동을 동시에 볼 수 있음
+        • 오직 <span style="color:#0066ff;">사람</span>만 인식<br/>
+        • 같은 사람은 nearest-neighbor 기반으로 ID 유지<br/>
+        • 박스와 라벨은 찐 파랑 계열로 표시<br/>
+        • 박스는 보간되어 부드럽게 따라감<br/>
+        • 가로 모드에서는 디텍팅 + 3D 파동 동시 표시
       </div>
     </div>
   </aside>
@@ -398,13 +398,18 @@
 
 <script>
 (() => {
+  const BLUE = "#0066ff";
+  const BLUE_LINE = "rgba(0,102,255,0.98)";
+  const BLUE_FILL = "rgba(0,102,255,0.16)";
+  const BLUE_SOFT = "rgba(0,102,255,0.30)";
+  const BLUE_SOFT_2 = "rgba(0,102,255,0.50)";
+
   const GRID_W = 10;
   const GRID_H = 10;
   const GRID_SIZE = GRID_W * GRID_H;
 
   const state = {
     mode: "detect",
-    view: "2d",
     sidebarOpen: true,
 
     model: null,
@@ -429,6 +434,7 @@
     damping: 0.968,
     detectThreshold: 0.55,
     motionThreshold: 0.018,
+    trackingSmoothness: 0.22,
 
     lastDetectRun: 0,
     detectIntervalMs: 220,
@@ -438,7 +444,6 @@
     lastUiUpdate: 0,
 
     showStatus: false,
-    showMiniDetect: true,
     landscapeDual: true
   };
 
@@ -455,8 +460,6 @@
 
     modeDetectBtn: document.getElementById("modeDetectBtn"),
     modeRippleBtn: document.getElementById("modeRippleBtn"),
-    view2DBtn: document.getElementById("view2DBtn"),
-    view3DBtn: document.getElementById("view3DBtn"),
 
     cameraBtn: document.getElementById("cameraBtn"),
     mockBtn: document.getElementById("mockBtn"),
@@ -466,14 +469,15 @@
     dampingRange: document.getElementById("dampingRange"),
     thresholdRange: document.getElementById("thresholdRange"),
     motionRange: document.getElementById("motionRange"),
+    smoothRange: document.getElementById("smoothRange"),
 
     energyVal: document.getElementById("energyVal"),
     dampingVal: document.getElementById("dampingVal"),
     thresholdVal: document.getElementById("thresholdVal"),
     motionVal: document.getElementById("motionVal"),
+    smoothVal: document.getElementById("smoothVal"),
 
     showStatusCheck: document.getElementById("showStatusCheck"),
-    showMiniDetectCheck: document.getElementById("showMiniDetectCheck"),
     landscapeDualCheck: document.getElementById("landscapeDualCheck"),
 
     floatingInfo: document.getElementById("floatingInfo"),
@@ -490,6 +494,10 @@
 
   function rand(min, max) {
     return Math.random() * (max - min) + min;
+  }
+
+  function lerp(a, b, t) {
+    return a + (b - a) * t;
   }
 
   function setActive(el, on) {
@@ -534,18 +542,16 @@
 
     setActive(ui.modeDetectBtn, state.mode === "detect");
     setActive(ui.modeRippleBtn, state.mode === "ripple");
-    setActive(ui.view2DBtn, state.view === "2d");
-    setActive(ui.view3DBtn, state.view === "3d");
 
-    ui.modeChip.textContent = state.mode === "detect" ? "관객 디텍팅" : "파동 시각화";
+    ui.modeChip.textContent = state.mode === "detect" ? "사람 디텍팅" : "파동 시각화";
 
     ui.energyVal.textContent = state.energy.toFixed(1);
     ui.dampingVal.textContent = state.damping.toFixed(3);
     ui.thresholdVal.textContent = state.detectThreshold.toFixed(2);
     ui.motionVal.textContent = state.motionThreshold.toFixed(3);
+    ui.smoothVal.textContent = state.trackingSmoothness.toFixed(2);
 
     ui.showStatusCheck.checked = state.showStatus;
-    ui.showMiniDetectCheck.checked = state.showMiniDetect;
     ui.landscapeDualCheck.checked = state.landscapeDual;
     ui.floatingInfo.style.display = state.showStatus ? "block" : "none";
 
@@ -553,7 +559,7 @@
     ui.statusText.textContent =
       `모델 ${state.modelReady ? "준비" : "로딩중"} / ` +
       `카메라 ${state.cameraOn ? "켜짐" : "꺼짐"} / ` +
-      `관객 ${state.tracks.length}명 / ` +
+      `사람 ${state.tracks.length}명 / ` +
       `활성 움직임 ${movingCount}명 / ` +
       `FPS ${Math.round(state.fps)}`;
   }
@@ -583,7 +589,6 @@
   function updateMockPeople() {
     const W = canvas.clientWidth || window.innerWidth;
     const H = canvas.clientHeight || window.innerHeight;
-
     state.lastDetections.length = 0;
 
     for (const p of state.mockPeople) {
@@ -674,6 +679,12 @@
         y: c.y,
         w: c.w,
         h: c.h,
+
+        displayX: c.x,
+        displayY: c.y,
+        displayW: c.w,
+        displayH: c.h,
+
         missed: 0,
         motion: 0,
         pulse: 0
@@ -689,6 +700,23 @@
     }
 
     state.tracks = state.tracks.filter(t => t.missed < 15);
+  }
+
+  function smoothTracks() {
+    const s = state.trackingSmoothness;
+    for (const t of state.tracks) {
+      if (typeof t.displayX !== "number") {
+        t.displayX = t.x;
+        t.displayY = t.y;
+        t.displayW = t.w;
+        t.displayH = t.h;
+      } else {
+        t.displayX = lerp(t.displayX, t.x, s);
+        t.displayY = lerp(t.displayY, t.y, s);
+        t.displayW = lerp(t.displayW, t.w, s);
+        t.displayH = lerp(t.displayH, t.h, s);
+      }
+    }
   }
 
   async function loadModel() {
@@ -766,8 +794,8 @@
 
   function normalizeTrackToGrid(track, rectW = canvas.clientWidth, rectH = canvas.clientHeight) {
     return {
-      gx: (track.x / Math.max(1, rectW)) * (state.gridW - 1),
-      gy: (track.y / Math.max(1, rectH)) * (state.gridH - 1)
+      gx: (track.displayX / Math.max(1, rectW)) * (state.gridW - 1),
+      gy: (track.displayY / Math.max(1, rectH)) * (state.gridH - 1)
     };
   }
 
@@ -895,42 +923,44 @@
     }
 
     for (const track of state.tracks) {
-      let x = track.x - track.w / 2;
-      let y = track.y - track.h / 2;
-      let w = track.w;
-      let h = track.h;
+      let x = track.displayX - track.displayW / 2;
+      let y = track.displayY - track.displayH / 2;
+      let w = track.displayW;
+      let h = track.displayH;
 
       if (state.cameraOn) {
         const m = mapVideoBBoxToCanvas(x, y, w, h, W, H);
         x = m.x; y = m.y; w = m.w; h = m.h;
       }
 
-      ctx.strokeStyle = "rgba(79,140,255,0.95)";
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = BLUE_LINE;
+      ctx.lineWidth = 2.4;
       ctx.strokeRect(x, y, w, h);
 
-      ctx.fillStyle = "rgba(79,140,255,0.15)";
+      ctx.fillStyle = BLUE_FILL;
       ctx.fillRect(x, y, w, h);
 
-      const label = `ID ${track.id}`;
+      const label = `PERSON ${track.id}`;
       ctx.font = "bold 14px sans-serif";
       const tw = ctx.measureText(label).width;
-      ctx.fillStyle = "rgba(0,0,0,0.92)";
+
+      ctx.fillStyle = "rgba(0,0,0,0.86)";
       ctx.fillRect(x, y - 24, tw + 16, 20);
-      ctx.strokeStyle = "rgba(79,140,255,0.8)";
+      ctx.strokeStyle = BLUE_LINE;
       ctx.strokeRect(x, y - 24, tw + 16, 20);
-      ctx.fillStyle = "#ffffff";
+
+      ctx.fillStyle = BLUE;
       ctx.fillText(label, x + 8, y - 9);
 
       const cx = x + w / 2;
       const cy = y + h / 2;
 
       ctx.beginPath();
-      ctx.arc(cx, cy, 4, 0, Math.PI * 2);
-      ctx.fillStyle = "#4f8cff";
+      ctx.arc(cx, cy, 4.2, 0, Math.PI * 2);
+      ctx.fillStyle = BLUE;
       ctx.fill();
 
-      ctx.strokeStyle = "rgba(79,140,255,0.55)";
+      ctx.strokeStyle = BLUE_SOFT_2;
       ctx.beginPath();
       ctx.moveTo(cx - 10, cy);
       ctx.lineTo(cx + 10, cy);
@@ -942,85 +972,16 @@
       const barW = Math.max(20, w);
       const bx = x;
       const by = y + h + 8;
+
       ctx.fillStyle = "rgba(255,255,255,0.10)";
       ctx.fillRect(bx, by, barW, 4);
-      ctx.fillStyle = motion >= (state.motionThreshold / 0.08) ? "#4f8cff" : "rgba(255,255,255,0.35)";
+      ctx.fillStyle = motion >= (state.motionThreshold / 0.08) ? BLUE : "rgba(255,255,255,0.35)";
       ctx.fillRect(bx, by, barW * motion, 4);
     }
 
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = BLUE;
     ctx.font = "bold 16px sans-serif";
-    ctx.fillText("관객 디텍팅 / ID 기억", 18, H - 18);
-
-    ctx.restore();
-  }
-
-  function drawRipple2D(rect = null) {
-    const W = rect ? rect.w : canvas.clientWidth;
-    const H = rect ? rect.h : canvas.clientHeight;
-    const ox = rect ? rect.x : 0;
-    const oy = rect ? rect.y : 0;
-
-    const leftPad = 44;
-    const topPad = 54;
-    const rightPad = 24;
-    const bottomPad = 30;
-    const gw = W - leftPad - rightPad;
-    const gh = H - topPad - bottomPad;
-    const cellW = gw / state.gridW;
-    const cellH = gh / state.gridH;
-
-    ctx.save();
-    ctx.translate(ox, oy);
-    ctx.fillStyle = "rgba(0,0,0,0.96)";
-    ctx.fillRect(0, 0, W, H);
-
-    ctx.fillStyle = "#fff";
-    ctx.font = "bold 16px sans-serif";
-    ctx.fillText("파동 시각화 / 10×10 Grid", 18, 28);
-
-    for (let y = 0; y < state.gridH; y++) {
-      for (let x = 0; x < state.gridW; x++) {
-        const v = state.gridValues[idx(x, y)];
-        const px = leftPad + x * cellW;
-        const py = topPad + y * cellH;
-        const m = 4;
-
-        ctx.fillStyle = waveGray(v);
-        ctx.fillRect(px + m, py + m, cellW - m * 2, cellH - m * 2);
-        ctx.strokeStyle = "rgba(255,255,255,0.08)";
-        ctx.strokeRect(px + m, py + m, cellW - m * 2, cellH - m * 2);
-      }
-    }
-
-    for (const track of state.tracks) {
-      const p = normalizeTrackToGrid(track);
-      const px = leftPad + (p.gx + 0.5) * cellW;
-      const py = topPad + (p.gy + 0.5) * cellH;
-      const active = (track.motion || 0) >= state.motionThreshold;
-
-      ctx.beginPath();
-      ctx.arc(px, py, active ? 7 : 5, 0, Math.PI * 2);
-      ctx.fillStyle = active ? "#4f8cff" : "rgba(255,255,255,0.45)";
-      ctx.fill();
-
-      if (active) {
-        ctx.beginPath();
-        ctx.arc(px, py, 16 + (track.pulse || 0) * 12, 0, Math.PI * 2);
-        ctx.strokeStyle = "rgba(79,140,255,0.35)";
-        ctx.stroke();
-      }
-
-      const label = `ID ${track.id}`;
-      ctx.font = "bold 12px sans-serif";
-      const tw = ctx.measureText(label).width;
-      ctx.fillStyle = "rgba(0,0,0,0.92)";
-      ctx.fillRect(px - tw/2 - 7, py - 28, tw + 14, 18);
-      ctx.strokeStyle = active ? "rgba(79,140,255,0.75)" : "rgba(255,255,255,0.35)";
-      ctx.strokeRect(px - tw/2 - 7, py - 28, tw + 14, 18);
-      ctx.fillStyle = "#fff";
-      ctx.fillText(label, px - tw/2, py - 15);
-    }
+    ctx.fillText("사람 디텍팅 / ID 트래킹", 18, H - 18);
 
     ctx.restore();
   }
@@ -1113,18 +1074,25 @@
 
       ctx.beginPath();
       ctx.arc(sx, sy, active ? 7 : 5, 0, Math.PI * 2);
-      ctx.fillStyle = active ? "#4f8cff" : "rgba(255,255,255,0.45)";
+      ctx.fillStyle = active ? BLUE : "rgba(255,255,255,0.45)";
       ctx.fill();
 
-      const label = `ID ${track.id}`;
+      const label = `PERSON ${track.id}`;
       ctx.font = "bold 12px sans-serif";
       const tw = ctx.measureText(label).width;
       ctx.fillStyle = "rgba(0,0,0,0.92)";
       ctx.fillRect(sx - tw/2 - 7, sy - 28, tw + 14, 18);
-      ctx.strokeStyle = active ? "rgba(79,140,255,0.75)" : "rgba(255,255,255,0.35)";
+      ctx.strokeStyle = active ? BLUE_LINE : "rgba(255,255,255,0.35)";
       ctx.strokeRect(sx - tw/2 - 7, sy - 28, tw + 14, 18);
-      ctx.fillStyle = "#fff";
+      ctx.fillStyle = BLUE;
       ctx.fillText(label, sx - tw/2, sy - 15);
+
+      if (active) {
+        ctx.beginPath();
+        ctx.arc(sx, sy, 16 + (track.pulse || 0) * 12, 0, Math.PI * 2);
+        ctx.strokeStyle = BLUE_SOFT;
+        ctx.stroke();
+      }
     }
 
     ctx.restore();
@@ -1138,18 +1106,8 @@
       const leftW = Math.max(280, W * 0.34);
       const rightW = W - leftW;
 
-      if (state.showMiniDetect) {
-        drawDetectionScene({ x: 0, y: 0, w: leftW, h: H });
-      } else {
-        ctx.fillStyle = "rgba(0,0,0,0.95)";
-        ctx.fillRect(0, 0, leftW, H);
-      }
-
-      if (state.view === "2d") {
-        drawRipple2D({ x: leftW, y: 0, w: rightW, h: H });
-      } else {
-        drawRipple3D({ x: leftW, y: 0, w: rightW, h: H });
-      }
+      drawDetectionScene({ x: 0, y: 0, w: leftW, h: H });
+      drawRipple3D({ x: leftW, y: 0, w: rightW, h: H });
 
       ctx.strokeStyle = "rgba(255,255,255,0.08)";
       ctx.beginPath();
@@ -1159,8 +1117,7 @@
       return;
     }
 
-    if (state.view === "2d") drawRipple2D();
-    else drawRipple3D();
+    drawRipple3D();
   }
 
   function animate(now) {
@@ -1169,6 +1126,7 @@
     state.fps = 1000 / Math.max(1, dt);
 
     runDetection(now);
+    smoothTracks();
     updateWaveField();
 
     ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
@@ -1207,16 +1165,6 @@
     ui.modeRippleBtn.addEventListener("click", () => {
       state.mode = "ripple";
       if (window.innerWidth < 800) toggleSidebar(false);
-      updateUI(true);
-    });
-
-    ui.view2DBtn.addEventListener("click", () => {
-      state.view = "2d";
-      updateUI(true);
-    });
-
-    ui.view3DBtn.addEventListener("click", () => {
-      state.view = "3d";
       updateUI(true);
     });
 
@@ -1267,13 +1215,13 @@
       updateUI(true);
     });
 
-    ui.showStatusCheck.addEventListener("change", (e) => {
-      state.showStatus = e.target.checked;
+    ui.smoothRange.addEventListener("input", (e) => {
+      state.trackingSmoothness = parseFloat(e.target.value);
       updateUI(true);
     });
 
-    ui.showMiniDetectCheck.addEventListener("change", (e) => {
-      state.showMiniDetect = e.target.checked;
+    ui.showStatusCheck.addEventListener("change", (e) => {
+      state.showStatus = e.target.checked;
       updateUI(true);
     });
 
