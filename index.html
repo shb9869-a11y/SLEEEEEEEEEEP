@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Ripple System - MoveNet</title>
+<title>Ripple Live</title>
 
 <style>
-body{margin:0;background:#000;color:#fff;font-family:sans-serif;}
-canvas{position:absolute;width:100%;height:100%;}
-video{display:none;}
+body { margin:0; background:#000; overflow:hidden; }
+canvas { position:absolute; width:100%; height:100%; }
+video { display:none; }
 </style>
 </head>
 
@@ -17,7 +17,7 @@ video{display:none;}
 <video id="video" autoplay playsinline muted></video>
 <canvas id="canvas"></canvas>
 
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
 
 <script>
@@ -33,54 +33,59 @@ let grid = Array.from({length:10},()=>Array(10).fill(0));
 let vel = Array.from({length:10},()=>Array(10).fill(0));
 
 async function init(){
+
+  // 카메라
   const stream = await navigator.mediaDevices.getUserMedia({
-    video:{facingMode:"environment"}
+    video: { facingMode:"environment" },
+    audio: false
   });
   video.srcObject = stream;
 
+  await video.play();
+
+  // MoveNet (🔥 핵심 수정)
   detector = await poseDetection.createDetector(
     poseDetection.SupportedModels.MoveNet,
-    {modelType:"lightning"}
+    {
+      modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING
+    }
   );
 
   resize();
-  loop();
+  requestAnimationFrame(loop);
 }
 
 function resize(){
-  canvas.width = innerWidth;
-  canvas.height = innerHeight;
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
 }
 window.onresize = resize;
 
 function getBox(keypoints){
-  const pts = keypoints.filter(k=>k.score>0.25);
-  if(pts.length<4) return null;
+  const pts = keypoints.filter(k=>k.score>0.3);
+  if(pts.length < 4) return null;
 
-  let xs = pts.map(k=>k.x);
-  let ys = pts.map(k=>k.y);
+  const xs = pts.map(p=>p.x);
+  const ys = pts.map(p=>p.y);
 
-  let minX=Math.min(...xs);
-  let maxX=Math.max(...xs);
-  let minY=Math.min(...ys);
-  let maxY=Math.max(...ys);
-
-  let padX=(maxX-minX)*0.2;
-  let padY=(maxY-minY)*0.25;
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
 
   return {
     cx:(minX+maxX)/2,
     cy:(minY+maxY)/2,
-    w:(maxX-minX)+padX*2,
-    h:(maxY-minY)+padY*2
+    w:(maxX-minX)*1.4,
+    h:(maxY-minY)*1.6
   };
 }
 
-function trackPeople(boxes){
-  let newTracks=[];
+function track(boxes){
+  let newTracks = [];
 
   boxes.forEach(b=>{
-    let best=null, bestDist=9999;
+    let best=null, bestDist=999;
 
     tracks.forEach(t=>{
       let d = Math.hypot(t.cx-b.cx, t.cy-b.cy);
@@ -112,81 +117,84 @@ function trackPeople(boxes){
   });
 
   tracks.forEach(t=>t.life++);
-  tracks = [...newTracks, ...tracks.filter(t=>t.life<60)];
+  tracks = [...newTracks, ...tracks.filter(t=>t.life<40)];
 }
 
-function injectRipple(){
+function inject(){
   tracks.forEach(t=>{
-    if(t.motion<0.02) return;
+    if(t.motion < 0.02) return;
 
     let gx = Math.floor((t.cx/canvas.width)*10);
     let gy = Math.floor((t.cy/canvas.height)*10);
 
     if(gx>=0 && gx<10 && gy>=0 && gy<10){
-      vel[gy][gx]+=0.5 + t.motion*2;
+      vel[gy][gx] += 0.6 + t.motion*2;
     }
   });
 }
 
 function updateWave(){
-  injectRipple();
+  inject();
 
   let next = Array.from({length:10},()=>Array(10).fill(0));
 
   for(let y=0;y<10;y++){
     for(let x=0;x<10;x++){
+
       let c = grid[y][x];
       let l = x>0?grid[y][x-1]:0;
       let r = x<9?grid[y][x+1]:0;
       let u = y>0?grid[y-1][x]:0;
       let d = y<9?grid[y+1][x]:0;
 
-      let lap = (l+r+u+d-4*c);
+      let lap = (l+r+u+d - 4*c);
 
-      vel[y][x]+=lap*0.25;
-      vel[y][x]*=0.96;
+      vel[y][x] += lap * 0.25;
+      vel[y][x] *= 0.96;
 
-      next[y][x]=c+vel[y][x];
+      next[y][x] = c + vel[y][x];
     }
   }
 
-  grid=next;
+  grid = next;
 }
 
 function draw(){
+
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  // ripple grid
   let cw = canvas.width/10;
   let ch = canvas.height/10;
 
+  // ripple
   for(let y=0;y<10;y++){
     for(let x=0;x<10;x++){
       let v = Math.abs(grid[y][x]);
-      let c = Math.floor(20+v*200);
+      let c = Math.floor(20 + v*200);
 
-      ctx.fillStyle=`rgb(${c},${c},${c})`;
-      ctx.fillRect(x*cw+2,y*ch+2,cw-4,ch-4);
+      ctx.fillStyle = `rgb(${c},${c},${c})`;
+      ctx.fillRect(x*cw+2, y*ch+2, cw-4, ch-4);
     }
   }
 
-  // people boxes
+  // people
   tracks.forEach(t=>{
     ctx.strokeStyle="#0047FF";
     ctx.lineWidth=2;
-    ctx.strokeRect(t.cx-t.w/2,t.cy-t.h/2,t.w,t.h);
+    ctx.strokeRect(t.cx-t.w/2, t.cy-t.h/2, t.w, t.h);
 
     ctx.fillStyle="#0047FF";
-    ctx.fillText("ID "+t.id,t.cx-20,t.cy-20);
+    ctx.fillText("ID "+t.id, t.cx-20, t.cy-20);
   });
 }
 
 async function loop(){
+
   const poses = await detector.estimatePoses(video);
 
   let boxes = poses.map(p=>getBox(p.keypoints)).filter(Boolean);
 
-  trackPeople(boxes);
+  track(boxes);
   updateWave();
   draw();
 
