@@ -1,911 +1,128 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-  <title>인기척: Camera Ripple Tracker</title>
-
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="theme-color" content="#000000" />
-
-  <style>
-    :root{
-      --bg:#000;
-      --text:#f2f2f2;
-      --muted:#9a9a9a;
-      --panel:rgba(8,8,8,0.92);
-      --line:rgba(255,255,255,0.12);
-      --blue:#0047FF;
-      --blueSoft:rgba(0,71,255,0.16);
-    }
-
-    *{
-      box-sizing:border-box;
-      -webkit-tap-highlight-color:transparent;
-    }
-
-    html,body{
-      margin:0;
-      width:100%;
-      height:100%;
-      overflow:hidden;
-      background:#000;
-      color:var(--text);
-      font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR",sans-serif;
-    }
-
-    body{
-      background:
-        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px),
-        linear-gradient(0deg, rgba(255,255,255,0.03) 1px, transparent 1px),
-        #000;
-      background-size:44px 44px,44px 44px,auto;
-    }
-
-    #app{
-      position:relative;
-      width:100vw;
-      height:100vh;
-      overflow:hidden;
-    }
-
-    video{
-      display:none;
-    }
-
-    canvas{
-      position:absolute;
-      inset:0;
-      width:100%;
-      height:100%;
-      display:block;
-    }
-
-    .topbar{
-      position:absolute;
-      left:10px;
-      right:10px;
-      top:calc(env(safe-area-inset-top,0px) + 10px);
-      z-index:20;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      pointer-events:none;
-    }
-
-    .left,.right{
-      display:flex;
-      gap:8px;
-      align-items:center;
-      pointer-events:auto;
-    }
-
-    .btn,.chip{
-      min-height:44px;
-      padding:0 14px;
-      border-radius:12px;
-      border:1px solid var(--line);
-      background:rgba(8,8,8,0.9);
-      color:#fff;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      backdrop-filter:blur(8px);
-      font-size:13px;
-    }
-
-    .btn{ cursor:pointer; }
-
-    .menu{
-      position:absolute;
-      left:10px;
-      top:calc(env(safe-area-inset-top,0px) + 62px);
-      z-index:20;
-      width:min(330px, calc(100vw - 20px));
-      background:var(--panel);
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:14px;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      backdrop-filter:blur(10px);
-    }
-
-    .row{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-    }
-
-    .smbtn{
-      min-height:40px;
-      padding:10px 12px;
-      border-radius:10px;
-      border:1px solid var(--line);
-      background:#151515;
-      color:#fff;
-      cursor:pointer;
-      font-size:13px;
-      font-weight:600;
-    }
-
-    .smbtn.active{
-      background:#fff;
-      color:#000;
-      border-color:#fff;
-    }
-
-    .small{
-      font-size:11px;
-      color:var(--muted);
-      line-height:1.45;
-    }
-
-    .hint{
-      position:absolute;
-      right:10px;
-      bottom:calc(env(safe-area-inset-bottom,0px) + 10px);
-      z-index:20;
-      background:rgba(8,8,8,0.86);
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:12px 14px;
-      font-size:12px;
-      color:var(--muted);
-      max-width:min(360px, calc(100vw - 20px));
-      line-height:1.5;
-    }
-
-    .hint strong{ color:#fff; }
-
-    @media (max-width: 799px){
-      .hint{
-        left:10px;
-        right:10px;
-        max-width:none;
-      }
-    }
-  </style>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{margin:0;background:#000;}
+canvas{position:absolute;width:100%;height:100%;}
+</style>
 </head>
+
 <body>
-<div id="app">
-  <div class="topbar">
-    <div class="left">
-      <div id="menuBtn" class="btn">☰</div>
-      <div id="modeChip" class="chip">관객 디텍팅</div>
-    </div>
-    <div class="right">
-      <div id="cameraChip" class="chip">카메라 대기</div>
-      <div id="fullscreenBtn" class="btn">⤢</div>
-    </div>
-  </div>
 
-  <div id="menu" class="menu">
-    <div class="row">
-      <button id="startCameraBtn" class="smbtn">카메라 시작</button>
-      <button id="toggleMenuBtn" class="smbtn">메뉴 숨기기</button>
-    </div>
+<video id="video" autoplay playsinline style="display:none;"></video>
+<canvas id="canvas"></canvas>
 
-    <div class="row">
-      <button id="modeDetectBtn" class="smbtn active">1. 디텍팅</button>
-      <button id="modeRippleBtn" class="smbtn">2. 파동</button>
-    </div>
-
-    <div class="row">
-      <button id="view2DBtn" class="smbtn active">2D Grid</button>
-      <button id="view3DBtn" class="smbtn">3D Module</button>
-    </div>
-
-    <div class="row">
-      <button id="toggleDualBtn" class="smbtn active">가로 동시 보기</button>
-    </div>
-
-    <div class="small">
-      • 폰 카메라 직접 사용<br/>
-      • 사람이 사라져도 최대 3초간 번호 기억<br/>
-      • 근처 검출 박스가 나타나면 같은 번호로 재연결<br/>
-      • 움직임 세기가 기준 이상일 때만 파동 발생
-    </div>
-  </div>
-
-  <div class="hint">
-    <strong>트래킹 로직</strong><br/>
-    사람 검출 → ID 부여 → 3초 메모리 유지 → 근처 재등장 시 같은 번호 유지 → 움직임 기반 파동 발화
-  </div>
-
-  <video id="video" autoplay playsinline muted></video>
-  <canvas id="canvas"></canvas>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
 
 <script>
-(() => {
-  const MEMORY_MS = 3000;
-  const DETECT_INTERVAL_MS = 220;
-  const PERSON_SCORE_THRESHOLD = 0.45;
-  const REASSIGN_DISTANCE_RATIO = 0.18;
-  const MATCH_DISTANCE_RATIO = 0.12;
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
 
-  const state = {
-    model: null,
-    modelReady: false,
-    cameraOn: false,
+let detector;
+let tracks = [];
+let nextID = 1;
 
-    mode: "detect",
-    view: "2d",
-    dualLandscape: true,
-    menuOpen: true,
+async function init(){
+  const stream = await navigator.mediaDevices.getUserMedia({
+    video:{facingMode:"environment"}
+  });
+  video.srcObject = stream;
 
-    tracks: [],
-    nextTrackId: 1,
+  detector = await poseDetection.createDetector(
+    poseDetection.SupportedModels.MoveNet
+  );
 
-    gridW: 10,
-    gridH: 10,
-    grid: [],
-    vel: [],
+  resize();
+  loop();
+}
 
-    motionThreshold: 0.010,
-    damping: 0.968,
-    pulseScale: 1.55,
+function resize(){
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
+}
 
-    lastDetectTime: 0,
-    runningDetection: false,
+window.onresize = resize;
 
-    fps: 0,
-    lastFrameTime: performance.now()
+function getBox(keypoints){
+  let xs = keypoints.map(k=>k.x);
+  let ys = keypoints.map(k=>k.y);
+
+  let minX = Math.min(...xs);
+  let maxX = Math.max(...xs);
+  let minY = Math.min(...ys);
+  let maxY = Math.max(...ys);
+
+  return {
+    x:minX,
+    y:minY,
+    w:maxX-minX,
+    h:maxY-minY,
+    cx:(minX+maxX)/2,
+    cy:(minY+maxY)/2
   };
+}
 
-  const video = document.getElementById("video");
-  const canvas = document.getElementById("canvas");
-  const ctx = canvas.getContext("2d");
+function trackPeople(boxes){
+  let newTracks=[];
 
-  const ui = {
-    menu: document.getElementById("menu"),
-    menuBtn: document.getElementById("menuBtn"),
-    toggleMenuBtn: document.getElementById("toggleMenuBtn"),
-    fullscreenBtn: document.getElementById("fullscreenBtn"),
+  boxes.forEach(b=>{
+    let best=null, bestDist=9999;
 
-    startCameraBtn: document.getElementById("startCameraBtn"),
-    modeDetectBtn: document.getElementById("modeDetectBtn"),
-    modeRippleBtn: document.getElementById("modeRippleBtn"),
-    view2DBtn: document.getElementById("view2DBtn"),
-    view3DBtn: document.getElementById("view3DBtn"),
-    toggleDualBtn: document.getElementById("toggleDualBtn"),
-
-    modeChip: document.getElementById("modeChip"),
-    cameraChip: document.getElementById("cameraChip")
-  };
-
-  function initField(){
-    state.grid = Array.from({length: state.gridH}, () => Array(state.gridW).fill(0));
-    state.vel = Array.from({length: state.gridH}, () => Array(state.gridW).fill(0));
-  }
-
-  function resize(){
-    const dpr = Math.max(1, window.devicePixelRatio || 1);
-    canvas.width = Math.floor(window.innerWidth * dpr);
-    canvas.height = Math.floor(window.innerHeight * dpr);
-    canvas.style.width = window.innerWidth + "px";
-    canvas.style.height = window.innerHeight + "px";
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  }
-
-  function clamp(v, a, b){
-    return Math.max(a, Math.min(b, v));
-  }
-
-  function isLandscape(){
-    return window.innerWidth > window.innerHeight;
-  }
-
-  function updateUI(){
-    ui.menu.style.display = state.menuOpen ? "flex" : "none";
-    ui.modeChip.textContent = state.mode === "detect" ? "관객 디텍팅" : "파동 시각화";
-    ui.cameraChip.textContent = state.cameraOn
-      ? (state.modelReady ? "카메라 ON" : "모델 로딩중")
-      : "카메라 대기";
-
-    ui.modeDetectBtn.classList.toggle("active", state.mode === "detect");
-    ui.modeRippleBtn.classList.toggle("active", state.mode === "ripple");
-    ui.view2DBtn.classList.toggle("active", state.view === "2d");
-    ui.view3DBtn.classList.toggle("active", state.view === "3d");
-    ui.toggleDualBtn.classList.toggle("active", state.dualLandscape);
-  }
-
-  async function startCamera(){
-    try{
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: "environment" },
-          width: { ideal: 960 },
-          height: { ideal: 540 }
-        },
-        audio: false
-      });
-      video.srcObject = stream;
-      await video.play();
-      state.cameraOn = true;
-      updateUI();
-    }catch(err){
-      alert("카메라 접근 실패");
-      console.error(err);
-    }
-  }
-
-  async function loadModel(){
-    try{
-      state.model = await cocoSsd.load({ base: "lite_mobilenet_v2" });
-      state.modelReady = true;
-      updateUI();
-    }catch(err){
-      console.error(err);
-    }
-  }
-
-  function distance(a, b){
-    return Math.hypot(a.cx - b.cx, a.cy - b.cy);
-  }
-
-  function createTrack(det, now){
-    const [x,y,w,h] = det.bbox;
-    return {
-      id: state.nextTrackId++,
-      className: det.class || "person",
-      x, y, w, h,
-      cx: x + w/2,
-      cy: y + h/2,
-      lastSeen: now,
-      missingSince: null,
-      life: 0,
-      motion: 0,
-      active: true
-    };
-  }
-
-  function updateTrack(track, det, now){
-    const [x,y,w,h] = det.bbox;
-    const cx = x + w/2;
-    const cy = y + h/2;
-
-    const dist = Math.hypot(cx - track.cx, cy - track.cy);
-    const normMotion = dist / Math.max(1, Math.min(video.videoWidth || 1280, video.videoHeight || 720));
-
-    track.motion = track.motion * 0.72 + normMotion * 0.28;
-    track.x = x;
-    track.y = y;
-    track.w = w;
-    track.h = h;
-    track.cx = cx;
-    track.cy = cy;
-    track.className = det.class || track.className;
-    track.lastSeen = now;
-    track.missingSince = null;
-    track.life += 1;
-    track.active = true;
-  }
-
-  function cleanupTracks(now){
-    state.tracks = state.tracks.filter(t => {
-      if (t.active) return true;
-      if (!t.missingSince) return true;
-      return (now - t.missingSince) <= MEMORY_MS;
+    tracks.forEach(t=>{
+      let d = Math.hypot(t.cx-b.cx, t.cy-b.cy);
+      if(d<bestDist && d<100){
+        best=t;
+        bestDist=d;
+      }
     });
 
-    for (const t of state.tracks) {
-      if (!t.active) {
-        t.motion *= 0.92;
-      }
+    if(best){
+      let motion = Math.hypot(b.cx-best.cx, b.cy-best.cy)/300;
+
+      best.motion = best.motion*0.7 + motion*0.3;
+      best.cx=b.cx; best.cy=b.cy;
+      best.w=b.w; best.h=b.h;
+      best.life=0;
+
+      newTracks.push(best);
+    }else{
+      newTracks.push({
+        id:nextID++,
+        ...b,
+        motion:0,
+        life:0
+      });
     }
-  }
+  });
 
-  function assignDetections(preds, now){
-    const vw = video.videoWidth || 1280;
-    const vh = video.videoHeight || 720;
-    const matchDist = Math.min(vw, vh) * MATCH_DISTANCE_RATIO;
-    const reassignDist = Math.min(vw, vh) * REASSIGN_DISTANCE_RATIO;
+  tracks.forEach(t=>t.life++);
+  tracks = [...newTracks, ...tracks.filter(t=>t.life<60)];
+}
 
-    // 사람 우선
-    const people = preds.filter(p => p.class === "person" && p.score >= PERSON_SCORE_THRESHOLD);
-    // 사라진 뒤 주변 객체 이어붙이기용
-    const nearbyObjects = preds.filter(p => p.score >= 0.45);
+async function loop(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 
-    // 기존 트랙 모두 일단 inactive 처리
-    for (const t of state.tracks) {
-      t.active = false;
-    }
+  const poses = await detector.estimatePoses(video);
 
-    const unmatchedTrackIds = new Set(state.tracks.map((t, i) => i));
-    const unmatchedPeople = new Set(people.map((_, i) => i));
+  let boxes = poses.map(p=>getBox(p.keypoints));
+  trackPeople(boxes);
 
-    // 1차: 사람과 기존 트랙 매칭
-    const pairs = [];
-    for (let ti = 0; ti < state.tracks.length; ti++) {
-      const t = state.tracks[ti];
-      for (let pi = 0; pi < people.length; pi++) {
-        const p = people[pi];
-        const [x,y,w,h] = p.bbox;
-        const cx = x + w/2;
-        const cy = y + h/2;
-        const d = Math.hypot(cx - t.cx, cy - t.cy);
-        pairs.push({ ti, pi, d });
-      }
-    }
+  tracks.forEach(t=>{
+    ctx.strokeStyle="#0047FF";
+    ctx.lineWidth=2;
+    ctx.strokeRect(t.cx-t.w/2, t.cy-t.h/2, t.w, t.h);
 
-    pairs.sort((a,b) => a.d - b.d);
+    ctx.fillStyle="#0047FF";
+    ctx.fillText("ID "+t.id, t.cx-20, t.cy-20);
+  });
 
-    for (const pair of pairs) {
-      if (!unmatchedTrackIds.has(pair.ti) || !unmatchedPeople.has(pair.pi)) continue;
-      if (pair.d > matchDist) continue;
-      updateTrack(state.tracks[pair.ti], people[pair.pi], now);
-      unmatchedTrackIds.delete(pair.ti);
-      unmatchedPeople.delete(pair.pi);
-    }
+  requestAnimationFrame(loop);
+}
 
-    // 2차: 남은 사람은 새 트랙
-    for (const pi of unmatchedPeople) {
-      state.tracks.push(createTrack(people[pi], now));
-    }
-
-    // 3차: 사람이 사라진 트랙은 missing 처리
-    for (const ti of unmatchedTrackIds) {
-      const t = state.tracks[ti];
-      if (!t.missingSince) t.missingSince = now;
-      t.active = false;
-    }
-
-    // 4차: 3초 안에 사라진 사람 주변의 객체를 같은 번호로 붙이기
-    for (const t of state.tracks) {
-      if (t.active) continue;
-      if (!t.missingSince) continue;
-      if ((now - t.missingSince) > MEMORY_MS) continue;
-
-      let bestObj = null;
-      let bestDist = Infinity;
-
-      for (const obj of nearbyObjects) {
-        const [x,y,w,h] = obj.bbox;
-        const cx = x + w/2;
-        const cy = y + h/2;
-        const d = Math.hypot(cx - t.cx, cy - t.cy);
-
-        if (d < bestDist && d < reassignDist) {
-          bestObj = obj;
-          bestDist = d;
-        }
-      }
-
-      if (bestObj) {
-        updateTrack(t, bestObj, now);
-      }
-    }
-
-    cleanupTracks(now);
-  }
-
-  async function runDetection(now){
-    if (!state.cameraOn || !state.modelReady) return;
-    if (state.runningDetection) return;
-    if (now - state.lastDetectTime < DETECT_INTERVAL_MS) return;
-    if (video.readyState < 2) return;
-
-    state.runningDetection = true;
-    state.lastDetectTime = now;
-
-    try{
-      const preds = await state.model.detect(video, undefined, 12);
-      assignDetections(preds, now);
-    }catch(err){
-      console.error(err);
-    }finally{
-      state.runningDetection = false;
-    }
-  }
-
-  function normalizeTrackToGrid(track){
-    const vw = video.videoWidth || 1280;
-    const vh = video.videoHeight || 720;
-    return {
-      gx: (track.cx / vw) * (state.gridW - 1),
-      gy: (track.cy / vh) * (state.gridH - 1)
-    };
-  }
-
-  function injectRipples(){
-    for (const t of state.tracks) {
-      if ((t.motion || 0) < state.motionThreshold) continue;
-      const p = normalizeTrackToGrid(t);
-      const gx = Math.round(p.gx);
-      const gy = Math.round(p.gy);
-
-      if (gx < 0 || gx >= state.gridW || gy < 0 || gy >= state.gridH) continue;
-
-      const pulse = clamp((t.motion - state.motionThreshold) / 0.05, 0, 1.5);
-      state.vel[gy][gx] += 0.18 + pulse * state.pulseScale;
-    }
-  }
-
-  function updateWave(){
-    injectRipples();
-
-    const next = Array.from({length: state.gridH}, () => Array(state.gridW).fill(0));
-
-    for (let y = 0; y < state.gridH; y++) {
-      for (let x = 0; x < state.gridW; x++) {
-        const c = state.grid[y][x];
-        const l = x > 0 ? state.grid[y][x - 1] : 0;
-        const r = x < state.gridW - 1 ? state.grid[y][x + 1] : 0;
-        const u = y > 0 ? state.grid[y - 1][x] : 0;
-        const d = y < state.gridH - 1 ? state.grid[y + 1][x] : 0;
-
-        const lap = (l + r + u + d - 4 * c);
-        state.vel[y][x] += lap * 0.22;
-        state.vel[y][x] *= state.damping;
-        next[y][x] = c + state.vel[y][x];
-      }
-    }
-
-    state.grid = next;
-  }
-
-  function drawGridBackground(rect){
-    ctx.save();
-    ctx.strokeStyle = "rgba(255,255,255,0.05)";
-    ctx.lineWidth = 1;
-    for (let x = 0; x <= rect.w; x += 44) {
-      ctx.beginPath();
-      ctx.moveTo(rect.x + x, rect.y);
-      ctx.lineTo(rect.x + x, rect.y + rect.h);
-      ctx.stroke();
-    }
-    for (let y = 0; y <= rect.h; y += 44) {
-      ctx.beginPath();
-      ctx.moveTo(rect.x, rect.y + y);
-      ctx.lineTo(rect.x + rect.w, rect.y + y);
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
-
-  function getContainRect(targetRect){
-    const vw = video.videoWidth || 1280;
-    const vh = video.videoHeight || 720;
-    const scale = Math.min(targetRect.w / vw, targetRect.h / vh);
-    const dw = vw * scale;
-    const dh = vh * scale;
-    const dx = targetRect.x + (targetRect.w - dw) / 2;
-    const dy = targetRect.y + (targetRect.h - dh) / 2;
-    return { dx, dy, dw, dh, vw, vh };
-  }
-
-  function mapTrackToRect(track, rect){
-    const r = getContainRect(rect);
-    return {
-      cx: r.dx + (track.cx / r.vw) * r.dw,
-      cy: r.dy + (track.cy / r.vh) * r.dh,
-      w: (track.w / r.vw) * r.dw,
-      h: (track.h / r.vh) * r.dh
-    };
-  }
-
-  function drawVideo(rect){
-    ctx.save();
-    ctx.fillStyle = "rgba(0,0,0,0.92)";
-    ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
-    drawGridBackground(rect);
-
-    if (state.cameraOn && video.readyState >= 2) {
-      const r = getContainRect(rect);
-      ctx.drawImage(video, r.dx, r.dy, r.dw, r.dh);
-      ctx.strokeStyle = "rgba(255,255,255,0.08)";
-      ctx.strokeRect(r.dx, r.dy, r.dw, r.dh);
-    }
-    ctx.restore();
-  }
-
-  function drawDetect(rect){
-    drawVideo(rect);
-
-    ctx.save();
-
-    for (const t of state.tracks) {
-      const m = mapTrackToRect(t, rect);
-      const x = m.cx - m.w / 2;
-      const y = m.cy - m.h / 2;
-
-      ctx.strokeStyle = "#0047FF";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(x, y, m.w, m.h);
-
-      ctx.fillStyle = "rgba(0,71,255,0.16)";
-      ctx.fillRect(x, y, m.w, m.h);
-
-      const label = `ID ${t.id}`;
-      ctx.font = "bold 14px sans-serif";
-      const tw = ctx.measureText(label).width;
-
-      ctx.fillStyle = "rgba(0,0,0,0.92)";
-      ctx.fillRect(x, y - 24, tw + 16, 20);
-
-      ctx.strokeStyle = "#0047FF";
-      ctx.strokeRect(x, y - 24, tw + 16, 20);
-
-      ctx.fillStyle = "#fff";
-      ctx.fillText(label, x + 8, y - 9);
-
-      const motionBarW = Math.max(24, m.w);
-      const motionNorm = clamp((t.motion || 0) / 0.05, 0, 1);
-
-      ctx.fillStyle = "rgba(255,255,255,0.10)";
-      ctx.fillRect(x, y + m.h + 8, motionBarW, 4);
-
-      ctx.fillStyle = "#0047FF";
-      ctx.fillRect(x, y + m.h + 8, motionBarW * motionNorm, 4);
-
-      if (!t.active && t.missingSince) {
-        ctx.strokeStyle = "rgba(255,255,255,0.35)";
-        ctx.setLineDash([6,6]);
-        ctx.strokeRect(x - 4, y - 4, m.w + 8, m.h + 8);
-        ctx.setLineDash([]);
-      }
-    }
-
-    ctx.fillStyle = "#fff";
-    ctx.font = "bold 16px sans-serif";
-    ctx.fillText("관객 디텍팅 / 3초 번호 기억", rect.x + 18, rect.y + rect.h - 18);
-
-    ctx.restore();
-  }
-
-  function waveGray(v){
-    const t = clamp(Math.abs(v), 0, 2.0) / 2.0;
-    const c = Math.floor(18 + t * 220);
-    const a = 0.15 + t * 0.85;
-    return `rgba(${c},${c},${c},${a})`;
-  }
-
-  function drawRipple2D(rect){
-    ctx.save();
-    ctx.fillStyle = "rgba(0,0,0,0.94)";
-    ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
-
-    const leftPad = 44, topPad = 54, rightPad = 20, bottomPad = 24;
-    const gw = rect.w - leftPad - rightPad;
-    const gh = rect.h - topPad - bottomPad;
-    const cellW = gw / state.gridW;
-    const cellH = gh / state.gridH;
-
-    for (let y = 0; y < state.gridH; y++) {
-      for (let x = 0; x < state.gridW; x++) {
-        const px = rect.x + leftPad + x * cellW;
-        const py = rect.y + topPad + y * cellH;
-        const v = state.grid[y][x];
-
-        ctx.fillStyle = waveGray(v);
-        ctx.fillRect(px + 4, py + 4, cellW - 8, cellH - 8);
-
-        ctx.strokeStyle = "rgba(255,255,255,0.08)";
-        ctx.strokeRect(px + 4, py + 4, cellW - 8, cellH - 8);
-      }
-    }
-
-    for (const t of state.tracks) {
-      const p = normalizeTrackToGrid(t);
-      const px = rect.x + leftPad + (p.gx + 0.5) * cellW;
-      const py = rect.y + topPad + (p.gy + 0.5) * cellH;
-      const activePulse = (t.motion || 0) >= state.motionThreshold;
-
-      ctx.beginPath();
-      ctx.arc(px, py, activePulse ? 7 : 5, 0, Math.PI * 2);
-      ctx.fillStyle = activePulse ? "#0047FF" : "rgba(255,255,255,0.45)";
-      ctx.fill();
-
-      const label = `ID ${t.id}`;
-      ctx.font = "bold 12px sans-serif";
-      const tw = ctx.measureText(label).width;
-
-      ctx.fillStyle = "rgba(0,0,0,0.92)";
-      ctx.fillRect(px - tw/2 - 7, py - 28, tw + 14, 18);
-
-      ctx.strokeStyle = activePulse ? "#0047FF" : "rgba(255,255,255,0.25)";
-      ctx.strokeRect(px - tw/2 - 7, py - 28, tw + 14, 18);
-
-      ctx.fillStyle = "#fff";
-      ctx.fillText(label, px - tw/2, py - 15);
-    }
-
-    ctx.fillStyle = "#fff";
-    ctx.font = "bold 16px sans-serif";
-    ctx.fillText("파동 / 움직임 기준 발화", rect.x + 18, rect.y + 28);
-    ctx.restore();
-  }
-
-  function drawRipple3D(rect){
-    ctx.save();
-    ctx.fillStyle = "rgba(0,0,0,0.94)";
-    ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
-
-    const centerX = rect.x + rect.w * 0.5;
-    const startY = rect.y + rect.h * 0.22;
-    const tileW = Math.min(42, rect.w / 18);
-    const tileH = tileW * 0.55;
-    const baseHeight = Math.min(18, rect.h / 30);
-
-    for (let gy = 0; gy < state.gridH; gy++) {
-      for (let gx = 0; gx < state.gridW; gx++) {
-        const v = clamp(Math.abs(state.grid[gy][gx]), 0, 2.0);
-        const h = baseHeight + v * 34;
-
-        const sx = centerX + (gx - gy) * tileW * 0.5;
-        const sy = startY + (gx + gy) * tileH * 0.5;
-
-        const top = [
-          [sx, sy - h],
-          [sx + tileW*0.5, sy - tileH*0.5 - h],
-          [sx, sy - tileH - h],
-          [sx - tileW*0.5, sy - tileH*0.5 - h]
-        ];
-        const right = [
-          [sx, sy - h],
-          [sx + tileW*0.5, sy - tileH*0.5 - h],
-          [sx + tileW*0.5, sy - tileH*0.5],
-          [sx, sy]
-        ];
-        const left = [
-          [sx, sy - h],
-          [sx - tileW*0.5, sy - tileH*0.5 - h],
-          [sx - tileW*0.5, sy - tileH*0.5],
-          [sx, sy]
-        ];
-
-        const tg = Math.floor(40 + v * 90);
-        const rg = Math.floor(24 + v * 54);
-        const lg = Math.floor(14 + v * 36);
-
-        ctx.beginPath();
-        ctx.moveTo(top[0][0], top[0][1]);
-        top.slice(1).forEach(p => ctx.lineTo(p[0], p[1]));
-        ctx.closePath();
-        ctx.fillStyle = `rgba(${tg},${tg},${tg},0.96)`;
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.moveTo(right[0][0], right[0][1]);
-        right.slice(1).forEach(p => ctx.lineTo(p[0], p[1]));
-        ctx.closePath();
-        ctx.fillStyle = `rgba(${rg},${rg},${rg},0.92)`;
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.moveTo(left[0][0], left[0][1]);
-        left.slice(1).forEach(p => ctx.lineTo(p[0], p[1]));
-        ctx.closePath();
-        ctx.fillStyle = `rgba(${lg},${lg},${lg},0.94)`;
-        ctx.fill();
-      }
-    }
-
-    for (const t of state.tracks) {
-      const p = normalizeTrackToGrid(t);
-      const sx = centerX + (p.gx - p.gy) * tileW * 0.5;
-      const sy = startY + (p.gx + p.gy) * tileH * 0.5 - 98;
-      const activePulse = (t.motion || 0) >= state.motionThreshold;
-
-      ctx.beginPath();
-      ctx.arc(sx, sy, activePulse ? 7 : 5, 0, Math.PI * 2);
-      ctx.fillStyle = activePulse ? "#0047FF" : "rgba(255,255,255,0.45)";
-      ctx.fill();
-    }
-
-    ctx.fillStyle = "#fff";
-    ctx.font = "bold 16px sans-serif";
-    ctx.fillText("3D module ripple", rect.x + 18, rect.y + 28);
-    ctx.restore();
-  }
-
-  async function render(now){
-    const dt = now - state.lastFrameTime;
-    state.lastFrameTime = now;
-    state.fps = 1000 / Math.max(1, dt);
-
-    await runDetection(now);
-    updateWave();
-
-    ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
-
-    if (state.mode === "detect") {
-      drawDetect({x:0, y:0, w:canvas.clientWidth, h:canvas.clientHeight});
-    } else {
-      if (isLandscape() && state.dualLandscape) {
-        const leftW = Math.max(280, canvas.clientWidth * 0.34);
-        drawDetect({x:0, y:0, w:leftW, h:canvas.clientHeight});
-
-        const rr = {
-          x:leftW,
-          y:0,
-          w:canvas.clientWidth - leftW,
-          h:canvas.clientHeight
-        };
-
-        if (state.view === "2d") drawRipple2D(rr);
-        else drawRipple3D(rr);
-
-        ctx.strokeStyle = "rgba(255,255,255,0.08)";
-        ctx.beginPath();
-        ctx.moveTo(leftW, 0);
-        ctx.lineTo(leftW, canvas.clientHeight);
-        ctx.stroke();
-      } else {
-        const rr = {x:0, y:0, w:canvas.clientWidth, h:canvas.clientHeight};
-        if (state.view === "2d") drawRipple2D(rr);
-        else drawRipple3D(rr);
-      }
-    }
-
-    requestAnimationFrame(render);
-  }
-
-  async function tryFullscreen(){
-    try{
-      if (document.documentElement.requestFullscreen) {
-        await document.documentElement.requestFullscreen();
-      }
-    }catch(e){}
-  }
-
-  ui.menuBtn.onclick = () => {
-    state.menuOpen = !state.menuOpen;
-    updateUI();
-  };
-
-  ui.toggleMenuBtn.onclick = () => {
-    state.menuOpen = false;
-    updateUI();
-  };
-
-  ui.fullscreenBtn.onclick = tryFullscreen;
-
-  ui.startCameraBtn.onclick = async () => {
-    await startCamera();
-  };
-
-  ui.modeDetectBtn.onclick = () => {
-    state.mode = "detect";
-    updateUI();
-  };
-
-  ui.modeRippleBtn.onclick = () => {
-    state.mode = "ripple";
-    updateUI();
-  };
-
-  ui.view2DBtn.onclick = () => {
-    state.view = "2d";
-    updateUI();
-  };
-
-  ui.view3DBtn.onclick = () => {
-    state.view = "3d";
-    updateUI();
-  };
-
-  ui.toggleDualBtn.onclick = () => {
-    state.dualLandscape = !state.dualLandscape;
-    updateUI();
-  };
-
-  window.addEventListener("resize", resize);
-  window.addEventListener("orientationchange", () => setTimeout(resize, 150));
-
-  initField();
-  resize();
-  updateUI();
-  loadModel();
-  requestAnimationFrame(render);
-})();
+init();
 </script>
 </body>
 </html>
