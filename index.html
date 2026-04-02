@@ -2,867 +2,916 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Blue Box + Yellow Skeleton Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>인기척: 파동 시각화 프로토타입</title>
   <style>
     :root{
-      --panel-w: 340px;
-      --blue-rgb: 0, 56, 168;
-      --blue-solid: rgb(0, 56, 168);
-      --yellow: #ffd400;
-      --bg: #05070b;
-      --panel: rgba(10, 14, 22, 0.92);
-      --line: rgba(255,255,255,0.09);
-      --text: #f3f7ff;
-      --muted: #b8c3d7;
-      --accent: #4da3ff;
+      --bg:#0a0c10;
+      --panel:#121722;
+      --panel-2:#1b2231;
+      --line:#283246;
+      --text:#ebf2ff;
+      --muted:#9fb0cf;
+      --accent:#7aa2ff;
+      --accent-2:#57e3c0;
+      --warn:#ffcc66;
+      --danger:#ff6f6f;
     }
-
-    * { box-sizing: border-box; }
-
-    html, body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      background: #000;
-      overflow: hidden;
-      font-family: Inter, Arial, Helvetica, sans-serif;
-      color: var(--text);
+    *{ box-sizing:border-box; }
+    html,body{
+      margin:0; padding:0; width:100%; height:100%;
+      background:var(--bg); color:var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard",
+                   "Noto Sans KR", "Segoe UI", sans-serif;
+      overflow:hidden;
     }
-
-    #app {
-      position: fixed;
-      inset: 0;
-      display: grid;
-      grid-template-columns: 1fr var(--panel-w);
-      background: #000;
+    #app{
+      width:100vw; height:100vh; position:relative; background:
+      radial-gradient(circle at top, rgba(80,100,160,.16), transparent 32%),
+      linear-gradient(180deg, #090b10 0%, #0b1018 100%);
     }
-
-    #stage {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      background: #000;
-      overflow: hidden;
+    .menu{
+      position:absolute; left:16px; top:16px; z-index:20;
+      width:320px; max-width:calc(100vw - 32px);
+      background:rgba(18,23,34,.90);
+      border:1px solid rgba(122,162,255,.18);
+      border-radius:16px; padding:14px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 16px 40px rgba(0,0,0,.32);
     }
-
-    video, canvas {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+    .menu h1{
+      font-size:16px; margin:0 0 6px 0; font-weight:700;
     }
-
-    video {
-      filter: grayscale(1) contrast(1.08) brightness(0.92);
-      background: #000;
+    .menu p{
+      margin:0 0 10px 0; color:var(--muted); font-size:12px; line-height:1.45;
     }
-
-    #overlay {
-      pointer-events: none;
+    .row{ display:flex; gap:8px; align-items:center; margin-bottom:8px; flex-wrap:wrap; }
+    button, select, input[type="range"]{
+      appearance:none; border:none; outline:none;
+      border-radius:10px;
     }
-
-    #topBar {
-      position: absolute;
-      top: 18px;
-      left: 18px;
-      z-index: 20;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
+    button{
+      background:var(--panel-2);
+      color:var(--text); padding:10px 12px; cursor:pointer;
+      border:1px solid rgba(255,255,255,.06);
+      font-weight:600;
     }
-
-    .glassBtn {
-      appearance: none;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: rgba(10,14,22,0.72);
-      color: #fff;
-      padding: 11px 14px;
-      border-radius: 14px;
-      cursor: pointer;
+    button:hover{ background:#242d40; }
+    button.active{
+      background:linear-gradient(180deg, rgba(122,162,255,.22), rgba(87,227,192,.18));
+      border-color: rgba(122,162,255,.45);
+    }
+    .pill{
+      padding:8px 10px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.06);
+      border-radius:999px; font-size:12px;
+      color:var(--muted);
+    }
+    .sliderWrap{
+      display:grid; grid-template-columns: 90px 1fr 42px;
+      gap:8px; align-items:center; width:100%;
+      font-size:12px; color:var(--muted);
+    }
+    input[type="range"]{
+      width:100%; height:8px; background:#1c2536;
+      border:1px solid rgba(255,255,255,.04);
+    }
+    input[type="range"]::-webkit-slider-thumb{
+      appearance:none; width:16px; height:16px; border-radius:50%;
+      background:var(--accent); cursor:pointer; border:none;
+    }
+    .status{
+      position:absolute; right:16px; top:16px; z-index:20;
+      background:rgba(18,23,34,.86);
+      border:1px solid rgba(122,162,255,.16);
+      border-radius:14px; padding:12px 14px;
+      min-width:240px; max-width:420px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 16px 40px rgba(0,0,0,.24);
+      font-size:12px;
+    }
+    .status .title{ font-weight:700; margin-bottom:6px; }
+    .status .line{ color:var(--muted); margin:4px 0; }
+    .canvasWrap{
+      position:absolute; inset:0;
+      display:grid; grid-template-columns: 1fr;
+    }
+    canvas{
+      width:100%; height:100%; display:block;
+    }
+    .legend{
+      position:absolute; right:16px; bottom:16px; z-index:10;
+      background:rgba(18,23,34,.82);
+      border:1px solid rgba(122,162,255,.14);
+      border-radius:12px; padding:10px 12px;
+      color:var(--muted); font-size:12px; line-height:1.5;
       backdrop-filter: blur(8px);
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: 0.01em;
     }
-
-    .glassBtn:hover {
-      background: rgba(20,28,42,0.86);
+    .legend strong{ color:var(--text); }
+    .miniNote{
+      font-size:11px; color:var(--muted); line-height:1.4; margin-top:4px;
     }
-
-    .statusChip {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 11px 14px;
-      border-radius: 14px;
-      background: rgba(10,14,22,0.72);
-      border: 1px solid rgba(255,255,255,0.12);
-      backdrop-filter: blur(8px);
-      font-size: 13px;
-      color: var(--muted);
-      font-weight: 600;
+    .footerHint{
+      position:absolute; left:16px; bottom:16px; z-index:10;
+      color:rgba(235,242,255,.6); font-size:12px;
     }
-
-    #sidePanel {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      background: var(--panel);
-      border-left: 1px solid var(--line);
-      overflow: auto;
-      padding: 18px 16px 24px;
-      backdrop-filter: blur(14px);
+    .badge{
+      display:inline-block; padding:2px 7px; border-radius:999px; margin-left:6px;
+      font-size:11px; background:rgba(87,227,192,.12); color:#8af0d3;
+      border:1px solid rgba(87,227,192,.18);
+      vertical-align:middle;
     }
-
-    #sidePanel h1 {
-      margin: 2px 0 14px;
-      font-size: 18px;
-      line-height: 1.2;
-      letter-spacing: -0.02em;
-    }
-
-    .group {
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 14px;
-      margin-bottom: 12px;
-      background: rgba(255,255,255,0.02);
-    }
-
-    .groupTitle {
-      font-size: 13px;
-      color: var(--accent);
-      font-weight: 800;
-      margin-bottom: 12px;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-
-    .row {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 10px;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-
-    .row:last-child {
-      margin-bottom: 0;
-    }
-
-    label {
-      font-size: 13px;
-      color: var(--text);
-      font-weight: 600;
-      line-height: 1.35;
-    }
-
-    .value {
-      font-size: 12px;
-      color: var(--muted);
-      font-variant-numeric: tabular-nums;
-      min-width: 54px;
-      text-align: right;
-    }
-
-    input[type="range"] {
-      width: 100%;
-      margin-top: 8px;
-    }
-
-    .toggleRow {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
-    .toggleRow:last-child {
-      margin-bottom: 0;
-    }
-
-    .switch {
-      position: relative;
-      width: 52px;
-      height: 30px;
-      flex: 0 0 auto;
-    }
-
-    .switch input {
-      display: none;
-    }
-
-    .slider {
-      position: absolute;
-      inset: 0;
-      cursor: pointer;
-      background: rgba(255,255,255,0.16);
-      border-radius: 999px;
-      transition: 0.2s ease;
-    }
-
-    .slider::before {
-      content: "";
-      position: absolute;
-      width: 24px;
-      height: 24px;
-      left: 3px;
-      top: 3px;
-      border-radius: 50%;
-      background: #fff;
-      transition: 0.2s ease;
-    }
-
-    .switch input:checked + .slider {
-      background: rgba(77,163,255,0.9);
-    }
-
-    .switch input:checked + .slider::before {
-      transform: translateX(22px);
-    }
-
-    #detections {
-      margin: 0;
-      padding: 0;
-      list-style: none;
-      display: grid;
-      gap: 8px;
-    }
-
-    #detections li {
-      padding: 10px 11px;
-      border-radius: 12px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.06);
-      font-size: 12px;
-      line-height: 1.35;
-      color: #e6efff;
-    }
-
-    .mini {
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.45;
-    }
-
-    .fullWidthBtn {
-      width: 100%;
-      margin-top: 10px;
-      border-radius: 12px;
-      padding: 12px 14px;
-      font-weight: 800;
-    }
-
-    @media (max-width: 980px) {
-      :root { --panel-w: 300px; }
-    }
-
-    @media (max-width: 820px) {
-      #app {
-        grid-template-columns: 1fr;
-      }
-
-      #sidePanel {
-        position: absolute;
-        right: 0;
-        top: 0;
-        width: min(86vw, 340px);
-        transform: translateX(0);
-        z-index: 40;
-      }
-    }
+    .warn{ color:var(--warn); }
+    .danger{ color:var(--danger); }
   </style>
 </head>
 <body>
-  <div id="app">
-    <div id="stage">
-      <video id="video" autoplay playsinline muted></video>
-      <canvas id="overlay"></canvas>
+<div id="app">
+  <div class="menu">
+    <h1>인기척: 파동 시각화 프로토타입 <span class="badge">GitHub Pages용</span></h1>
+    <p>
+      1번은 관객 디텍팅/넘버링 고정 화면, 2번은 디텍팅된 인간 좌표가 10×10 모듈 그리드에
+      파동으로 퍼지는 화면입니다. GitHub에 올려 바로 확인할 수 있게 한 파일로 구성했습니다.
+    </p>
 
-      <div id="topBar">
-        <button class="glassBtn" id="startBtn">시작</button>
-        <button class="glassBtn" id="switchCamBtn">카메라 전환</button>
-        <button class="glassBtn" id="togglePanelBtn">메뉴 열기/닫기</button>
-        <div class="statusChip" id="status">대기 중</div>
+    <div class="row">
+      <button id="modeDetectBtn" class="active">1. 관객 디텍팅</button>
+      <button id="modeRippleBtn">2. 파동 시각화</button>
+    </div>
+
+    <div class="row">
+      <button id="view2DBtn" class="active">2D Grid</button>
+      <button id="view3DBtn">3D Modules</button>
+      <button id="cameraBtn">카메라 시작</button>
+      <button id="mockBtn">Mock 사람 추가</button>
+      <button id="clearBtn">리셋</button>
+    </div>
+
+    <div class="row">
+      <span class="pill">탐지 방식: 브라우저 COCO-SSD + 간단한 ID 트래커</span>
+    </div>
+
+    <div class="row">
+      <div class="sliderWrap">
+        <label for="energyRange">파동 강도</label>
+        <input id="energyRange" type="range" min="0.4" max="2.5" step="0.1" value="1.2">
+        <span id="energyVal">1.2</span>
+      </div>
+      <div class="sliderWrap">
+        <label for="dampingRange">감쇠</label>
+        <input id="dampingRange" type="range" min="0.90" max="0.995" step="0.001" value="0.972">
+        <span id="dampingVal">0.972</span>
+      </div>
+      <div class="sliderWrap">
+        <label for="radiusRange">반경</label>
+        <input id="radiusRange" type="range" min="0.8" max="6" step="0.1" value="2.3">
+        <span id="radiusVal">2.3</span>
+      </div>
+      <div class="sliderWrap">
+        <label for="thresholdRange">검출 문턱</label>
+        <input id="thresholdRange" type="range" min="0.35" max="0.85" step="0.01" value="0.55">
+        <span id="thresholdVal">0.55</span>
       </div>
     </div>
 
-    <aside id="sidePanel">
-      <h1>Tracking Control</h1>
-
-      <div class="group">
-        <div class="groupTitle">View</div>
-
-        <div class="toggleRow">
-          <label for="showBoxes">파란 박스 표시</label>
-          <label class="switch">
-            <input id="showBoxes" type="checkbox" checked />
-            <span class="slider"></span>
-          </label>
-        </div>
-
-        <div class="toggleRow">
-          <label for="showSkeleton">노란 스켈레톤 표시</label>
-          <label class="switch">
-            <input id="showSkeleton" type="checkbox" checked />
-            <span class="slider"></span>
-          </label>
-        </div>
-
-        <div class="toggleRow">
-          <label for="personOnly">person만 보기</label>
-          <label class="switch">
-            <input id="personOnly" type="checkbox" />
-            <span class="slider"></span>
-          </label>
-        </div>
-      </div>
-
-      <div class="group">
-        <div class="groupTitle">Detection</div>
-
-        <div class="row">
-          <div style="width:100%">
-            <label for="objThreshold">물체 confidence</label>
-            <input id="objThreshold" type="range" min="0.1" max="0.95" step="0.01" value="0.45" />
-          </div>
-          <div class="value" id="objThresholdVal">0.45</div>
-        </div>
-
-        <div class="row">
-          <div style="width:100%">
-            <label for="poseThreshold">포즈 confidence</label>
-            <input id="poseThreshold" type="range" min="0.1" max="0.95" step="0.01" value="0.45" />
-          </div>
-          <div class="value" id="poseThresholdVal">0.45</div>
-        </div>
-
-        <div class="row">
-          <div style="width:100%">
-            <label for="maxResults">최대 검출 수</label>
-            <input id="maxResults" type="range" min="1" max="20" step="1" value="8" />
-          </div>
-          <div class="value" id="maxResultsVal">8</div>
-        </div>
-      </div>
-
-      <div class="group">
-        <div class="groupTitle">Style</div>
-
-        <div class="row">
-          <div style="width:100%">
-            <label for="boxAlpha">박스 채움 강도</label>
-            <input id="boxAlpha" type="range" min="0.15" max="1" step="0.01" value="0.78" />
-          </div>
-          <div class="value" id="boxAlphaVal">0.78</div>
-        </div>
-
-        <div class="row">
-          <div style="width:100%">
-            <label for="labelFont">라벨 폰트 크기</label>
-            <input id="labelFont" type="range" min="12" max="32" step="1" value="18" />
-          </div>
-          <div class="value" id="labelFontVal">18</div>
-        </div>
-
-        <div class="row">
-          <div style="width:100%">
-            <label for="skeletonWidth">스켈레톤 두께</label>
-            <input id="skeletonWidth" type="range" min="1" max="8" step="1" value="4" />
-          </div>
-          <div class="value" id="skeletonWidthVal">4</div>
-        </div>
-      </div>
-
-      <div class="group">
-        <div class="groupTitle">Info</div>
-        <div class="mini" id="cameraInfo">카메라: 아직 없음</div>
-        <div class="mini" id="fpsInfo" style="margin-top:8px;">FPS: -</div>
-        <button id="restartBtn" class="glassBtn fullWidthBtn">모델/카메라 다시 시작</button>
-      </div>
-
-      <div class="group">
-        <div class="groupTitle">Detections</div>
-        <ul id="detections"></ul>
-      </div>
-    </aside>
+    <div class="miniNote">
+      메뉴 설명<br/>
+      • <strong>1. 관객 디텍팅</strong>: 사람 바운딩박스와 고정된 ID 표시<br/>
+      • <strong>2. 파동 시각화</strong>: 사람 ID/좌표가 100개 모듈 그리드에 반영되어 에너지가 퍼짐<br/>
+      • <strong>Mock 사람 추가</strong>: 카메라 없이도 GitHub Pages에서 바로 테스트 가능
+    </div>
   </div>
 
-  <script type="module">
-    import {
-      FilesetResolver,
-      ObjectDetector,
-      PoseLandmarker
-    } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/vision_bundle.mjs";
+  <div class="status" id="statusBox">
+    <div class="title">시스템 상태</div>
+    <div class="line" id="modelLine">모델: 로딩 전</div>
+    <div class="line" id="cameraLine">카메라: 꺼짐</div>
+    <div class="line" id="peopleLine">관객 수: 0</div>
+    <div class="line" id="modeLine">현재 화면: 관객 디텍팅</div>
+    <div class="line" id="fpsLine">FPS: -</div>
+  </div>
 
-    const video = document.getElementById("video");
-    const canvas = document.getElementById("overlay");
-    const ctx = canvas.getContext("2d");
+  <div class="canvasWrap">
+    <canvas id="mainCanvas"></canvas>
+  </div>
 
-    const statusEl = document.getElementById("status");
-    const cameraInfoEl = document.getElementById("cameraInfo");
-    const fpsInfoEl = document.getElementById("fpsInfo");
-    const detectionsEl = document.getElementById("detections");
+  <div class="legend">
+    <strong>작동 로직</strong><br/>
+    관객 검출 → centroid 추출 → nearest-neighbor로 ID 고정 →<br/>
+    10×10 모듈에 파동 에너지 주입 → 감쇠/간섭 → 2D 또는 3D 시각화
+  </div>
 
-    const startBtn = document.getElementById("startBtn");
-    const switchCamBtn = document.getElementById("switchCamBtn");
-    const restartBtn = document.getElementById("restartBtn");
-    const togglePanelBtn = document.getElementById("togglePanelBtn");
-    const sidePanel = document.getElementById("sidePanel");
+  <div class="footerHint">
+    GitHub Pages 배포 팁: 이 파일을 <strong>index.html</strong>로 올리면 됩니다.
+  </div>
+</div>
 
-    const ui = {
-      showBoxes: document.getElementById("showBoxes"),
-      showSkeleton: document.getElementById("showSkeleton"),
-      personOnly: document.getElementById("personOnly"),
-      objThreshold: document.getElementById("objThreshold"),
-      poseThreshold: document.getElementById("poseThreshold"),
-      maxResults: document.getElementById("maxResults"),
-      boxAlpha: document.getElementById("boxAlpha"),
-      labelFont: document.getElementById("labelFont"),
-      skeletonWidth: document.getElementById("skeletonWidth"),
+<video id="video" playsinline autoplay muted style="display:none;"></video>
 
-      objThresholdVal: document.getElementById("objThresholdVal"),
-      poseThresholdVal: document.getElementById("poseThresholdVal"),
-      maxResultsVal: document.getElementById("maxResultsVal"),
-      boxAlphaVal: document.getElementById("boxAlphaVal"),
-      labelFontVal: document.getElementById("labelFontVal"),
-      skeletonWidthVal: document.getElementById("skeletonWidthVal")
-    };
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+<script>
+(() => {
+  const state = {
+    mode: 'detect',
+    view: '2d',
+    model: null,
+    modelReady: false,
+    cameraOn: false,
+    usingMock: true,
+    tracks: [],
+    nextTrackId: 1,
+    mockPeople: [],
+    lastDetections: [],
+    gridW: 10,
+    gridH: 10,
+    gridValues: [],
+    lastFrameTime: performance.now(),
+    fps: 0,
+    detectThreshold: 0.55,
+    energy: 1.2,
+    damping: 0.972,
+    radius: 2.3,
+    lastDetectRun: 0,
+    detectIntervalMs: 120,
+    showMiniDetectInRipple: true
+  };
 
-    let stream = null;
-    let objectDetector = null;
-    let poseLandmarker = null;
-    let running = false;
-    let rafId = null;
-    let devices = [];
-    let currentDeviceIndex = 0;
-    let facingMode = "user";
-    let lastVideoTime = -1;
-    let lastFpsUpdate = performance.now();
-    let frameCounter = 0;
+  const canvas = document.getElementById('mainCanvas');
+  const ctx = canvas.getContext('2d');
+  const video = document.getElementById('video');
 
-    const OBJECT_MODEL =
-      "https://storage.googleapis.com/mediapipe-tasks/object_detector/efficientdet_lite0_uint8.tflite";
+  const ui = {
+    modeDetectBtn: document.getElementById('modeDetectBtn'),
+    modeRippleBtn: document.getElementById('modeRippleBtn'),
+    view2DBtn: document.getElementById('view2DBtn'),
+    view3DBtn: document.getElementById('view3DBtn'),
+    cameraBtn: document.getElementById('cameraBtn'),
+    mockBtn: document.getElementById('mockBtn'),
+    clearBtn: document.getElementById('clearBtn'),
+    energyRange: document.getElementById('energyRange'),
+    dampingRange: document.getElementById('dampingRange'),
+    radiusRange: document.getElementById('radiusRange'),
+    thresholdRange: document.getElementById('thresholdRange'),
+    energyVal: document.getElementById('energyVal'),
+    dampingVal: document.getElementById('dampingVal'),
+    radiusVal: document.getElementById('radiusVal'),
+    thresholdVal: document.getElementById('thresholdVal'),
+    modelLine: document.getElementById('modelLine'),
+    cameraLine: document.getElementById('cameraLine'),
+    peopleLine: document.getElementById('peopleLine'),
+    modeLine: document.getElementById('modeLine'),
+    fpsLine: document.getElementById('fpsLine')
+  };
 
-    const POSE_MODEL =
-      "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task";
+  function initGrid() {
+    state.gridValues = Array.from({ length: state.gridH }, () =>
+      Array.from({ length: state.gridW }, () => 0)
+    );
+  }
 
-    const POSE_CONNECTIONS = [
-      [0,1],[1,2],[2,3],[3,7],
-      [0,4],[4,5],[5,6],[6,8],
-      [9,10],
-      [11,12],
-      [11,13],[13,15],
-      [12,14],[14,16],
-      [15,17],[15,19],[15,21],
-      [16,18],[16,20],[16,22],
-      [11,23],[12,24],
-      [23,24],
-      [23,25],[25,27],[27,29],[29,31],
-      [24,26],[26,28],[28,30],[30,32]
-    ];
+  function resize() {
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    canvas.width = Math.floor(window.innerWidth * dpr);
+    canvas.height = Math.floor(window.innerHeight * dpr);
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
 
-    function setStatus(msg) {
-      statusEl.textContent = msg;
-    }
+  function setActive(button, active) {
+    if (active) button.classList.add('active');
+    else button.classList.remove('active');
+  }
 
-    function syncUiValues() {
-      ui.objThresholdVal.textContent = Number(ui.objThreshold.value).toFixed(2);
-      ui.poseThresholdVal.textContent = Number(ui.poseThreshold.value).toFixed(2);
-      ui.maxResultsVal.textContent = ui.maxResults.value;
-      ui.boxAlphaVal.textContent = Number(ui.boxAlpha.value).toFixed(2);
-      ui.labelFontVal.textContent = ui.labelFont.value;
-      ui.skeletonWidthVal.textContent = ui.skeletonWidth.value;
-    }
+  function updateButtons() {
+    setActive(ui.modeDetectBtn, state.mode === 'detect');
+    setActive(ui.modeRippleBtn, state.mode === 'ripple');
+    setActive(ui.view2DBtn, state.view === '2d');
+    setActive(ui.view3DBtn, state.view === '3d');
+    ui.modeLine.textContent = '현재 화면: ' + (state.mode === 'detect' ? '관객 디텍팅' : '파동 시각화');
+    ui.peopleLine.textContent = '관객 수: ' + state.tracks.length;
+    ui.cameraLine.textContent = '카메라: ' + (state.cameraOn ? '켜짐' : '꺼짐') + (state.usingMock ? ' / Mock 모드 병행' : '');
+    ui.modelLine.textContent = '모델: ' + (state.modelReady ? 'COCO-SSD 준비됨' : '로딩 중 또는 미사용');
+    ui.fpsLine.textContent = 'FPS: ' + Math.round(state.fps);
+  }
 
-    Object.values(ui).forEach(el => {
-      if (el instanceof HTMLElement && "addEventListener" in el) {
-        el.addEventListener("input", syncUiValues);
-      }
-    });
-    syncUiValues();
+  function rand(min, max) {
+    return Math.random() * (max - min) + min;
+  }
 
-    function resizeCanvas() {
-      const rect = video.getBoundingClientRect();
-      const dpr = Math.max(1, window.devicePixelRatio || 1);
-      canvas.width = Math.round(rect.width * dpr);
-      canvas.height = Math.round(rect.height * dpr);
-      canvas.style.width = rect.width + "px";
-      canvas.style.height = rect.height + "px";
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-
-    window.addEventListener("resize", resizeCanvas);
-
-    async function listCameras() {
-      const all = await navigator.mediaDevices.enumerateDevices();
-      devices = all.filter(d => d.kind === "videoinput");
-      if (!devices.length) {
-        throw new Error("사용 가능한 카메라가 없음");
-      }
-    }
-
-    async function startCamera({useDeviceId = true} = {}) {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-        stream = null;
-      }
-
-      await listCameras();
-
-      const constraints = {
-        audio: false,
-        video: useDeviceId && devices[currentDeviceIndex]
-          ? {
-              deviceId: { exact: devices[currentDeviceIndex].deviceId },
-              width: { ideal: 1280 },
-              height: { ideal: 720 }
-            }
-          : {
-              facingMode: { ideal: facingMode },
-              width: { ideal: 1280 },
-              height: { ideal: 720 }
-            }
-      };
-
-      stream = await navigator.mediaDevices.getUserMedia(constraints);
-      video.srcObject = stream;
-
-      await new Promise(resolve => {
-        video.onloadedmetadata = async () => {
-          await video.play();
-          resolve();
-        };
-      });
-
-      resizeCanvas();
-
-      const activeTrack = stream.getVideoTracks()[0];
-      const label = activeTrack?.label || devices[currentDeviceIndex]?.label || "알 수 없음";
-      cameraInfoEl.textContent = `카메라: ${label}`;
-    }
-
-    async function createModels() {
-      setStatus("모델 로딩 중");
-      const vision = await FilesetResolver.forVisionTasks(
-        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/wasm"
-      );
-
-      objectDetector = await ObjectDetector.createFromOptions(vision, {
-        baseOptions: {
-          modelAssetPath: OBJECT_MODEL,
-          delegate: "GPU"
-        },
-        runningMode: "VIDEO",
-        scoreThreshold: Number(ui.objThreshold.value),
-        maxResults: Number(ui.maxResults.value)
-      });
-
-      poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
-        baseOptions: {
-          modelAssetPath: POSE_MODEL,
-          delegate: "GPU"
-        },
-        runningMode: "VIDEO",
-        numPoses: 4,
-        minPoseDetectionConfidence: Number(ui.poseThreshold.value),
-        minPosePresenceConfidence: Number(ui.poseThreshold.value),
-        minTrackingConfidence: Number(ui.poseThreshold.value)
-      });
-
-      setStatus("준비 완료");
-    }
-
-    function clamp(v, min, max) {
-      return Math.max(min, Math.min(max, v));
-    }
-
-    function drawFilledBox(x, y, w, h, label, score) {
-      if (!ui.showBoxes.checked) return;
-
-      const alpha = Number(ui.boxAlpha.value);
-      const fontSize = Number(ui.labelFont.value);
-      const text = `${label} ${(score * 100).toFixed(0)}%`;
-
-      ctx.save();
-      ctx.fillStyle = `rgba(${getComputedStyle(document.documentElement).getPropertyValue('--blue-rgb')}, ${alpha})`;
-      ctx.strokeStyle = "rgba(255,255,255,0.12)";
-      ctx.lineWidth = 1.2;
-      ctx.fillRect(x, y, w, h);
-      ctx.strokeRect(x, y, w, h);
-
-      ctx.font = `800 ${fontSize}px Inter, Arial, sans-serif`;
-      const padX = 10;
-      const padY = 8;
-      const textW = ctx.measureText(text).width;
-      const tagW = textW + padX * 2;
-      const tagH = fontSize + padY * 2;
-      const tagY = Math.max(0, y - tagH - 6);
-
-      ctx.fillStyle = "rgba(0, 56, 168, 0.98)";
-      ctx.fillRect(x, tagY, tagW, tagH);
-
-      ctx.fillStyle = "#ffffff";
-      ctx.textBaseline = "top";
-      ctx.fillText(text, x + padX, tagY + padY - 1);
-      ctx.restore();
-    }
-
-    function drawSkeleton(landmarks) {
-      if (!ui.showSkeleton.checked || !landmarks?.length) return;
-
-      const lineW = Number(ui.skeletonWidth.value);
-      const poseConf = Number(ui.poseThreshold.value);
-      const rect = video.getBoundingClientRect();
-      const vw = rect.width;
-      const vh = rect.height;
-
-      ctx.save();
-      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--yellow').trim();
-      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--yellow').trim();
-      ctx.lineWidth = lineW;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-
-      for (const [a, b] of POSE_CONNECTIONS) {
-        const p1 = landmarks[a];
-        const p2 = landmarks[b];
-        if (!p1 || !p2) continue;
-
-        const p1ok = (p1.visibility ?? p1.presence ?? 1) >= poseConf;
-        const p2ok = (p2.visibility ?? p2.presence ?? 1) >= poseConf;
-        if (!p1ok || !p2ok) continue;
-
-        ctx.beginPath();
-        ctx.moveTo(p1.x * vw, p1.y * vh);
-        ctx.lineTo(p2.x * vw, p2.y * vh);
-        ctx.stroke();
-      }
-
-      for (const p of landmarks) {
-        const ok = (p.visibility ?? p.presence ?? 1) >= poseConf;
-        if (!ok) continue;
-        ctx.beginPath();
-        ctx.arc(p.x * vw, p.y * vh, Math.max(2.5, lineW * 0.85), 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-
-    function bboxToCssRect(bbox) {
-      const rect = video.getBoundingClientRect();
-      const vw = rect.width;
-      const vh = rect.height;
-
-      return {
-        x: bbox.originX * (vw / video.videoWidth),
-        y: bbox.originY * (vh / video.videoHeight),
-        w: bbox.width * (vw / video.videoWidth),
-        h: bbox.height * (vh / video.videoHeight)
-      };
-    }
-
-    function poseInsideBox(landmarks, box) {
-      if (!landmarks?.length) return false;
-      let inside = 0;
-      let total = 0;
-
-      const rect = video.getBoundingClientRect();
-      const vw = rect.width;
-      const vh = rect.height;
-
-      for (const p of landmarks) {
-        const ok = (p.visibility ?? p.presence ?? 1) >= Number(ui.poseThreshold.value);
-        if (!ok) continue;
-        total++;
-        const x = p.x * vw;
-        const y = p.y * vh;
-        if (
-          x >= box.x - 20 &&
-          x <= box.x + box.w + 20 &&
-          y >= box.y - 20 &&
-          y <= box.y + box.h + 20
-        ) {
-          inside++;
-        }
-      }
-      if (!total) return false;
-      return inside / total > 0.28;
-    }
-
-    function updateDetectionList(rows) {
-      detectionsEl.innerHTML = "";
-      if (!rows.length) {
-        const li = document.createElement("li");
-        li.textContent = "현재 검출 없음";
-        detectionsEl.appendChild(li);
-        return;
-      }
-
-      rows.slice(0, 12).forEach(r => {
-        const li = document.createElement("li");
-        li.innerHTML = `<strong>${r.name}</strong><br>score ${r.score}% · x ${r.x} · y ${r.y} · w ${r.w} · h ${r.h}`;
-        detectionsEl.appendChild(li);
+  function addMockPeople() {
+    const count = Math.floor(rand(2, 6));
+    state.mockPeople = [];
+    for (let i = 0; i < count; i++) {
+      state.mockPeople.push({
+        x: rand(0.15, 0.85),
+        y: rand(0.2, 0.82),
+        w: rand(0.08, 0.14),
+        h: rand(0.18, 0.28),
+        vx: rand(-0.0025, 0.0025),
+        vy: rand(-0.0022, 0.0022)
       });
     }
+    state.usingMock = true;
+  }
 
-    async function renderLoop() {
-      if (!running) return;
-      rafId = requestAnimationFrame(renderLoop);
+  function updateMockPeople() {
+    for (const p of state.mockPeople) {
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < 0.08 || p.x > 0.92) p.vx *= -1;
+      if (p.y < 0.12 || p.y > 0.88) p.vy *= -1;
+    }
+    const W = canvas.clientWidth;
+    const H = canvas.clientHeight;
+    state.lastDetections = state.mockPeople.map((p) => ({
+      bbox: [(p.x - p.w / 2) * W, (p.y - p.h / 2) * H, p.w * W, p.h * H],
+      class: 'person',
+      score: 0.99
+    }));
+  }
 
-      if (!video.videoWidth || !video.videoHeight) return;
-      if (video.currentTime === lastVideoTime) return;
-      lastVideoTime = video.currentTime;
+  function centroidOfDet(det) {
+    const [x, y, w, h] = det.bbox;
+    return { x: x + w / 2, y: y + h / 2, w, h };
+  }
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+  function distance(a, b) {
+    const dx = a.x - b.x, dy = a.y - b.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
 
-      if (!objectDetector || !poseLandmarker) return;
+  function updateTracks(detections) {
+    const maxDist = Math.min(canvas.clientWidth, canvas.clientHeight) * 0.12;
+    const centroids = detections.map(centroidOfDet);
+    const unmatchedDet = new Set(centroids.map((_, i) => i));
+    const unmatchedTracks = new Set(state.tracks.map((_, i) => i));
 
-      objectDetector.setOptions({
-        scoreThreshold: Number(ui.objThreshold.value),
-        maxResults: Number(ui.maxResults.value)
-      });
-
-      poseLandmarker.setOptions({
-        minPoseDetectionConfidence: Number(ui.poseThreshold.value),
-        minPosePresenceConfidence: Number(ui.poseThreshold.value),
-        minTrackingConfidence: Number(ui.poseThreshold.value)
-      });
-
-      const now = performance.now();
-      const objectResult = objectDetector.detectForVideo(video, now);
-      const poseResult = poseLandmarker.detectForVideo(video, now);
-
-      let detections = objectResult?.detections ?? [];
-      detections = detections.filter(d => {
-        const cat = d.categories?.[0];
-        if (!cat) return false;
-        if (ui.personOnly.checked) return cat.categoryName === "person";
-        return true;
-      });
-
-      const listRows = [];
-
-      for (const det of detections) {
-        const cat = det.categories?.[0];
-        const name = cat?.categoryName || "unknown";
-        const score = cat?.score ?? 0;
-        const box = bboxToCssRect(det.boundingBox);
-
-        drawFilledBox(box.x, box.y, box.w, box.h, name, score);
-
-        listRows.push({
-          name,
-          score: (score * 100).toFixed(0),
-          x: Math.round(box.x),
-          y: Math.round(box.y),
-          w: Math.round(box.w),
-          h: Math.round(box.h)
+    const pairs = [];
+    for (let ti = 0; ti < state.tracks.length; ti++) {
+      for (let di = 0; di < centroids.length; di++) {
+        pairs.push({
+          ti,
+          di,
+          dist: distance(state.tracks[ti], centroids[di])
         });
       }
+    }
+    pairs.sort((a,b) => a.dist - b.dist);
 
-      const poses = poseResult?.landmarks ?? [];
-      const personBoxes = detections
-        .filter(d => d.categories?.[0]?.categoryName === "person")
-        .map(d => bboxToCssRect(d.boundingBox));
-
-      if (ui.showSkeleton.checked) {
-        if (personBoxes.length) {
-          for (const box of personBoxes) {
-            const matched = poses.find(landmarks => poseInsideBox(landmarks, box));
-            if (matched) drawSkeleton(matched);
-          }
-        } else if (!ui.personOnly.checked) {
-          for (const landmarks of poses) {
-            drawSkeleton(landmarks);
-          }
-        }
-      }
-
-      updateDetectionList(listRows);
-
-      frameCounter++;
-      const elapsed = now - lastFpsUpdate;
-      if (elapsed >= 1000) {
-        const fps = (frameCounter * 1000 / elapsed).toFixed(1);
-        fpsInfoEl.textContent = `FPS: ${fps}`;
-        frameCounter = 0;
-        lastFpsUpdate = now;
-      }
+    for (const p of pairs) {
+      if (!unmatchedTracks.has(p.ti) || !unmatchedDet.has(p.di)) continue;
+      if (p.dist > maxDist) continue;
+      const t = state.tracks[p.ti];
+      const c = centroids[p.di];
+      t.x = c.x; t.y = c.y; t.w = c.w; t.h = c.h;
+      t.missed = 0;
+      t.updatedAt = performance.now();
+      unmatchedTracks.delete(p.ti);
+      unmatchedDet.delete(p.di);
     }
 
-    async function startAll() {
-      try {
-        setStatus("카메라 시작 중");
-        await startCamera({ useDeviceId: false });
-        setStatus("모델 생성 중");
-        await createModels();
-        running = true;
-        lastVideoTime = -1;
-        renderLoop();
-      } catch (err) {
-        console.error(err);
-        setStatus(`오류: ${err.message}`);
-      }
-    }
-
-    async function restartAll() {
-      running = false;
-      if (rafId) cancelAnimationFrame(rafId);
-      rafId = null;
-      if (stream) {
-        stream.getTracks().forEach(t => t.stop());
-        stream = null;
-      }
-      objectDetector = null;
-      poseLandmarker = null;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      await startAll();
-    }
-
-    async function switchCamera() {
-      try {
-        running = false;
-        if (rafId) cancelAnimationFrame(rafId);
-
-        await listCameras();
-
-        if (devices.length > 1) {
-          currentDeviceIndex = (currentDeviceIndex + 1) % devices.length;
-          await startCamera({ useDeviceId: true });
-        } else {
-          facingMode = facingMode === "user" ? "environment" : "user";
-          await startCamera({ useDeviceId: false });
-        }
-
-        running = true;
-        lastVideoTime = -1;
-        renderLoop();
-      } catch (err) {
-        console.error(err);
-        setStatus(`카메라 전환 실패: ${err.message}`);
-      }
-    }
-
-    startBtn.addEventListener("click", startAll);
-    switchCamBtn.addEventListener("click", switchCamera);
-    restartBtn.addEventListener("click", restartAll);
-
-    togglePanelBtn.addEventListener("click", () => {
-      const isHidden = sidePanel.style.display === "none";
-      sidePanel.style.display = isHidden ? "block" : "none";
+    [...unmatchedDet].forEach(di => {
+      const c = centroids[di];
+      state.tracks.push({
+        id: state.nextTrackId++,
+        x: c.x, y: c.y, w: c.w, h: c.h,
+        missed: 0,
+        updatedAt: performance.now()
+      });
     });
 
-    navigator.mediaDevices?.addEventListener?.("devicechange", async () => {
-      try {
-        await listCameras();
-      } catch (_) {}
+    [...unmatchedTracks].reverse().forEach(ti => {
+      state.tracks[ti].missed += 1;
     });
+    state.tracks = state.tracks.filter(t => t.missed < 15);
+  }
 
-    syncUiValues();
-  </script>
+  async function loadModel() {
+    try {
+      ui.modelLine.textContent = '모델: COCO-SSD 로딩 중...';
+      state.model = await cocoSsd.load({ base: 'lite_mobilenet_v2' });
+      state.modelReady = true;
+      updateButtons();
+    } catch (e) {
+      ui.modelLine.innerHTML = '모델: <span class="danger">로딩 실패</span> → Mock 모드로 사용 가능';
+      console.error(e);
+    }
+  }
+
+  async function startCamera() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false
+      });
+      video.srcObject = stream;
+      await video.play();
+      state.cameraOn = true;
+      state.usingMock = false;
+      updateButtons();
+    } catch (e) {
+      state.cameraOn = false;
+      state.usingMock = true;
+      addMockPeople();
+      updateButtons();
+      alert('카메라 접근에 실패해서 Mock 모드로 전환합니다.');
+      console.error(e);
+    }
+  }
+
+  function stopCamera() {
+    const stream = video.srcObject;
+    if (stream) {
+      stream.getTracks().forEach(t => t.stop());
+      video.srcObject = null;
+    }
+    state.cameraOn = false;
+    updateButtons();
+  }
+
+  async function runDetection(now) {
+    if (now - state.lastDetectRun < state.detectIntervalMs) return;
+    state.lastDetectRun = now;
+
+    if (state.cameraOn && state.modelReady && video.readyState >= 2) {
+      try {
+        const preds = await state.model.detect(video);
+        state.lastDetections = preds.filter(p => p.class === 'person' && p.score >= state.detectThreshold);
+      } catch (e) {
+        console.error('detect error', e);
+      }
+    } else if (state.usingMock) {
+      updateMockPeople();
+    } else {
+      state.lastDetections = [];
+    }
+    updateTracks(state.lastDetections);
+  }
+
+  function normalizeTrackToGrid(track) {
+    const W = canvas.clientWidth;
+    const H = canvas.clientHeight;
+    const nx = track.x / Math.max(1, W);
+    const ny = track.y / Math.max(1, H);
+    return {
+      gx: nx * (state.gridW - 1),
+      gy: ny * (state.gridH - 1)
+    };
+  }
+
+  function injectRipples() {
+    for (const track of state.tracks) {
+      const p = normalizeTrackToGrid(track);
+      const baseAmp = state.energy * (0.6 + ((track.id * 17) % 7) / 10);
+      for (let y = 0; y < state.gridH; y++) {
+        for (let x = 0; x < state.gridW; x++) {
+          const dx = x - p.gx;
+          const dy = y - p.gy;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const sigma = state.radius;
+          const wave = Math.exp(-(dist * dist) / (2 * sigma * sigma));
+          state.gridValues[y][x] += wave * baseAmp * 0.06;
+        }
+      }
+    }
+  }
+
+  function updateGrid() {
+    for (let y = 0; y < state.gridH; y++) {
+      for (let x = 0; x < state.gridW; x++) {
+        state.gridValues[y][x] *= state.damping;
+        if (state.gridValues[y][x] < 0.002) state.gridValues[y][x] = 0;
+      }
+    }
+    injectRipples();
+  }
+
+  function clamp(v, a, b) {
+    return Math.max(a, Math.min(b, v));
+  }
+
+  function energyColor(v) {
+    const t = clamp(v, 0, 1.6) / 1.6;
+    const r = Math.floor(40 + t * 160);
+    const g = Math.floor(80 + t * 130);
+    const b = Math.floor(110 + t * 145);
+    const a = 0.2 + t * 0.85;
+    return `rgba(${r},${g},${b},${a})`;
+  }
+
+  function drawBackgroundGrid() {
+    const W = canvas.clientWidth;
+    const H = canvas.clientHeight;
+    const gap = 42;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(120,140,180,0.08)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < W; x += gap) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+    for (let y = 0; y < H; y += gap) {
+      ctx.beginPath();
+      ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawVideoContainRect() {
+    const W = canvas.clientWidth;
+    const H = canvas.clientHeight;
+    let vw = state.cameraOn ? video.videoWidth || 1280 : 1280;
+    let vh = state.cameraOn ? video.videoHeight || 720 : 720;
+    const scale = Math.min(W / vw, H / vh);
+    const dw = vw * scale;
+    const dh = vh * scale;
+    const dx = (W - dw) / 2;
+    const dy = (H - dh) / 2;
+    return { dx, dy, dw, dh, vw, vh };
+  }
+
+  function screenToVideoContain(x, y, w, h) {
+    const { dx, dy, dw, dh, vw, vh } = drawVideoContainRect();
+    const sx = dx + (x / vw) * dw;
+    const sy = dy + (y / vh) * dh;
+    const sw = (w / vw) * dw;
+    const sh = (h / vh) * dh;
+    return { x: sx, y: sy, w: sw, h: sh };
+  }
+
+  function drawDetectionScene(full=true, panelRect=null) {
+    const W = panelRect ? panelRect.w : canvas.clientWidth;
+    const H = panelRect ? panelRect.h : canvas.clientHeight;
+    const ox = panelRect ? panelRect.x : 0;
+    const oy = panelRect ? panelRect.y : 0;
+
+    ctx.save();
+    ctx.translate(ox, oy);
+
+    ctx.fillStyle = full ? 'rgba(8,10,16,0.95)' : 'rgba(8,10,16,0.85)';
+    ctx.fillRect(0, 0, W, H);
+    drawBackgroundGrid();
+
+    if (state.cameraOn && video.readyState >= 2) {
+      const vw = video.videoWidth || 1280;
+      const vh = video.videoHeight || 720;
+      const scale = Math.min(W / vw, H / vh);
+      const dw = vw * scale;
+      const dh = vh * scale;
+      const dx = (W - dw) / 2;
+      const dy = (H - dh) / 2;
+      ctx.drawImage(video, dx, dy, dw, dh);
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctx.strokeRect(dx, dy, dw, dh);
+    } else {
+      ctx.fillStyle = 'rgba(255,255,255,0.04)';
+      ctx.fillRect(20, 20, W - 40, H - 40);
+      ctx.fillStyle = 'rgba(255,255,255,0.45)';
+      ctx.font = '16px sans-serif';
+      ctx.fillText('카메라가 꺼져 있어 Mock 사람 데이터로 시뮬레이션 중입니다.', 36, 48);
+    }
+
+    for (const track of state.tracks) {
+      let x = track.x - track.w / 2;
+      let y = track.y - track.h / 2;
+      let w = track.w;
+      let h = track.h;
+
+      if (state.cameraOn) {
+        const mapped = screenToVideoContain(x, y, w, h);
+        x = mapped.x; y = mapped.y; w = mapped.w; h = mapped.h;
+      }
+
+      ctx.strokeStyle = 'rgba(122,162,255,0.95)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, w, h);
+
+      ctx.fillStyle = 'rgba(122,162,255,0.18)';
+      ctx.fillRect(x, y, w, h);
+
+      ctx.fillStyle = '#eaf2ff';
+      ctx.font = 'bold 15px sans-serif';
+      const label = `ID ${track.id}`;
+      const pad = 8;
+      const tw = ctx.measureText(label).width;
+      ctx.fillStyle = 'rgba(12,18,28,0.92)';
+      ctx.fillRect(x, y - 26, tw + pad * 2, 22);
+      ctx.strokeStyle = 'rgba(122,162,255,0.7)';
+      ctx.strokeRect(x, y - 26, tw + pad * 2, 22);
+      ctx.fillStyle = '#eaf2ff';
+      ctx.fillText(label, x + pad, y - 10);
+
+      const cx = x + w / 2, cy = y + h / 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#57e3c0';
+      ctx.fill();
+
+      ctx.strokeStyle = 'rgba(87,227,192,0.65)';
+      ctx.beginPath();
+      ctx.moveTo(cx - 10, cy);
+      ctx.lineTo(cx + 10, cy);
+      ctx.moveTo(cx, cy - 10);
+      ctx.lineTo(cx, cy + 10);
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = 'rgba(235,242,255,0.95)';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.fillText('관객 디텍팅 / ID 고정 뷰', 24, H - 24);
+
+    ctx.restore();
+  }
+
+  function drawRipple2D(panelRect=null) {
+    const W = panelRect ? panelRect.w : canvas.clientWidth;
+    const H = panelRect ? panelRect.h : canvas.clientHeight;
+    const ox = panelRect ? panelRect.x : 0;
+    const oy = panelRect ? panelRect.y : 0;
+    const leftPad = 60, topPad = 60, rightPad = 60, bottomPad = 60;
+    const gw = W - leftPad - rightPad;
+    const gh = H - topPad - bottomPad;
+    const cellW = gw / state.gridW;
+    const cellH = gh / state.gridH;
+
+    ctx.save();
+    ctx.translate(ox, oy);
+    ctx.fillStyle = 'rgba(8,10,16,0.96)';
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.fillStyle = '#eef4ff';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.fillText('파동 시각화 / 10×10 모듈 그리드', 24, 30);
+
+    for (let y = 0; y < state.gridH; y++) {
+      for (let x = 0; x < state.gridW; x++) {
+        const v = state.gridValues[y][x];
+        const px = leftPad + x * cellW;
+        const py = topPad + y * cellH;
+        const margin = 6;
+        ctx.fillStyle = energyColor(v);
+        ctx.fillRect(px + margin, py + margin, cellW - margin * 2, cellH - margin * 2);
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+        ctx.strokeRect(px + margin, py + margin, cellW - margin * 2, cellH - margin * 2);
+      }
+    }
+
+    for (const track of state.tracks) {
+      const p = normalizeTrackToGrid(track);
+      const px = leftPad + (p.gx + 0.5) * cellW;
+      const py = topPad + (p.gy + 0.5) * cellH;
+
+      ctx.beginPath();
+      ctx.arc(px, py, 8, 0, Math.PI * 2);
+      ctx.fillStyle = '#57e3c0';
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(px, py, 18, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(87,227,192,0.5)';
+      ctx.stroke();
+
+      const label = `ID ${track.id}`;
+      ctx.font = 'bold 13px sans-serif';
+      const tw = ctx.measureText(label).width;
+      ctx.fillStyle = 'rgba(12,18,28,0.92)';
+      ctx.fillRect(px - tw/2 - 7, py - 34, tw + 14, 20);
+      ctx.strokeStyle = 'rgba(122,162,255,0.6)';
+      ctx.strokeRect(px - tw/2 - 7, py - 34, tw + 14, 20);
+      ctx.fillStyle = '#eef4ff';
+      ctx.fillText(label, px - tw/2, py - 20);
+    }
+
+    ctx.fillStyle = 'rgba(235,242,255,0.7)';
+    ctx.font = '12px sans-serif';
+    for (let x = 0; x < state.gridW; x++) {
+      ctx.fillText(String(x + 1), leftPad + x * cellW + cellW * 0.44, H - 24);
+    }
+    for (let y = 0; y < state.gridH; y++) {
+      ctx.fillText(String(y + 1), 30, topPad + y * cellH + cellH * 0.58);
+    }
+
+    ctx.restore();
+  }
+
+  function drawRipple3D(panelRect=null) {
+    const W = panelRect ? panelRect.w : canvas.clientWidth;
+    const H = panelRect ? panelRect.h : canvas.clientHeight;
+    const ox = panelRect ? panelRect.x : 0;
+    const oy = panelRect ? panelRect.y : 0;
+
+    const gridW = state.gridW, gridH = state.gridH;
+    const centerX = W * 0.5;
+    const startY = H * 0.20;
+    const tileW = Math.min(48, W / 18);
+    const tileH = tileW * 0.55;
+    const baseHeight = Math.min(22, H / 30);
+
+    ctx.save();
+    ctx.translate(ox, oy);
+    ctx.fillStyle = 'rgba(8,10,16,0.96)';
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.fillStyle = '#eef4ff';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.fillText('파동 시각화 / 3D 모듈 뷰', 24, 30);
+
+    for (let gy = 0; gy < gridH; gy++) {
+      for (let gx = 0; gx < gridW; gx++) {
+        const v = clamp(state.gridValues[gy][gx], 0, 1.5);
+        const h = baseHeight + v * 80;
+        const sx = centerX + (gx - gy) * tileW * 0.5;
+        const sy = startY + (gx + gy) * tileH * 0.5;
+
+        const top = [
+          [sx, sy - h],
+          [sx + tileW * 0.5, sy - tileH * 0.5 - h],
+          [sx, sy - tileH - h],
+          [sx - tileW * 0.5, sy - tileH * 0.5 - h]
+        ];
+        const right = [
+          [sx, sy - h],
+          [sx + tileW * 0.5, sy - tileH * 0.5 - h],
+          [sx + tileW * 0.5, sy - tileH * 0.5],
+          [sx, sy]
+        ];
+        const left = [
+          [sx, sy - h],
+          [sx - tileW * 0.5, sy - tileH * 0.5 - h],
+          [sx - tileW * 0.5, sy - tileH * 0.5],
+          [sx, sy]
+        ];
+
+        ctx.beginPath();
+        ctx.moveTo(top[0][0], top[0][1]);
+        top.slice(1).forEach(p => ctx.lineTo(p[0], p[1]));
+        ctx.closePath();
+        ctx.fillStyle = energyColor(v + 0.25);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(right[0][0], right[0][1]);
+        right.slice(1).forEach(p => ctx.lineTo(p[0], p[1]));
+        ctx.closePath();
+        ctx.fillStyle = `rgba(60,90,140,${0.18 + v * 0.45})`;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(left[0][0], left[0][1]);
+        left.slice(1).forEach(p => ctx.lineTo(p[0], p[1]));
+        ctx.closePath();
+        ctx.fillStyle = `rgba(35,60,95,${0.18 + v * 0.45})`;
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+        ctx.stroke();
+      }
+    }
+
+    for (const track of state.tracks) {
+      const p = normalizeTrackToGrid(track);
+      const gx = p.gx;
+      const gy = p.gy;
+      const sx = centerX + (gx - gy) * tileW * 0.5;
+      const sy = startY + (gx + gy) * tileH * 0.5 - 110;
+
+      ctx.beginPath();
+      ctx.arc(sx, sy, 8, 0, Math.PI * 2);
+      ctx.fillStyle = '#57e3c0';
+      ctx.fill();
+
+      const label = `ID ${track.id}`;
+      ctx.font = 'bold 13px sans-serif';
+      const tw = ctx.measureText(label).width;
+      ctx.fillStyle = 'rgba(10,16,26,0.94)';
+      ctx.fillRect(sx - tw/2 - 8, sy - 32, tw + 16, 20);
+      ctx.strokeStyle = 'rgba(122,162,255,0.7)';
+      ctx.strokeRect(sx - tw/2 - 8, sy - 32, tw + 16, 20);
+      ctx.fillStyle = '#eef4ff';
+      ctx.fillText(label, sx - tw/2, sy - 18);
+    }
+
+    ctx.restore();
+  }
+
+  function drawCombinedRippleScene() {
+    const W = canvas.clientWidth;
+    const H = canvas.clientHeight;
+
+    if (!state.showMiniDetectInRipple) {
+      state.view === '2d' ? drawRipple2D() : drawRipple3D();
+      return;
+    }
+
+    const leftW = Math.max(280, W * 0.30);
+    const rightW = W - leftW;
+    drawDetectionScene(false, { x: 0, y: 0, w: leftW, h: H });
+    if (state.view === '2d') {
+      drawRipple2D({ x: leftW, y: 0, w: rightW, h: H });
+    } else {
+      drawRipple3D({ x: leftW, y: 0, w: rightW, h: H });
+    }
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.beginPath();
+    ctx.moveTo(leftW, 0); ctx.lineTo(leftW, H); ctx.stroke();
+    ctx.restore();
+  }
+
+  function animate(now) {
+    const dt = now - state.lastFrameTime;
+    state.lastFrameTime = now;
+    state.fps = 1000 / Math.max(1, dt);
+
+    runDetection(now);
+    updateGrid();
+
+    ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+
+    if (state.mode === 'detect') {
+      drawDetectionScene(true);
+    } else {
+      drawCombinedRippleScene();
+    }
+
+    updateButtons();
+    requestAnimationFrame(animate);
+  }
+
+  function resetAll() {
+    state.tracks = [];
+    state.nextTrackId = 1;
+    state.lastDetections = [];
+    state.mockPeople = [];
+    initGrid();
+  }
+
+  function bindUI() {
+    ui.modeDetectBtn.onclick = () => { state.mode = 'detect'; };
+    ui.modeRippleBtn.onclick = () => { state.mode = 'ripple'; };
+    ui.view2DBtn.onclick = () => { state.view = '2d'; };
+    ui.view3DBtn.onclick = () => { state.view = '3d'; };
+
+    ui.cameraBtn.onclick = async () => {
+      if (state.cameraOn) {
+        stopCamera();
+        state.usingMock = true;
+        addMockPeople();
+      } else {
+        await startCamera();
+      }
+      updateButtons();
+    };
+
+    ui.mockBtn.onclick = () => {
+      stopCamera();
+      addMockPeople();
+      resetAll();
+      addMockPeople();
+      updateButtons();
+    };
+
+    ui.clearBtn.onclick = () => {
+      resetAll();
+      if (state.usingMock) addMockPeople();
+      updateButtons();
+    };
+
+    ui.energyRange.oninput = (e) => {
+      state.energy = parseFloat(e.target.value);
+      ui.energyVal.textContent = state.energy.toFixed(1);
+    };
+    ui.dampingRange.oninput = (e) => {
+      state.damping = parseFloat(e.target.value);
+      ui.dampingVal.textContent = state.damping.toFixed(3);
+    };
+    ui.radiusRange.oninput = (e) => {
+      state.radius = parseFloat(e.target.value);
+      ui.radiusVal.textContent = state.radius.toFixed(1);
+    };
+    ui.thresholdRange.oninput = (e) => {
+      state.detectThreshold = parseFloat(e.target.value);
+      ui.thresholdVal.textContent = state.detectThreshold.toFixed(2);
+    };
+  }
+
+  function boot() {
+    initGrid();
+    resize();
+    bindUI();
+    addMockPeople();
+    updateButtons();
+    loadModel();
+    requestAnimationFrame(animate);
+  }
+
+  window.addEventListener('resize', resize);
+  boot();
+})();
+</script>
 </body>
 </html>
