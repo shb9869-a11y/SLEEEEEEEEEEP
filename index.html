@@ -1,207 +1,733 @@
 <!DOCTYPE html>
+
 <html lang="ko">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Ripple Live</title>
-
-<style>
-body { margin:0; background:#000; overflow:hidden; }
-canvas { position:absolute; width:100%; height:100%; }
-video { display:none; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"/>
+  <title>인기척: 파동 시스템</title>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="theme-color" content="#000000"/>
+  <style>
+    :root{
+      --bg:#000;--panel:rgba(10,10,10,0.94);--panelBorder:rgba(255,255,255,0.12);
+      --text:#f3f3f3;--muted:#a6a6a6;--blue:#4f8cff;--blueSoft:rgba(79,140,255,0.18);
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    html,body{margin:0;width:100%;height:100%;background:#000;color:var(--text);overflow:hidden;
+      font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR","Segoe UI",sans-serif;}
+    body{background:linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px),
+      linear-gradient(0deg,rgba(255,255,255,0.03) 1px,transparent 1px),#000;background-size:44px 44px,44px 44px,auto;}
+    #app{position:relative;width:100vw;height:100vh;overflow:hidden;}
+    canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
+    video{display:none;}
+    .topbar{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);left:10px;right:10px;
+      z-index:50;display:flex;justify-content:space-between;align-items:center;pointer-events:none;}
+    .topbarLeft,.topbarRight{display:flex;align-items:center;gap:8px;pointer-events:auto;}
+    .iconBtn{width:44px;height:44px;border-radius:12px;border:1px solid var(--panelBorder);
+      background:rgba(8,8,8,0.92);color:#fff;display:flex;align-items:center;justify-content:center;
+      font-size:18px;cursor:pointer;backdrop-filter:blur(10px);}
+    .chip{min-height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--panelBorder);
+      background:rgba(8,8,8,0.92);display:flex;align-items:center;font-size:13px;color:#fff;backdrop-filter:blur(10px);}
+    .overlay{position:absolute;inset:0;background:rgba(0,0,0,0.56);opacity:0;pointer-events:none;
+      transition:opacity 0.25s ease;z-index:45;}
+    .overlay.show{opacity:1;pointer-events:auto;}
+    .sidebar{position:absolute;top:0;left:0;width:min(360px,88vw);height:100%;z-index:60;
+      transform:translateX(-100%);transition:transform 0.28s ease;background:rgba(8,8,8,0.97);
+      border-right:1px solid var(--panelBorder);
+      padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 16px) 16px;
+      overflow:auto;backdrop-filter:blur(14px);}
+    .sidebar.open{transform:translateX(0);}
+    .title{font-size:24px;font-weight:700;margin-bottom:8px;letter-spacing:-0.02em;}
+    .subtitle{color:var(--muted);font-size:13px;line-height:1.5;margin-bottom:18px;}
+    .section{margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.08);}
+    .section:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none;}
+    .label{font-size:12px;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.08em;}
+    .row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+    .btn{min-height:44px;padding:12px 14px;border-radius:12px;border:1px solid var(--panelBorder);
+      background:#151515;color:#f3f3f3;font-size:14px;font-weight:600;cursor:pointer;}
+    .btn.active{background:#fff;color:#000;border-color:#fff;}
+    .btn.block{width:100%;}
+    .sliderWrap{display:grid;grid-template-columns:78px 1fr 48px;gap:10px;align-items:center;
+      margin-bottom:10px;font-size:13px;color:var(--muted);}
+    input[type="range"]{width:100%;appearance:none;height:6px;border-radius:999px;background:#2a2a2a;outline:none;}
+    input[type="range"]::-webkit-slider-thumb{appearance:none;width:18px;height:18px;border-radius:50%;background:#fff;border:none;}
+    .checkRow{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:42px;
+      padding:10px 0;font-size:14px;color:#eaeaea;}
+    .checkRow input{width:18px;height:18px;}
+    .floatingInfo{position:absolute;right:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);z-index:30;
+      max-width:min(360px,calc(100vw - 20px));border:1px solid var(--panelBorder);background:rgba(8,8,8,0.88);
+      border-radius:16px;padding:12px 14px;color:var(--muted);font-size:12px;line-height:1.5;backdrop-filter:blur(10px);}
+    .floatingInfo strong{color:#fff;}
+    @media (max-width:799px){.floatingInfo{left:10px;right:10px;max-width:none;}}
+  </style>
 </head>
-
 <body>
+<div id="app">
+  <div class="topbar">
+    <div class="topbarLeft">
+      <button id="menuBtn" class="iconBtn">☰</button>
+      <div id="modeChip" class="chip">관객 디텍팅</div>
+    </div>
+    <div class="topbarRight">
+      <button id="fullscreenBtn" class="iconBtn">⤢</button>
+    </div>
+  </div>
+  <div id="overlay" class="overlay"></div>
+  <aside id="sidebar" class="sidebar open">
+    <div class="title">인기척: 파동 시스템</div>
+    <div class="subtitle">인물은 파란 박스로 감지하고, ID를 기억해 넘버링합니다.<br>움직임 세기가 기준을 넘을 때만 파동이 발생합니다.</div>
+    <div class="section">
+      <div class="label">화면</div>
+      <div class="row">
+        <button id="modeDetectBtn" class="btn active">1. 디텍팅</button>
+        <button id="modeRippleBtn" class="btn">2. 파동</button>
+      </div>
+      <div class="row">
+        <button id="view2DBtn" class="btn active">2D Grid</button>
+        <button id="view3DBtn" class="btn">3D Module</button>
+      </div>
+    </div>
+    <div class="section">
+      <div class="label">카메라 / 실행</div>
+      <div class="row">
+        <button id="cameraBtn" class="btn block">카메라 시작</button>
+        <button id="mockBtn" class="btn block">Mock 사람 테스트</button>
+        <button id="resetBtn" class="btn block">리셋</button>
+      </div>
+    </div>
+    <div class="section">
+      <div class="label">파동 파라미터</div>
+      <div class="sliderWrap"><span>강도</span><input id="energyRange" type="range" min="0.4" max="3.0" step="0.1" value="1.4"><span id="energyVal">1.4</span></div>
+      <div class="sliderWrap"><span>감쇠</span><input id="dampingRange" type="range" min="0.90" max="0.995" step="0.001" value="0.968"><span id="dampingVal">0.968</span></div>
+      <div class="sliderWrap"><span>반경</span><input id="radiusRange" type="range" min="0.8" max="6.0" step="0.1" value="2.5"><span id="radiusVal">2.5</span></div>
+      <div class="sliderWrap"><span>문턱</span><input id="thresholdRange" type="range" min="0.35" max="0.85" step="0.01" value="0.55"><span id="thresholdVal">0.55</span></div>
+      <div class="sliderWrap"><span>움직임</span><input id="motionRange" type="range" min="0.002" max="0.08" step="0.001" value="0.018"><span id="motionVal">0.018</span></div>
+    </div>
+    <div class="section">
+      <div class="label">옵션</div>
+      <label class="checkRow"><span>상태 정보 표시</span><input id="showStatusCheck" type="checkbox"></label>
+      <label class="checkRow"><span>파동 화면에 디텍팅 미리보기</span><input id="showMiniDetectCheck" type="checkbox" checked></label>
+      <label class="checkRow"><span>가로 모드 동시 보기 허용</span><input id="landscapeDualCheck" type="checkbox" checked></label>
+    </div>
+    <div class="section">
+      <div class="label">설명</div>
+      <div style="font-size:13px;line-height:1.55;color:var(--muted);">
+        • 인물은 <span style="color:#4f8cff;">파란 박스</span>로 디텍팅됨<br>
+        • 같은 사람은 nearest-neighbor 기반으로 ID를 유지<br>
+        • 움직임 세기가 기준보다 클 때만 파동이 발화됨<br>
+        • 파동은 위치에서 시작해 주변으로 확산되고 감쇠됨<br>
+        • 가로 모드에서는 디텍팅 + 파동을 동시에 볼 수 있음
+      </div>
+    </div>
+  </aside>
+  <div id="floatingInfo" class="floatingInfo" style="display:none;">
+    <strong>시스템 정보</strong><br><span id="statusText">-</span>
+  </div>
+  <canvas id="mainCanvas"></canvas>
+  <video id="video" playsinline autoplay muted></video>
+</div>
 
-<video id="video" autoplay playsinline muted></video>
-<canvas id="canvas"></canvas>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
 
 <script>
-const video = document.getElementById("video");
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+(() => {
+  // ─── 상수 ───────────────────────────────────────────────
+  const GW = 10, GH = 10, GSIZ = GW * GH;
 
-let detector;
-let tracks = [];
-let nextID = 1;
+  // ─── Float32Array로 wave field (heap 재사용, GC 없음) ──
+  const grid     = new Float32Array(GSIZ); // 현재
+  const gridNext = new Float32Array(GSIZ); // 다음
+  const vel      = new Float32Array(GSIZ); // 속도
 
-let grid = Array.from({length:10},()=>Array(10).fill(0));
-let vel = Array.from({length:10},()=>Array(10).fill(0));
-
-async function init(){
-
-  // 카메라
-  const stream = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode:"environment" },
-    audio: false
-  });
-  video.srcObject = stream;
-
-  await video.play();
-
-  // MoveNet (🔥 핵심 수정)
-  detector = await poseDetection.createDetector(
-    poseDetection.SupportedModels.MoveNet,
-    {
-      modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING
-    }
-  );
-
-  resize();
-  requestAnimationFrame(loop);
-}
-
-function resize(){
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-}
-window.onresize = resize;
-
-function getBox(keypoints){
-  const pts = keypoints.filter(k=>k.score>0.3);
-  if(pts.length < 4) return null;
-
-  const xs = pts.map(p=>p.x);
-  const ys = pts.map(p=>p.y);
-
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const minY = Math.min(...ys);
-  const maxY = Math.max(...ys);
-
-  return {
-    cx:(minX+maxX)/2,
-    cy:(minY+maxY)/2,
-    w:(maxX-minX)*1.4,
-    h:(maxY-minY)*1.6
+  // ─── 상태 ───────────────────────────────────────────────
+  const S = {
+    mode:'detect', view:'2d', sidebarOpen:true,
+    model:null, modelReady:false,
+    cameraOn:false, usingMock:true,
+    tracks:[], nextTrackId:1, lastDetections:[],
+    mockPeople:[],
+    energy:1.4, damping:0.968, radius:2.5,
+    detectThreshold:0.55, motionThreshold:0.018,
+    lastDetectRun:0, detectIntervalMs:130,
+    lastFrameTime:performance.now(), fps:0,
+    showStatus:false, showMiniDetect:true, landscapeDual:true,
+    // UI 더티 플래그 — 매 프레임 DOM 건드리지 않기
+    uiDirty:true,
+    // FPS 스무딩용
+    fpsAlpha:0.1,
   };
-}
 
-function track(boxes){
-  let newTracks = [];
+  // ─── DOM ────────────────────────────────────────────────
+  const canvas = document.getElementById('mainCanvas');
+  const ctx    = canvas.getContext('2d', { alpha: false }); // alpha:false → 합성 비용 절감
+  const video  = document.getElementById('video');
 
-  boxes.forEach(b=>{
-    let best=null, bestDist=999;
+  const $  = id => document.getElementById(id);
+  const ui = {
+    sidebar:$('sidebar'), overlay:$('overlay'),
+    menuBtn:$('menuBtn'), fullscreenBtn:$('fullscreenBtn'), modeChip:$('modeChip'),
+    modeDetectBtn:$('modeDetectBtn'), modeRippleBtn:$('modeRippleBtn'),
+    view2DBtn:$('view2DBtn'), view3DBtn:$('view3DBtn'),
+    cameraBtn:$('cameraBtn'), mockBtn:$('mockBtn'), resetBtn:$('resetBtn'),
+    energyRange:$('energyRange'), dampingRange:$('dampingRange'),
+    radiusRange:$('radiusRange'), thresholdRange:$('thresholdRange'), motionRange:$('motionRange'),
+    energyVal:$('energyVal'), dampingVal:$('dampingVal'),
+    radiusVal:$('radiusVal'), thresholdVal:$('thresholdVal'), motionVal:$('motionVal'),
+    showStatusCheck:$('showStatusCheck'), showMiniDetectCheck:$('showMiniDetectCheck'),
+    landscapeDualCheck:$('landscapeDualCheck'),
+    floatingInfo:$('floatingInfo'), statusText:$('statusText'),
+  };
 
-    tracks.forEach(t=>{
-      let d = Math.hypot(t.cx-b.cx, t.cy-b.cy);
-      if(d<bestDist && d<120){
-        best=t;
-        bestDist=d;
-      }
-    });
+  // ─── 유틸 ───────────────────────────────────────────────
+  const clamp = (v,a,b) => v < a ? a : v > b ? b : v;
+  const rand  = (a,b)   => Math.random()*(b-a)+a;
+  const idx   = (x,y)   => y * GW + x;
 
-    if(best){
-      let motion = Math.hypot(b.cx-best.cx, b.cy-best.cy)/300;
+  function resizeCanvas() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2); // 3x 이상 디스플레이도 2배로 제한
+    canvas.width  = Math.floor(window.innerWidth  * dpr);
+    canvas.height = Math.floor(window.innerHeight * dpr);
+    canvas.style.width  = window.innerWidth  + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
 
-      best.motion = best.motion*0.7 + motion*0.3;
-      best.cx=b.cx;
-      best.cy=b.cy;
-      best.w=b.w;
-      best.h=b.h;
-      best.life=0;
+  // ─── UI (dirty flag로만 갱신) ────────────────────────────
+  function markUIDirty() { S.uiDirty = true; }
 
-      newTracks.push(best);
-    }else{
-      newTracks.push({
-        id:nextID++,
-        ...b,
-        motion:0,
-        life:0
+  function flushUI() {
+    if (!S.uiDirty) return;
+    S.uiDirty = false;
+
+    ui.sidebar.classList.toggle('open', S.sidebarOpen);
+    ui.overlay.classList.toggle('show', S.sidebarOpen);
+
+    ui.modeDetectBtn.classList.toggle('active', S.mode==='detect');
+    ui.modeRippleBtn.classList.toggle('active', S.mode==='ripple');
+    ui.view2DBtn.classList.toggle('active', S.view==='2d');
+    ui.view3DBtn.classList.toggle('active', S.view==='3d');
+
+    ui.modeChip.textContent = S.mode==='detect' ? '관객 디텍팅' : '파동 시각화';
+
+    ui.energyVal.textContent    = S.energy.toFixed(1);
+    ui.dampingVal.textContent   = S.damping.toFixed(3);
+    ui.radiusVal.textContent    = S.radius.toFixed(1);
+    ui.thresholdVal.textContent = S.detectThreshold.toFixed(2);
+    ui.motionVal.textContent    = S.motionThreshold.toFixed(3);
+
+    ui.showStatusCheck.checked       = S.showStatus;
+    ui.showMiniDetectCheck.checked   = S.showMiniDetect;
+    ui.landscapeDualCheck.checked    = S.landscapeDual;
+
+    ui.floatingInfo.style.display = S.showStatus ? 'block' : 'none';
+
+    if (S.showStatus) {
+      const moving = S.tracks.filter(t => (t.motion||0) >= S.motionThreshold).length;
+      ui.statusText.textContent =
+        `모델 ${S.modelReady?'준비':'로딩중'} / 카메라 ${S.cameraOn?'켜짐':'꺼짐'} / ` +
+        `관객 ${S.tracks.length}명 / 활성 움직임 ${moving}명 / FPS ${Math.round(S.fps)}`;
+    }
+  }
+
+  // ─── Mock ────────────────────────────────────────────────
+  function addMockPeople() {
+    S.mockPeople = [];
+    const count = 2 + Math.floor(rand(0,4));
+    for (let i=0;i<count;i++) {
+      S.mockPeople.push({
+        x:rand(0.15,0.85), y:rand(0.20,0.82),
+        w:rand(0.08,0.13), h:rand(0.17,0.27),
+        vx:rand(-0.004,0.004), vy:rand(-0.003,0.003),
+        twitch:rand(0.6,1.4)
       });
     }
-  });
+    S.usingMock = true;
+  }
 
-  tracks.forEach(t=>t.life++);
-  tracks = [...newTracks, ...tracks.filter(t=>t.life<40)];
-}
-
-function inject(){
-  tracks.forEach(t=>{
-    if(t.motion < 0.02) return;
-
-    let gx = Math.floor((t.cx/canvas.width)*10);
-    let gy = Math.floor((t.cy/canvas.height)*10);
-
-    if(gx>=0 && gx<10 && gy>=0 && gy<10){
-      vel[gy][gx] += 0.6 + t.motion*2;
+  // 매 프레임 호출 — GC 없게 기존 객체 재활용
+  function updateMockPeople() {
+    const W = canvas.clientWidth, H = canvas.clientHeight;
+    for (let i=0;i<S.mockPeople.length;i++) {
+      const p = S.mockPeople[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      if (Math.random() < 0.04 * p.twitch) {
+        p.x += rand(-0.01,0.01);
+        p.y += rand(-0.01,0.01);
+      }
+      if (p.x < 0.08 || p.x > 0.92) p.vx = -p.vx;
+      if (p.y < 0.12 || p.y > 0.88) p.vy = -p.vy;
     }
-  });
-}
-
-function updateWave(){
-  inject();
-
-  let next = Array.from({length:10},()=>Array(10).fill(0));
-
-  for(let y=0;y<10;y++){
-    for(let x=0;x<10;x++){
-
-      let c = grid[y][x];
-      let l = x>0?grid[y][x-1]:0;
-      let r = x<9?grid[y][x+1]:0;
-      let u = y>0?grid[y-1][x]:0;
-      let d = y<9?grid[y+1][x]:0;
-
-      let lap = (l+r+u+d - 4*c);
-
-      vel[y][x] += lap * 0.25;
-      vel[y][x] *= 0.96;
-
-      next[y][x] = c + vel[y][x];
+    // lastDetections 배열 재사용 (length 유지)
+    while (S.lastDetections.length < S.mockPeople.length)
+      S.lastDetections.push({ bbox:[0,0,0,0], class:'person', score:0.99 });
+    S.lastDetections.length = S.mockPeople.length;
+    for (let i=0;i<S.mockPeople.length;i++) {
+      const p = S.mockPeople[i], d = S.lastDetections[i];
+      d.bbox[0] = (p.x - p.w/2)*W;
+      d.bbox[1] = (p.y - p.h/2)*H;
+      d.bbox[2] = p.w*W;
+      d.bbox[3] = p.h*H;
     }
   }
 
-  grid = next;
-}
+  // ─── Track 매칭 ──────────────────────────────────────────
+  // 임시 배열을 클로저 밖에 할당해 매 프레임 GC 방지
+  const _pairs = [];
+  function updateTracks(dets) {
+    const maxD = Math.min(canvas.clientWidth, canvas.clientHeight) * 0.12;
+    const unmatchDet   = new Uint8Array(dets.length);   // 0=unmatched
+    const unmatchTrack = new Uint8Array(S.tracks.length);
 
-function draw(){
+    _pairs.length = 0;
+    for (let ti=0;ti<S.tracks.length;ti++) {
+      const t = S.tracks[ti];
+      for (let di=0;di<dets.length;di++) {
+        const b = dets[di].bbox;
+        const cx = b[0]+b[2]/2, cy = b[1]+b[3]/2;
+        const dx = t.x-cx, dy = t.y-cy;
+        const dist = Math.sqrt(dx*dx+dy*dy);
+        if (dist < maxD) _pairs.push({ti,di,dist});
+      }
+    }
+    _pairs.sort((a,b)=>a.dist-b.dist);
 
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+    for (let k=0;k<_pairs.length;k++) {
+      const {ti,di,dist} = _pairs[k];
+      if (unmatchTrack[ti] || unmatchDet[di]) continue;
+      unmatchTrack[ti] = 1;
+      unmatchDet[di]   = 1;
 
-  let cw = canvas.width/10;
-  let ch = canvas.height/10;
+      const t = S.tracks[ti];
+      const b = dets[di].bbox;
+      const cx = b[0]+b[2]/2, cy = b[1]+b[3]/2;
+      const px = t.x, py = t.y;
+      t.x = cx; t.y = cy; t.w = b[2]; t.h = b[3]; t.missed = 0;
 
-  // ripple
-  for(let y=0;y<10;y++){
-    for(let x=0;x<10;x++){
-      let v = Math.abs(grid[y][x]);
-      let c = Math.floor(20 + v*200);
+      const norm = Math.sqrt((cx-px)**2+(cy-py)**2) /
+                   Math.max(1, Math.min(canvas.clientWidth,canvas.clientHeight));
+      t.motion = t.motion ? t.motion*0.65+norm*0.35 : norm;
+      t.pulse  = Math.max(0,(t.motion-S.motionThreshold)/Math.max(0.0001,0.08-S.motionThreshold));
+    }
 
-      ctx.fillStyle = `rgb(${c},${c},${c})`;
-      ctx.fillRect(x*cw+2, y*ch+2, cw-4, ch-4);
+    // 새 트랙
+    for (let di=0;di<dets.length;di++) {
+      if (unmatchDet[di]) continue;
+      const b = dets[di].bbox;
+      S.tracks.push({ id:S.nextTrackId++, x:b[0]+b[2]/2, y:b[1]+b[3]/2,
+                      w:b[2], h:b[3], missed:0, motion:0, pulse:0 });
+    }
+
+    // 소멸
+    for (let ti=S.tracks.length-1;ti>=0;ti--) {
+      if (!unmatchTrack[ti]) {
+        const t = S.tracks[ti];
+        t.missed++;
+        t.motion = (t.motion||0)*0.85;
+        t.pulse  = (t.pulse||0)*0.8;
+        if (t.missed >= 15) S.tracks.splice(ti,1);
+      }
     }
   }
 
-  // people
-  tracks.forEach(t=>{
-    ctx.strokeStyle="#0047FF";
-    ctx.lineWidth=2;
-    ctx.strokeRect(t.cx-t.w/2, t.cy-t.h/2, t.w, t.h);
+  // ─── 모델 ────────────────────────────────────────────────
+  async function loadModel() {
+    try {
+      S.model = await cocoSsd.load({ base:'lite_mobilenet_v2' });
+      S.modelReady = true;
+      markUIDirty();
+    } catch(e) { console.error(e); }
+  }
 
-    ctx.fillStyle="#0047FF";
-    ctx.fillText("ID "+t.id, t.cx-20, t.cy-20);
-  });
-}
+  async function startCamera() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video:{ facingMode:{ideal:'environment'}, width:{ideal:1280}, height:{ideal:720} },
+        audio:false
+      });
+      video.srcObject = stream;
+      await video.play();
+      S.cameraOn = true;
+      S.usingMock = false;
+      markUIDirty();
+    } catch(e) {
+      console.error(e);
+      alert('카메라 접근 실패. Mock 모드로 전환합니다.');
+      stopCamera();
+      addMockPeople();
+      S.usingMock = true;
+      markUIDirty();
+    }
+  }
 
-async function loop(){
+  function stopCamera() {
+    const stream = video.srcObject;
+    if (stream) stream.getTracks().forEach(t=>t.stop());
+    video.srcObject = null;
+    S.cameraOn = false;
+  }
 
-  const poses = await detector.estimatePoses(video);
+  // detection은 async지만 루프를 블록하지 않게 분리
+  let _detectRunning = false;
+  async function runDetection(now) {
+    if (now - S.lastDetectRun < S.detectIntervalMs) return;
+    if (_detectRunning) return; // 겹치기 방지
+    S.lastDetectRun = now;
 
-  let boxes = poses.map(p=>getBox(p.keypoints)).filter(Boolean);
+    if (S.cameraOn && S.modelReady && video.readyState >= 2) {
+      _detectRunning = true;
+      try {
+        const preds = await S.model.detect(video);
+        S.lastDetections = preds.filter(p=>p.class==='person'&&p.score>=S.detectThreshold);
+      } catch(e){ console.error(e); } finally { _detectRunning = false; }
+    } else if (S.usingMock) {
+      updateMockPeople();
+    } else {
+      S.lastDetections.length = 0;
+    }
+    updateTracks(S.lastDetections);
+  }
 
-  track(boxes);
-  updateWave();
-  draw();
+  // ─── Wave field ──────────────────────────────────────────
+  function injectRipples() {
+    const cW = canvas.clientWidth, cH = canvas.clientHeight;
+    for (let i=0;i<S.tracks.length;i++) {
+      const t = S.tracks[i];
+      if ((t.motion||0) < S.motionThreshold) continue;
+      const gx = Math.round((t.x/Math.max(1,cW))*(GW-1));
+      const gy = Math.round((t.y/Math.max(1,cH))*(GH-1));
+      if (gx>=0&&gx<GW&&gy>=0&&gy<GH) {
+        const impulse = S.energy*(0.18+clamp(t.pulse||0,0,1.5)*0.85);
+        vel[idx(gx,gy)] += impulse;
+      }
+    }
+  }
 
-  requestAnimationFrame(loop);
-}
+  // Float32Array 인플레이스 연산 — 힙 할당 제로
+  function updateWaveField() {
+    injectRipples();
+    const damp = S.damping;
+    for (let y=0;y<GH;y++) {
+      for (let x=0;x<GW;x++) {
+        const i   = idx(x,y);
+        const l   = x>0    ? grid[idx(x-1,y)] : 0;
+        const r   = x<GW-1 ? grid[idx(x+1,y)] : 0;
+        const u   = y>0    ? grid[idx(x,y-1)] : 0;
+        const d   = y<GH-1 ? grid[idx(x,y+1)] : 0;
+        vel[i]    = (vel[i] + (l+r+u+d - 4*grid[i])*0.22)*damp;
+        gridNext[i] = grid[i] + vel[i];
+      }
+    }
+    grid.set(gridNext);
+  }
 
-init();
+  // ─── 캔버스 렌더 ─────────────────────────────────────────
+  // 공통 배경 그리드 (44px 간격 점선 대신 path 배치 최소화)
+  function drawBgGrid(ox,oy,W,H) {
+    ctx.save();
+    ctx.translate(ox,oy);
+    ctx.strokeStyle='rgba(255,255,255,0.05)';
+    ctx.lineWidth=1;
+    ctx.beginPath();
+    for(let x=0;x<=W;x+=44){ctx.moveTo(x,0);ctx.lineTo(x,H);}
+    for(let y=0;y<=H;y+=44){ctx.moveTo(0,y);ctx.lineTo(W,y);}
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // 비디오 → 캔버스 영역 좌표
+  function videoRect(tW,tH){
+    const vw=S.cameraOn?(video.videoWidth||1280):1280;
+    const vh=S.cameraOn?(video.videoHeight||720):720;
+    const s=Math.min(tW/vw,tH/vh);
+    return{dx:(tW-vw*s)/2,dy:(tH-vh*s)/2,dw:vw*s,dh:vh*s,vw,vh};
+  }
+
+  function mapBBox(x,y,w,h,tW,tH){
+    const r=videoRect(tW,tH);
+    return{x:r.dx+(x/r.vw)*r.dw,y:r.dy+(y/r.vh)*r.dh,w:(w/r.vw)*r.dw,h:(h/r.vh)*r.dh};
+  }
+
+  // 파동 밝기 계산 (인라인, 함수 콜 오버헤드 제거)
+  function drawDetectionScene(ox,oy,W,H) {
+    ctx.fillStyle='rgba(0,0,0,0.94)';
+    ctx.fillRect(ox,oy,W,H);
+    drawBgGrid(ox,oy,W,H);
+
+    ctx.save(); ctx.translate(ox,oy);
+
+    if(S.cameraOn&&video.readyState>=2){
+      const r=videoRect(W,H);
+      ctx.drawImage(video,r.dx,r.dy,r.dw,r.dh);
+      ctx.strokeStyle='rgba(255,255,255,0.08)';
+      ctx.strokeRect(r.dx,r.dy,r.dw,r.dh);
+    } else {
+      ctx.fillStyle='rgba(255,255,255,0.04)';
+      ctx.fillRect(18,18,W-36,H-36);
+      ctx.fillStyle='rgba(255,255,255,0.45)';
+      ctx.font='14px sans-serif';
+      ctx.fillText('카메라가 꺼져 있어 Mock 사람 데이터로 시뮬레이션 중입니다.',28,42);
+    }
+
+    ctx.font='bold 14px sans-serif';
+    for(let i=0;i<S.tracks.length;i++){
+      const t=S.tracks[i];
+      let bx=t.x-t.w/2,by=t.y-t.h/2,bw=t.w,bh=t.h;
+      if(S.cameraOn){const m=mapBBox(bx,by,bw,bh,W,H);bx=m.x;by=m.y;bw=m.w;bh=m.h;}
+
+      ctx.strokeStyle='rgba(79,140,255,0.95)';
+      ctx.lineWidth=2;
+      ctx.strokeRect(bx,by,bw,bh);
+      ctx.fillStyle='rgba(79,140,255,0.15)';
+      ctx.fillRect(bx,by,bw,bh);
+
+      const lbl='ID '+t.id;
+      const tw=ctx.measureText(lbl).width;
+      ctx.fillStyle='rgba(0,0,0,0.92)';
+      ctx.fillRect(bx,by-24,tw+16,20);
+      ctx.strokeStyle='rgba(79,140,255,0.8)';
+      ctx.strokeRect(bx,by-24,tw+16,20);
+      ctx.fillStyle='#fff';
+      ctx.fillText(lbl,bx+8,by-9);
+
+      const cx=bx+bw/2,cy=by+bh/2;
+      ctx.beginPath();ctx.arc(cx,cy,4,0,6.283);ctx.fillStyle='#4f8cff';ctx.fill();
+      ctx.strokeStyle='rgba(79,140,255,0.55)';
+      ctx.beginPath();ctx.moveTo(cx-10,cy);ctx.lineTo(cx+10,cy);ctx.moveTo(cx,cy-10);ctx.lineTo(cx,cy+10);ctx.stroke();
+
+      const motion=clamp((t.motion||0)/0.08,0,1);
+      const barW=Math.max(20,bw);
+      ctx.fillStyle='rgba(255,255,255,0.10)';ctx.fillRect(bx,by+bh+8,barW,4);
+      ctx.fillStyle=motion>=(S.motionThreshold/0.08)?'#4f8cff':'rgba(255,255,255,0.35)';
+      ctx.fillRect(bx,by+bh+8,barW*motion,4);
+    }
+
+    ctx.fillStyle='#fff';ctx.font='bold 16px sans-serif';
+    ctx.fillText('관객 디텍팅 / ID 기억',18,H-18);
+    ctx.restore();
+  }
+
+  // 파동 색상 (매 셀마다 string 생성 방지 → precompute lut)
+  const WAVE_LUT_SIZE=256;
+  const waveLUT=(()=>{
+    const a=new Array(WAVE_LUT_SIZE);
+    for(let i=0;i<WAVE_LUT_SIZE;i++){
+      const t=i/WAVE_LUT_SIZE;
+      const c=Math.floor(18+t*235);
+      const alpha=(0.15+t*0.85).toFixed(2);
+      a[i]=`rgba(${c},${c},${c},${alpha})`;
+    }
+    return a;
+  })();
+  function waveColor(v){
+    return waveLUT[Math.min(WAVE_LUT_SIZE-1,Math.floor(clamp(Math.abs(v),0,2.2)/2.2*WAVE_LUT_SIZE))];
+  }
+
+  function drawRipple2D(ox,oy,W,H) {
+    ctx.fillStyle='rgba(0,0,0,0.96)';ctx.fillRect(ox,oy,W,H);
+    ctx.save();ctx.translate(ox,oy);
+
+    ctx.fillStyle='#fff';ctx.font='bold 16px sans-serif';
+    ctx.fillText('파동 시각화 / 10×10 Grid',18,28);
+
+    const lp=44,tp=54,rp=24,bp=30;
+    const gw=W-lp-rp,gh=H-tp-bp;
+    const cw=gw/GW,ch=gh/GH,m=4;
+
+    // 셀 일괄 그리기
+    ctx.strokeStyle='rgba(255,255,255,0.08)';
+    for(let y=0;y<GH;y++){
+      for(let x=0;x<GW;x++){
+        const v=grid[idx(x,y)];
+        const px=lp+x*cw,py=tp+y*ch;
+        ctx.fillStyle=waveColor(v);
+        ctx.fillRect(px+m,py+m,cw-m*2,ch-m*2);
+        ctx.strokeRect(px+m,py+m,cw-m*2,ch-m*2);
+      }
+    }
+
+    // 트랙 표시
+    ctx.font='bold 12px sans-serif';
+    for(let i=0;i<S.tracks.length;i++){
+      const t=S.tracks[i];
+      const gx=(t.x/Math.max(1,canvas.clientWidth))*(GW-1);
+      const gy=(t.y/Math.max(1,canvas.clientHeight))*(GH-1);
+      const px=lp+(gx+0.5)*cw,py=tp+(gy+0.5)*ch;
+      const active=(t.motion||0)>=S.motionThreshold;
+
+      ctx.beginPath();ctx.arc(px,py,active?7:5,0,6.283);
+      ctx.fillStyle=active?'#4f8cff':'rgba(255,255,255,0.45)';ctx.fill();
+      if(active){
+        ctx.beginPath();ctx.arc(px,py,16+(t.pulse||0)*12,0,6.283);
+        ctx.strokeStyle='rgba(79,140,255,0.35)';ctx.stroke();
+      }
+      const lbl='ID '+t.id;const tw=ctx.measureText(lbl).width;
+      ctx.fillStyle='rgba(0,0,0,0.92)';ctx.fillRect(px-tw/2-7,py-28,tw+14,18);
+      ctx.strokeStyle=active?'rgba(79,140,255,0.75)':'rgba(255,255,255,0.35)';
+      ctx.strokeRect(px-tw/2-7,py-28,tw+14,18);
+      ctx.fillStyle='#fff';ctx.fillText(lbl,px-tw/2,py-15);
+    }
+    ctx.restore();
+  }
+
+  function drawRipple3D(ox,oy,W,H) {
+    ctx.fillStyle='rgba(0,0,0,0.96)';ctx.fillRect(ox,oy,W,H);
+    ctx.save();ctx.translate(ox,oy);
+
+    ctx.fillStyle='#fff';ctx.font='bold 16px sans-serif';
+    ctx.fillText('파동 시각화 / 3D Module',18,28);
+
+    const centerX=W*0.5, startY=H*0.22;
+    const tW2=Math.min(42,W/18), tH2=tW2*0.55, base=Math.min(18,H/30);
+
+    for(let gy=0;gy<GH;gy++){
+      for(let gx=0;gx<GW;gx++){
+        const v=clamp(Math.abs(grid[idx(gx,gy)]),0,2.2);
+        const h=base+v*34;
+        const sx=centerX+(gx-gy)*tW2*0.5;
+        const sy=startY+(gx+gy)*tH2*0.5;
+
+        const tg=Math.floor(40+v*90),rg=Math.floor(24+v*54),lg=Math.floor(14+v*36);
+
+        ctx.beginPath();
+        ctx.moveTo(sx,sy-h);ctx.lineTo(sx+tW2*0.5,sy-tH2*0.5-h);
+        ctx.lineTo(sx,sy-tH2-h);ctx.lineTo(sx-tW2*0.5,sy-tH2*0.5-h);
+        ctx.closePath();ctx.fillStyle=`rgba(${tg},${tg},${tg},0.96)`;ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(sx,sy-h);ctx.lineTo(sx+tW2*0.5,sy-tH2*0.5-h);
+        ctx.lineTo(sx+tW2*0.5,sy-tH2*0.5);ctx.lineTo(sx,sy);
+        ctx.closePath();ctx.fillStyle=`rgba(${rg},${rg},${rg},0.92)`;ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(sx,sy-h);ctx.lineTo(sx-tW2*0.5,sy-tH2*0.5-h);
+        ctx.lineTo(sx-tW2*0.5,sy-tH2*0.5);ctx.lineTo(sx,sy);
+        ctx.closePath();ctx.fillStyle=`rgba(${lg},${lg},${lg},0.94)`;ctx.fill();
+
+        ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.stroke();
+      }
+    }
+
+    ctx.font='bold 12px sans-serif';
+    for(let i=0;i<S.tracks.length;i++){
+      const t=S.tracks[i];
+      const gx=(t.x/Math.max(1,canvas.clientWidth))*(GW-1);
+      const gy=(t.y/Math.max(1,canvas.clientHeight))*(GH-1);
+      const sx=centerX+(gx-gy)*tW2*0.5;
+      const sy=startY+(gx+gy)*tH2*0.5-98;
+      const active=(t.motion||0)>=S.motionThreshold;
+      ctx.beginPath();ctx.arc(sx,sy,active?7:5,0,6.283);
+      ctx.fillStyle=active?'#4f8cff':'rgba(255,255,255,0.45)';ctx.fill();
+      const lbl='ID '+t.id;const tw=ctx.measureText(lbl).width;
+      ctx.fillStyle='rgba(0,0,0,0.92)';ctx.fillRect(sx-tw/2-7,sy-28,tw+14,18);
+      ctx.strokeStyle=active?'rgba(79,140,255,0.75)':'rgba(255,255,255,0.35)';
+      ctx.strokeRect(sx-tw/2-7,sy-28,tw+14,18);
+      ctx.fillStyle='#fff';ctx.fillText(lbl,sx-tw/2,sy-15);
+    }
+    ctx.restore();
+  }
+
+  function drawRippleScene(){
+    const W=canvas.clientWidth,H=canvas.clientHeight;
+    if(W>H && S.landscapeDual){
+      const lW=Math.max(280,Math.floor(W*0.34)),rW=W-lW;
+      if(S.showMiniDetect) drawDetectionScene(0,0,lW,H);
+      else{ctx.fillStyle='rgba(0,0,0,0.95)';ctx.fillRect(0,0,lW,H);}
+      if(S.view==='2d') drawRipple2D(lW,0,rW,H);
+      else drawRipple3D(lW,0,rW,H);
+      ctx.strokeStyle='rgba(255,255,255,0.08)';
+      ctx.beginPath();ctx.moveTo(lW,0);ctx.lineTo(lW,H);ctx.stroke();
+      return;
+    }
+    if(S.view==='2d') drawRipple2D(0,0,W,H);
+    else drawRipple3D(0,0,W,H);
+  }
+
+  // ─── 메인 루프 ───────────────────────────────────────────
+  function animate(now){
+    const dt = now - S.lastFrameTime;
+    S.lastFrameTime = now;
+    // EWMA FPS (덜 민감하게)
+    S.fps = S.fps*(1-S.fpsAlpha) + (1000/Math.max(1,dt))*S.fpsAlpha;
+
+    runDetection(now); // async지만 await 않음 — 결과는 다음 프레임에 반영
+    updateWaveField();
+
+    // clearRect 대신 fillRect (alpha:false 컨텍스트에선 더 빠름)
+    ctx.fillStyle='#000';
+    ctx.fillRect(0,0,canvas.clientWidth,canvas.clientHeight);
+
+    if(S.mode==='detect') drawDetectionScene(0,0,canvas.clientWidth,canvas.clientHeight);
+    else drawRippleScene();
+
+    flushUI(); // dirty 때만 DOM 건드림
+    requestAnimationFrame(animate);
+  }
+
+  // ─── 이벤트 ──────────────────────────────────────────────
+  function resetAll(){
+    S.tracks=[]; S.nextTrackId=1; S.lastDetections=[];
+    S.mockPeople=[];
+    grid.fill(0); gridNext.fill(0); vel.fill(0);
+  }
+
+  function toggleSidebar(v=null){
+    S.sidebarOpen = v===null ? !S.sidebarOpen : v;
+    markUIDirty();
+  }
+
+  function bindEvents(){
+    ui.menuBtn.addEventListener('click',()=>toggleSidebar());
+    ui.overlay.addEventListener('click',()=>toggleSidebar(false));
+
+    ui.modeDetectBtn.addEventListener('click',()=>{S.mode='detect';if(innerWidth<800)toggleSidebar(false);markUIDirty();});
+    ui.modeRippleBtn.addEventListener('click',()=>{S.mode='ripple';if(innerWidth<800)toggleSidebar(false);markUIDirty();});
+    ui.view2DBtn.addEventListener('click',()=>{S.view='2d';markUIDirty();});
+    ui.view3DBtn.addEventListener('click',()=>{S.view='3d';markUIDirty();});
+
+    ui.cameraBtn.addEventListener('click',async()=>{
+      if(S.cameraOn){stopCamera();addMockPeople();S.usingMock=true;}
+      else await startCamera();
+      if(innerWidth<800)toggleSidebar(false);markUIDirty();
+    });
+    ui.mockBtn.addEventListener('click',()=>{stopCamera();resetAll();addMockPeople();S.usingMock=true;if(innerWidth<800)toggleSidebar(false);markUIDirty();});
+    ui.resetBtn.addEventListener('click',()=>{resetAll();if(S.usingMock)addMockPeople();markUIDirty();});
+
+    ui.energyRange.addEventListener('input',e=>{S.energy=+e.target.value;markUIDirty();});
+    ui.dampingRange.addEventListener('input',e=>{S.damping=+e.target.value;markUIDirty();});
+    ui.radiusRange.addEventListener('input',e=>{S.radius=+e.target.value;markUIDirty();});
+    ui.thresholdRange.addEventListener('input',e=>{S.detectThreshold=+e.target.value;markUIDirty();});
+    ui.motionRange.addEventListener('input',e=>{S.motionThreshold=+e.target.value;markUIDirty();});
+
+    ui.showStatusCheck.addEventListener('change',e=>{S.showStatus=e.target.checked;markUIDirty();});
+    ui.showMiniDetectCheck.addEventListener('change',e=>{S.showMiniDetect=e.target.checked;markUIDirty();});
+    ui.landscapeDualCheck.addEventListener('change',e=>{S.landscapeDual=e.target.checked;markUIDirty();});
+
+    ui.fullscreenBtn.addEventListener('click',()=>{
+      try{document.documentElement.requestFullscreen?.();}catch(e){}
+    });
+
+    window.addEventListener('resize',resizeCanvas);
+    window.addEventListener('orientationchange',()=>setTimeout(resizeCanvas,150));
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(resizeCanvas,100);});
+  }
+
+  function boot(){
+    resizeCanvas();
+    addMockPeople();
+    bindEvents();
+    markUIDirty();
+    loadModel();
+    requestAnimationFrame(animate);
+  }
+
+  boot();
+})();
 </script>
+
 </body>
 </html>
