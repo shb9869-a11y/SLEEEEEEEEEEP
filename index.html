@@ -8,7 +8,6 @@
   />
   <title>인기척: 파동 시스템</title>
 
-  <!-- iPhone 홈화면 추가 대응 -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -16,37 +15,38 @@
 
   <style>
     :root{
-      --bg:#000000;
-      --bg2:#0b0b0b;
-      --panel:#111111ee;
-      --panelLine:#2d2d2d;
-      --text:#f4f4f4;
-      --muted:#a9a9a9;
-      --soft:#1a1a1a;
-      --line:#262626;
-      --white:#ffffff;
-      --accent:#d9d9d9;
+      --bg:#000;
+      --panel:rgba(10,10,10,0.94);
+      --panelBorder:rgba(255,255,255,0.12);
+      --text:#f3f3f3;
+      --muted:#a6a6a6;
+      --blue:#4f8cff;
+      --blueSoft:rgba(79,140,255,0.18);
+      --grid:rgba(255,255,255,0.04);
+      --whiteSoft:rgba(255,255,255,0.08);
     }
 
-    *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+    *{
+      box-sizing:border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-    html, body {
+    html,body{
       margin:0;
       width:100%;
       height:100%;
       background:#000;
       color:var(--text);
-      font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR","Segoe UI",sans-serif;
       overflow:hidden;
+      font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR","Segoe UI",sans-serif;
     }
 
     body{
       background:
-        linear-gradient(180deg, rgba(255,255,255,0.04), transparent 25%),
         linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px),
         linear-gradient(0deg, rgba(255,255,255,0.03) 1px, transparent 1px),
         #000;
-      background-size:100% 100%, 44px 44px, 44px 44px, auto;
+      background-size:44px 44px, 44px 44px, auto;
     }
 
     #app{
@@ -74,18 +74,18 @@
       top:calc(env(safe-area-inset-top, 0px) + 10px);
       left:10px;
       right:10px;
-      z-index:40;
+      z-index:50;
       display:flex;
       justify-content:space-between;
       align-items:center;
       pointer-events:none;
     }
 
-    .topbar-left,
-    .topbar-right{
+    .topbarLeft,
+    .topbarRight{
       display:flex;
-      gap:8px;
       align-items:center;
+      gap:8px;
       pointer-events:auto;
     }
 
@@ -93,9 +93,9 @@
       width:44px;
       height:44px;
       border-radius:12px;
-      border:1px solid var(--panelLine);
-      background:rgba(10,10,10,0.88);
-      color:var(--white);
+      border:1px solid var(--panelBorder);
+      background:rgba(8,8,8,0.92);
+      color:#fff;
       display:flex;
       align-items:center;
       justify-content:center;
@@ -108,13 +108,28 @@
       min-height:44px;
       padding:0 14px;
       border-radius:12px;
-      border:1px solid var(--panelLine);
-      background:rgba(10,10,10,0.88);
-      color:var(--text);
+      border:1px solid var(--panelBorder);
+      background:rgba(8,8,8,0.92);
       display:flex;
       align-items:center;
       font-size:13px;
+      color:#fff;
       backdrop-filter:blur(10px);
+    }
+
+    .overlay{
+      position:absolute;
+      inset:0;
+      background:rgba(0,0,0,0.56);
+      opacity:0;
+      pointer-events:none;
+      transition:opacity 0.25s ease;
+      z-index:45;
+    }
+
+    .overlay.show{
+      opacity:1;
+      pointer-events:auto;
     }
 
     .sidebar{
@@ -123,11 +138,11 @@
       left:0;
       width:min(360px, 88vw);
       height:100%;
-      z-index:50;
-      background:rgba(8,8,8,0.96);
-      border-right:1px solid var(--panelLine);
+      z-index:60;
       transform:translateX(-100%);
       transition:transform 0.28s ease;
+      background:rgba(8,8,8,0.97);
+      border-right:1px solid var(--panelBorder);
       padding:
         calc(env(safe-area-inset-top, 0px) + 16px)
         16px
@@ -141,30 +156,14 @@
       transform:translateX(0);
     }
 
-    .overlay{
-      position:absolute;
-      inset:0;
-      z-index:45;
-      background:rgba(0,0,0,0.55);
-      opacity:0;
-      pointer-events:none;
-      transition:opacity 0.25s ease;
-    }
-
-    .overlay.show{
-      opacity:1;
-      pointer-events:auto;
-    }
-
-    .sideTitle{
+    .title{
       font-size:24px;
       font-weight:700;
-      line-height:1.2;
       margin-bottom:8px;
       letter-spacing:-0.02em;
     }
 
-    .sideSub{
+    .subtitle{
       color:var(--muted);
       font-size:13px;
       line-height:1.5;
@@ -178,9 +177,9 @@
     }
 
     .section:last-child{
-      border-bottom:none;
       margin-bottom:0;
       padding-bottom:0;
+      border-bottom:none;
     }
 
     .label{
@@ -193,25 +192,25 @@
 
     .row{
       display:flex;
-      gap:8px;
       flex-wrap:wrap;
+      gap:8px;
       margin-bottom:10px;
     }
 
     .btn{
-      border:1px solid var(--panelLine);
-      background:#151515;
-      color:var(--text);
-      border-radius:12px;
+      min-height:44px;
       padding:12px 14px;
+      border-radius:12px;
+      border:1px solid var(--panelBorder);
+      background:#151515;
+      color:#f3f3f3;
       font-size:14px;
       font-weight:600;
       cursor:pointer;
-      min-height:44px;
     }
 
     .btn.active{
-      background:#f2f2f2;
+      background:#fff;
       color:#000;
       border-color:#fff;
     }
@@ -222,7 +221,7 @@
 
     .sliderWrap{
       display:grid;
-      grid-template-columns: 64px 1fr 44px;
+      grid-template-columns: 78px 1fr 48px;
       gap:10px;
       align-items:center;
       margin-bottom:10px;
@@ -248,989 +247,1076 @@
       border:none;
     }
 
-    .statusPanel{
-      position:absolute;
-      right:10px;
-      top:calc(env(safe-area-inset-top, 0px) + 62px);
-      z-index:30;
-      width:min(300px, calc(100vw - 20px));
-      background:rgba(8,8,8,0.88);
-      border:1px solid var(--panelLine);
-      border-radius:16px;
-      padding:14px;
-      backdrop-filter:blur(10px);
-    }
-
-    .statusTitle{
+    .checkRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      min-height:42px;
+      padding:10px 0;
       font-size:14px;
-      font-weight:700;
-      margin-bottom:8px;
+      color:#eaeaea;
     }
 
-    .statusLine{
-      font-size:12px;
-      color:var(--muted);
-      margin:4px 0;
+    .checkRow input{
+      width:18px;
+      height:18px;
     }
 
-    .bottomLegend{
+    .floatingInfo{
       position:absolute;
-      left:10px;
       right:10px;
       bottom:calc(env(safe-area-inset-bottom, 0px) + 10px);
-      z-index:20;
-      background:rgba(8,8,8,0.82);
-      border:1px solid var(--panelLine);
+      z-index:30;
+      max-width:min(360px, calc(100vw - 20px));
+      border:1px solid var(--panelBorder);
+      background:rgba(8,8,8,0.88);
       border-radius:16px;
       padding:12px 14px;
+      color:var(--muted);
       font-size:12px;
       line-height:1.5;
-      color:var(--muted);
       backdrop-filter:blur(10px);
     }
 
-    .bottomLegend strong{
+    .floatingInfo strong{
       color:#fff;
     }
 
-    .smallNote{
-      color:var(--muted);
-      font-size:12px;
-      line-height:1.5;
-    }
-
-    .tiny{
-      font-size:11px;
-      color:#8c8c8c;
-      line-height:1.45;
-    }
-
-    @media (min-width: 900px){
-      .statusPanel{
-        top:calc(env(safe-area-inset-top, 0px) + 16px);
-      }
-      .bottomLegend{
-        left:auto;
-        width:360px;
-        right:16px;
-        bottom:16px;
+    @media (max-width: 799px){
+      .floatingInfo{
+        left:10px;
+        right:10px;
+        max-width:none;
       }
     }
   </style>
 </head>
 <body>
-  <div id="app">
-    <div class="topbar">
-      <div class="topbar-left">
-        <button id="menuToggleBtn" class="iconBtn" aria-label="메뉴 열기">☰</button>
-        <div class="chip" id="modeChip">관객 디텍팅</div>
-      </div>
-      <div class="topbar-right">
-        <button id="fullscreenBtn" class="iconBtn" aria-label="전체화면">⤢</button>
-      </div>
+<div id="app">
+  <div class="topbar">
+    <div class="topbarLeft">
+      <button id="menuBtn" class="iconBtn" aria-label="메뉴">☰</button>
+      <div id="modeChip" class="chip">관객 디텍팅</div>
     </div>
-
-    <div id="overlay" class="overlay"></div>
-
-    <aside id="sidebar" class="sidebar open">
-      <div class="sideTitle">인기척: 파동 시스템</div>
-      <div class="sideSub">
-        흑백 기반 인터페이스. 왼쪽 메뉴를 열고 닫을 수 있고,
-        휴대폰 카메라로 사람을 잡아 ID를 고정한 뒤 파동 시각화에 반영합니다.
-      </div>
-
-      <div class="section">
-        <div class="label">화면</div>
-        <div class="row">
-          <button id="modeDetectBtn" class="btn active">1. 디텍팅</button>
-          <button id="modeRippleBtn" class="btn">2. 파동</button>
-        </div>
-        <div class="row">
-          <button id="view2DBtn" class="btn active">2D Grid</button>
-          <button id="view3DBtn" class="btn">3D Module</button>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="label">카메라 / 실행</div>
-        <div class="row">
-          <button id="cameraBtn" class="btn block">카메라 시작</button>
-          <button id="mockBtn" class="btn block">Mock 사람 테스트</button>
-          <button id="resetBtn" class="btn block">리셋</button>
-        </div>
-        <div class="tiny">
-          모바일에서는 후면 카메라를 우선 요청합니다. 홈화면에 추가하면 브라우저 UI가 줄어든 상태로 쓸 수 있습니다.
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="label">파라미터</div>
-        <div class="sliderWrap">
-          <span>강도</span>
-          <input id="energyRange" type="range" min="0.4" max="2.5" step="0.1" value="1.2">
-          <span id="energyVal">1.2</span>
-        </div>
-        <div class="sliderWrap">
-          <span>감쇠</span>
-          <input id="dampingRange" type="range" min="0.90" max="0.995" step="0.001" value="0.972">
-          <span id="dampingVal">0.972</span>
-        </div>
-        <div class="sliderWrap">
-          <span>반경</span>
-          <input id="radiusRange" type="range" min="0.8" max="6" step="0.1" value="2.4">
-          <span id="radiusVal">2.4</span>
-        </div>
-        <div class="sliderWrap">
-          <span>문턱</span>
-          <input id="thresholdRange" type="range" min="0.35" max="0.85" step="0.01" value="0.55">
-          <span id="thresholdVal">0.55</span>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="label">안내</div>
-        <div class="smallNote">
-          • 1번 화면: 사람 검출 + ID 고정<br/>
-          • 2번 화면: 10×10 그리드 또는 3D 모듈에 파동 반영<br/>
-          • 메뉴는 좌측 상단 버튼으로 숨기거나 다시 열 수 있음<br/>
-          • 아이폰은 Safari에서 열고 홈화면 추가 시 더 몰입감 있게 사용 가능
-        </div>
-      </div>
-    </aside>
-
-    <div class="statusPanel">
-      <div class="statusTitle">시스템 상태</div>
-      <div class="statusLine" id="modelLine">모델: 로딩 중 또는 미사용</div>
-      <div class="statusLine" id="cameraLine">카메라: 꺼짐</div>
-      <div class="statusLine" id="peopleLine">관객 수: 0</div>
-      <div class="statusLine" id="modeLine">현재 화면: 관객 디텍팅</div>
-      <div class="statusLine" id="fpsLine">FPS: -</div>
+    <div class="topbarRight">
+      <button id="fullscreenBtn" class="iconBtn" aria-label="전체화면">⤢</button>
     </div>
-
-    <div class="bottomLegend">
-      <strong>작동 로직</strong><br/>
-      사람 검출 → centroid 추출 → nearest-neighbor ID 고정 →
-      10×10 모듈 에너지 주입 → 감쇠와 간섭 → 2D / 3D 시각화
-    </div>
-
-    <canvas id="mainCanvas"></canvas>
-    <video id="video" playsinline autoplay muted></video>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+  <div id="overlay" class="overlay"></div>
 
-  <script>
-    (() => {
-      const state = {
-        mode: "detect",
-        view: "2d",
-        sidebarOpen: true,
+  <aside id="sidebar" class="sidebar open">
+    <div class="title">인기척: 파동 시스템</div>
+    <div class="subtitle">
+      인물은 파란 박스로 감지하고, ID를 기억해 넘버링합니다.
+      움직임의 세기가 일정 기준을 넘을 때만 파동이 발생하며,
+      파동은 퍼져나가면서 점차 소멸합니다.
+    </div>
 
-        model: null,
-        modelReady: false,
+    <div class="section">
+      <div class="label">화면</div>
+      <div class="row">
+        <button id="modeDetectBtn" class="btn active">1. 디텍팅</button>
+        <button id="modeRippleBtn" class="btn">2. 파동</button>
+      </div>
+      <div class="row">
+        <button id="view2DBtn" class="btn active">2D Grid</button>
+        <button id="view3DBtn" class="btn">3D Module</button>
+      </div>
+    </div>
 
-        cameraOn: false,
-        usingMock: true,
+    <div class="section">
+      <div class="label">카메라 / 실행</div>
+      <div class="row">
+        <button id="cameraBtn" class="btn block">카메라 시작</button>
+        <button id="mockBtn" class="btn block">Mock 사람 테스트</button>
+        <button id="resetBtn" class="btn block">리셋</button>
+      </div>
+    </div>
 
-        tracks: [],
-        nextTrackId: 1,
-        lastDetections: [],
-        mockPeople: [],
+    <div class="section">
+      <div class="label">파동 파라미터</div>
+      <div class="sliderWrap">
+        <span>강도</span>
+        <input id="energyRange" type="range" min="0.4" max="3.0" step="0.1" value="1.4">
+        <span id="energyVal">1.4</span>
+      </div>
+      <div class="sliderWrap">
+        <span>감쇠</span>
+        <input id="dampingRange" type="range" min="0.90" max="0.995" step="0.001" value="0.968">
+        <span id="dampingVal">0.968</span>
+      </div>
+      <div class="sliderWrap">
+        <span>반경</span>
+        <input id="radiusRange" type="range" min="0.8" max="6.0" step="0.1" value="2.5">
+        <span id="radiusVal">2.5</span>
+      </div>
+      <div class="sliderWrap">
+        <span>문턱</span>
+        <input id="thresholdRange" type="range" min="0.35" max="0.85" step="0.01" value="0.55">
+        <span id="thresholdVal">0.55</span>
+      </div>
+      <div class="sliderWrap">
+        <span>움직임</span>
+        <input id="motionRange" type="range" min="0.002" max="0.08" step="0.001" value="0.018">
+        <span id="motionVal">0.018</span>
+      </div>
+    </div>
 
-        gridW: 10,
-        gridH: 10,
-        gridValues: [],
+    <div class="section">
+      <div class="label">옵션</div>
+      <label class="checkRow">
+        <span>상태 정보 표시</span>
+        <input id="showStatusCheck" type="checkbox">
+      </label>
+      <label class="checkRow">
+        <span>파동 화면에 디텍팅 미리보기</span>
+        <input id="showMiniDetectCheck" type="checkbox" checked>
+      </label>
+      <label class="checkRow">
+        <span>가로 모드 동시 보기 허용</span>
+        <input id="landscapeDualCheck" type="checkbox" checked>
+      </label>
+    </div>
 
-        energy: 1.2,
-        damping: 0.972,
-        radius: 2.4,
-        detectThreshold: 0.55,
+    <div class="section">
+      <div class="label">설명</div>
+      <div style="font-size:13px; line-height:1.55; color:var(--muted);">
+        • 인물은 <span style="color:#4f8cff;">파란 박스</span>로 디텍팅됨<br/>
+        • 같은 사람은 nearest-neighbor 기반으로 ID를 유지<br/>
+        • 움직임 세기가 기준보다 클 때만 파동이 발화됨<br/>
+        • 파동은 위치에서 시작해 주변으로 확산되고 감쇠됨<br/>
+        • 가로 모드에서는 디텍팅 + 파동을 동시에 볼 수 있음
+      </div>
+    </div>
+  </aside>
 
-        lastDetectRun: 0,
-        detectIntervalMs: 140,
+  <div id="floatingInfo" class="floatingInfo" style="display:none;">
+    <strong>시스템 정보</strong><br/>
+    <span id="statusText">-</span>
+  </div>
 
-        lastFrameTime: performance.now(),
-        fps: 0,
+  <canvas id="mainCanvas"></canvas>
+  <video id="video" playsinline autoplay muted></video>
+</div>
 
-        showMiniDetectInRipple: true
-      };
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
 
-      const canvas = document.getElementById("mainCanvas");
-      const ctx = canvas.getContext("2d");
-      const video = document.getElementById("video");
+<script>
+(() => {
+  const state = {
+    mode: "detect",
+    view: "2d",
+    sidebarOpen: true,
 
-      const ui = {
-        sidebar: document.getElementById("sidebar"),
-        overlay: document.getElementById("overlay"),
-        menuToggleBtn: document.getElementById("menuToggleBtn"),
-        fullscreenBtn: document.getElementById("fullscreenBtn"),
+    model: null,
+    modelReady: false,
 
-        modeChip: document.getElementById("modeChip"),
+    cameraOn: false,
+    usingMock: true,
 
-        modeDetectBtn: document.getElementById("modeDetectBtn"),
-        modeRippleBtn: document.getElementById("modeRippleBtn"),
-        view2DBtn: document.getElementById("view2DBtn"),
-        view3DBtn: document.getElementById("view3DBtn"),
+    tracks: [],
+    nextTrackId: 1,
+    lastDetections: [],
+    mockPeople: [],
 
-        cameraBtn: document.getElementById("cameraBtn"),
-        mockBtn: document.getElementById("mockBtn"),
-        resetBtn: document.getElementById("resetBtn"),
+    gridW: 10,
+    gridH: 10,
+    gridValues: [],
+    prevGridValues: [],
+    velocityGrid: [],
 
-        energyRange: document.getElementById("energyRange"),
-        dampingRange: document.getElementById("dampingRange"),
-        radiusRange: document.getElementById("radiusRange"),
-        thresholdRange: document.getElementById("thresholdRange"),
-        energyVal: document.getElementById("energyVal"),
-        dampingVal: document.getElementById("dampingVal"),
-        radiusVal: document.getElementById("radiusVal"),
-        thresholdVal: document.getElementById("thresholdVal"),
+    energy: 1.4,
+    damping: 0.968,
+    radius: 2.5,
+    detectThreshold: 0.55,
+    motionThreshold: 0.018,
 
-        modelLine: document.getElementById("modelLine"),
-        cameraLine: document.getElementById("cameraLine"),
-        peopleLine: document.getElementById("peopleLine"),
-        modeLine: document.getElementById("modeLine"),
-        fpsLine: document.getElementById("fpsLine")
-      };
+    lastDetectRun: 0,
+    detectIntervalMs: 130,
+    lastFrameTime: performance.now(),
+    fps: 0,
 
-      function initGrid() {
-        state.gridValues = Array.from({ length: state.gridH }, () =>
-          Array.from({ length: state.gridW }, () => 0)
-        );
+    showStatus: false,
+    showMiniDetect: true,
+    landscapeDual: true
+  };
+
+  const canvas = document.getElementById("mainCanvas");
+  const ctx = canvas.getContext("2d");
+  const video = document.getElementById("video");
+
+  const ui = {
+    sidebar: document.getElementById("sidebar"),
+    overlay: document.getElementById("overlay"),
+    menuBtn: document.getElementById("menuBtn"),
+    fullscreenBtn: document.getElementById("fullscreenBtn"),
+    modeChip: document.getElementById("modeChip"),
+
+    modeDetectBtn: document.getElementById("modeDetectBtn"),
+    modeRippleBtn: document.getElementById("modeRippleBtn"),
+    view2DBtn: document.getElementById("view2DBtn"),
+    view3DBtn: document.getElementById("view3DBtn"),
+
+    cameraBtn: document.getElementById("cameraBtn"),
+    mockBtn: document.getElementById("mockBtn"),
+    resetBtn: document.getElementById("resetBtn"),
+
+    energyRange: document.getElementById("energyRange"),
+    dampingRange: document.getElementById("dampingRange"),
+    radiusRange: document.getElementById("radiusRange"),
+    thresholdRange: document.getElementById("thresholdRange"),
+    motionRange: document.getElementById("motionRange"),
+
+    energyVal: document.getElementById("energyVal"),
+    dampingVal: document.getElementById("dampingVal"),
+    radiusVal: document.getElementById("radiusVal"),
+    thresholdVal: document.getElementById("thresholdVal"),
+    motionVal: document.getElementById("motionVal"),
+
+    showStatusCheck: document.getElementById("showStatusCheck"),
+    showMiniDetectCheck: document.getElementById("showMiniDetectCheck"),
+    landscapeDualCheck: document.getElementById("landscapeDualCheck"),
+
+    floatingInfo: document.getElementById("floatingInfo"),
+    statusText: document.getElementById("statusText")
+  };
+
+  function initWaveField() {
+    state.gridValues = Array.from({ length: state.gridH }, () =>
+      Array.from({ length: state.gridW }, () => 0)
+    );
+    state.prevGridValues = Array.from({ length: state.gridH }, () =>
+      Array.from({ length: state.gridW }, () => 0)
+    );
+    state.velocityGrid = Array.from({ length: state.gridH }, () =>
+      Array.from({ length: state.gridW }, () => 0)
+    );
+  }
+
+  function resizeCanvas() {
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    canvas.width = Math.floor(window.innerWidth * dpr);
+    canvas.height = Math.floor(window.innerHeight * dpr);
+    canvas.style.width = window.innerWidth + "px";
+    canvas.style.height = window.innerHeight + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function clamp(v, min, max) {
+    return Math.max(min, Math.min(max, v));
+  }
+
+  function rand(min, max) {
+    return Math.random() * (max - min) + min;
+  }
+
+  function setActive(el, on) {
+    if (on) el.classList.add("active");
+    else el.classList.remove("active");
+  }
+
+  function toggleSidebar(forceValue = null) {
+    state.sidebarOpen = forceValue === null ? !state.sidebarOpen : forceValue;
+    updateUI();
+  }
+
+  function resetAll() {
+    state.tracks = [];
+    state.nextTrackId = 1;
+    state.lastDetections = [];
+    state.mockPeople = [];
+    initWaveField();
+  }
+
+  function isLandscape() {
+    return window.innerWidth > window.innerHeight;
+  }
+
+  function updateUI() {
+    ui.sidebar.classList.toggle("open", state.sidebarOpen);
+    ui.overlay.classList.toggle("show", state.sidebarOpen);
+
+    setActive(ui.modeDetectBtn, state.mode === "detect");
+    setActive(ui.modeRippleBtn, state.mode === "ripple");
+    setActive(ui.view2DBtn, state.view === "2d");
+    setActive(ui.view3DBtn, state.view === "3d");
+
+    ui.modeChip.textContent = state.mode === "detect" ? "관객 디텍팅" : "파동 시각화";
+
+    ui.energyVal.textContent = state.energy.toFixed(1);
+    ui.dampingVal.textContent = state.damping.toFixed(3);
+    ui.radiusVal.textContent = state.radius.toFixed(1);
+    ui.thresholdVal.textContent = state.detectThreshold.toFixed(2);
+    ui.motionVal.textContent = state.motionThreshold.toFixed(3);
+
+    ui.showStatusCheck.checked = state.showStatus;
+    ui.showMiniDetectCheck.checked = state.showMiniDetect;
+    ui.landscapeDualCheck.checked = state.landscapeDual;
+
+    ui.floatingInfo.style.display = state.showStatus ? "block" : "none";
+
+    const movingCount = state.tracks.filter(t => (t.motion || 0) >= state.motionThreshold).length;
+    ui.statusText.textContent =
+      `모델 ${state.modelReady ? "준비" : "로딩중"} / ` +
+      `카메라 ${state.cameraOn ? "켜짐" : "꺼짐"} / ` +
+      `관객 ${state.tracks.length}명 / ` +
+      `활성 움직임 ${movingCount}명 / ` +
+      `FPS ${Math.round(state.fps)}`;
+  }
+
+  function addMockPeople() {
+    state.mockPeople = [];
+    const count = Math.floor(rand(2, 6));
+    for (let i = 0; i < count; i++) {
+      state.mockPeople.push({
+        x: rand(0.15, 0.85),
+        y: rand(0.20, 0.82),
+        w: rand(0.08, 0.13),
+        h: rand(0.17, 0.27),
+        vx: rand(-0.004, 0.004),
+        vy: rand(-0.003, 0.003),
+        twitch: rand(0.6, 1.4)
+      });
+    }
+    state.usingMock = true;
+  }
+
+  function updateMockPeople() {
+    for (const p of state.mockPeople) {
+      // 기본 이동
+      p.x += p.vx;
+      p.y += p.vy;
+
+      // 간헐적 흔들림
+      if (Math.random() < 0.04 * p.twitch) {
+        p.x += rand(-0.01, 0.01);
+        p.y += rand(-0.01, 0.01);
       }
 
-      function resizeCanvas() {
-        const dpr = Math.max(1, window.devicePixelRatio || 1);
-        canvas.width = Math.floor(window.innerWidth * dpr);
-        canvas.height = Math.floor(window.innerHeight * dpr);
-        canvas.style.width = window.innerWidth + "px";
-        canvas.style.height = window.innerHeight + "px";
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      }
+      if (p.x < 0.08 || p.x > 0.92) p.vx *= -1;
+      if (p.y < 0.12 || p.y > 0.88) p.vy *= -1;
+    }
 
-      function clamp(v, min, max) {
-        return Math.max(min, Math.min(max, v));
-      }
+    const W = canvas.clientWidth;
+    const H = canvas.clientHeight;
+    state.lastDetections = state.mockPeople.map((p) => ({
+      bbox: [
+        (p.x - p.w / 2) * W,
+        (p.y - p.h / 2) * H,
+        p.w * W,
+        p.h * H
+      ],
+      class: "person",
+      score: 0.99
+    }));
+  }
 
-      function rand(min, max) {
-        return Math.random() * (max - min) + min;
-      }
+  function centroidOfDet(det) {
+    const [x, y, w, h] = det.bbox;
+    return { x: x + w / 2, y: y + h / 2, w, h };
+  }
 
-      function setActive(el, on) {
-        if (on) el.classList.add("active");
-        else el.classList.remove("active");
-      }
+  function distance(a, b) {
+    const dx = a.x - b.x;
+    const dy = a.y - b.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
 
-      function updateUI() {
-        ui.sidebar.classList.toggle("open", state.sidebarOpen);
-        ui.overlay.classList.toggle("show", state.sidebarOpen);
+  function updateTracks(detections) {
+    const maxDist = Math.min(canvas.clientWidth, canvas.clientHeight) * 0.12;
+    const centroids = detections.map(centroidOfDet);
 
-        setActive(ui.modeDetectBtn, state.mode === "detect");
-        setActive(ui.modeRippleBtn, state.mode === "ripple");
-        setActive(ui.view2DBtn, state.view === "2d");
-        setActive(ui.view3DBtn, state.view === "3d");
+    const unmatchedDet = new Set(centroids.map((_, i) => i));
+    const unmatchedTracks = new Set(state.tracks.map((_, i) => i));
 
-        ui.modeChip.textContent = state.mode === "detect" ? "관객 디텍팅" : "파동 시각화";
-        ui.modelLine.textContent = "모델: " + (state.modelReady ? "COCO-SSD 준비됨" : "로딩 중 또는 미사용");
-        ui.cameraLine.textContent = "카메라: " + (state.cameraOn ? "켜짐" : "꺼짐") + (state.usingMock ? " / Mock 모드" : "");
-        ui.peopleLine.textContent = "관객 수: " + state.tracks.length;
-        ui.modeLine.textContent = "현재 화면: " + (state.mode === "detect" ? "관객 디텍팅" : "파동 시각화");
-        ui.fpsLine.textContent = "FPS: " + Math.round(state.fps);
-
-        ui.energyVal.textContent = state.energy.toFixed(1);
-        ui.dampingVal.textContent = state.damping.toFixed(3);
-        ui.radiusVal.textContent = state.radius.toFixed(1);
-        ui.thresholdVal.textContent = state.detectThreshold.toFixed(2);
-      }
-
-      function toggleSidebar(forceValue = null) {
-        state.sidebarOpen = forceValue === null ? !state.sidebarOpen : forceValue;
-        updateUI();
-      }
-
-      function resetAll() {
-        state.tracks = [];
-        state.nextTrackId = 1;
-        state.lastDetections = [];
-        state.mockPeople = [];
-        initGrid();
-      }
-
-      function addMockPeople() {
-        state.mockPeople = [];
-        const count = Math.floor(rand(2, 6));
-        for (let i = 0; i < count; i++) {
-          state.mockPeople.push({
-            x: rand(0.15, 0.85),
-            y: rand(0.20, 0.82),
-            w: rand(0.07, 0.12),
-            h: rand(0.18, 0.28),
-            vx: rand(-0.0025, 0.0025),
-            vy: rand(-0.0022, 0.0022)
-          });
-        }
-        state.usingMock = true;
-      }
-
-      function updateMockPeople() {
-        for (const p of state.mockPeople) {
-          p.x += p.vx;
-          p.y += p.vy;
-
-          if (p.x < 0.08 || p.x > 0.92) p.vx *= -1;
-          if (p.y < 0.12 || p.y > 0.88) p.vy *= -1;
-        }
-
-        const W = canvas.clientWidth;
-        const H = canvas.clientHeight;
-
-        state.lastDetections = state.mockPeople.map((p) => ({
-          bbox: [
-            (p.x - p.w / 2) * W,
-            (p.y - p.h / 2) * H,
-            p.w * W,
-            p.h * H
-          ],
-          class: "person",
-          score: 0.99
-        }));
-      }
-
-      function centroidOfDet(det) {
-        const [x, y, w, h] = det.bbox;
-        return { x: x + w / 2, y: y + h / 2, w, h };
-      }
-
-      function distance(a, b) {
-        const dx = a.x - b.x;
-        const dy = a.y - b.y;
-        return Math.sqrt(dx * dx + dy * dy);
-      }
-
-      function updateTracks(detections) {
-        const maxDist = Math.min(canvas.clientWidth, canvas.clientHeight) * 0.12;
-        const centroids = detections.map(centroidOfDet);
-        const unmatchedDet = new Set(centroids.map((_, i) => i));
-        const unmatchedTracks = new Set(state.tracks.map((_, i) => i));
-
-        const pairs = [];
-        for (let ti = 0; ti < state.tracks.length; ti++) {
-          for (let di = 0; di < centroids.length; di++) {
-            pairs.push({
-              ti,
-              di,
-              dist: distance(state.tracks[ti], centroids[di])
-            });
-          }
-        }
-
-        pairs.sort((a, b) => a.dist - b.dist);
-
-        for (const p of pairs) {
-          if (!unmatchedTracks.has(p.ti) || !unmatchedDet.has(p.di)) continue;
-          if (p.dist > maxDist) continue;
-
-          const t = state.tracks[p.ti];
-          const c = centroids[p.di];
-
-          t.x = c.x;
-          t.y = c.y;
-          t.w = c.w;
-          t.h = c.h;
-          t.missed = 0;
-
-          unmatchedTracks.delete(p.ti);
-          unmatchedDet.delete(p.di);
-        }
-
-        [...unmatchedDet].forEach(di => {
-          const c = centroids[di];
-          state.tracks.push({
-            id: state.nextTrackId++,
-            x: c.x,
-            y: c.y,
-            w: c.w,
-            h: c.h,
-            missed: 0
-          });
+    const pairs = [];
+    for (let ti = 0; ti < state.tracks.length; ti++) {
+      for (let di = 0; di < centroids.length; di++) {
+        pairs.push({
+          ti,
+          di,
+          dist: distance(state.tracks[ti], centroids[di])
         });
+      }
+    }
+    pairs.sort((a, b) => a.dist - b.dist);
 
-        [...unmatchedTracks].reverse().forEach(ti => {
-          state.tracks[ti].missed += 1;
-        });
+    for (const p of pairs) {
+      if (!unmatchedTracks.has(p.ti) || !unmatchedDet.has(p.di)) continue;
+      if (p.dist > maxDist) continue;
 
-        state.tracks = state.tracks.filter(t => t.missed < 15);
+      const t = state.tracks[p.ti];
+      const c = centroids[p.di];
+
+      const prevX = t.x;
+      const prevY = t.y;
+
+      t.x = c.x;
+      t.y = c.y;
+      t.w = c.w;
+      t.h = c.h;
+      t.missed = 0;
+
+      // 움직임 강도 계산
+      const motionPx = Math.sqrt((t.x - prevX) ** 2 + (t.y - prevY) ** 2);
+      const norm = motionPx / Math.max(1, Math.min(canvas.clientWidth, canvas.clientHeight));
+      t.motion = t.motion ? (t.motion * 0.65 + norm * 0.35) : norm;
+      t.pulse = Math.max(0, (t.motion - state.motionThreshold) / Math.max(0.0001, 0.08 - state.motionThreshold));
+
+      unmatchedTracks.delete(p.ti);
+      unmatchedDet.delete(p.di);
+    }
+
+    [...unmatchedDet].forEach(di => {
+      const c = centroids[di];
+      state.tracks.push({
+        id: state.nextTrackId++,
+        x: c.x,
+        y: c.y,
+        w: c.w,
+        h: c.h,
+        missed: 0,
+        motion: 0,
+        pulse: 0
+      });
+    });
+
+    [...unmatchedTracks].reverse().forEach(ti => {
+      const t = state.tracks[ti];
+      t.missed += 1;
+      t.motion = (t.motion || 0) * 0.85;
+      t.pulse = (t.pulse || 0) * 0.8;
+    });
+
+    state.tracks = state.tracks.filter(t => t.missed < 15);
+  }
+
+  async function loadModel() {
+    try {
+      state.model = await cocoSsd.load({ base: "lite_mobilenet_v2" });
+      state.modelReady = true;
+      updateUI();
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function startCamera() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
+      });
+
+      video.srcObject = stream;
+      await video.play();
+
+      state.cameraOn = true;
+      state.usingMock = false;
+      updateUI();
+    } catch (err) {
+      console.error(err);
+      alert("카메라 접근 실패. Mock 모드로 전환합니다.");
+      stopCamera();
+      addMockPeople();
+      state.usingMock = true;
+      updateUI();
+    }
+  }
+
+  function stopCamera() {
+    const stream = video.srcObject;
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+    }
+    video.srcObject = null;
+    state.cameraOn = false;
+  }
+
+  async function runDetection(now) {
+    if (now - state.lastDetectRun < state.detectIntervalMs) return;
+    state.lastDetectRun = now;
+
+    if (state.cameraOn && state.modelReady && video.readyState >= 2) {
+      try {
+        const preds = await state.model.detect(video);
+        state.lastDetections = preds.filter(p => p.class === "person" && p.score >= state.detectThreshold);
+      } catch (err) {
+        console.error(err);
+      }
+    } else if (state.usingMock) {
+      updateMockPeople();
+    } else {
+      state.lastDetections = [];
+    }
+
+    updateTracks(state.lastDetections);
+  }
+
+  function normalizeTrackToGrid(track, rectW = canvas.clientWidth, rectH = canvas.clientHeight) {
+    return {
+      gx: (track.x / Math.max(1, rectW)) * (state.gridW - 1),
+      gy: (track.y / Math.max(1, rectH)) * (state.gridH - 1)
+    };
+  }
+
+  // 움직임이 기준을 넘을 때만 파동 발화
+  function injectMotionRipples() {
+    for (const track of state.tracks) {
+      if ((track.motion || 0) < state.motionThreshold) continue;
+
+      const p = normalizeTrackToGrid(track);
+      const intensity = clamp(track.pulse || 0, 0, 1.5);
+      const impulse = state.energy * (0.18 + intensity * 0.85);
+
+      const cx = Math.round(p.gx);
+      const cy = Math.round(p.gy);
+
+      if (cx >= 0 && cx < state.gridW && cy >= 0 && cy < state.gridH) {
+        state.velocityGrid[cy][cx] += impulse;
+      }
+    }
+  }
+
+  // 퍼져나가며 소멸하는 간단한 wave field
+  function updateWaveField() {
+    injectMotionRipples();
+
+    const next = Array.from({ length: state.gridH }, () =>
+      Array.from({ length: state.gridW }, () => 0)
+    );
+
+    for (let y = 0; y < state.gridH; y++) {
+      for (let x = 0; x < state.gridW; x++) {
+        const center = state.gridValues[y][x];
+        const left = x > 0 ? state.gridValues[y][x - 1] : 0;
+        const right = x < state.gridW - 1 ? state.gridValues[y][x + 1] : 0;
+        const up = y > 0 ? state.gridValues[y - 1][x] : 0;
+        const down = y < state.gridH - 1 ? state.gridValues[y + 1][x] : 0;
+
+        const laplacian = (left + right + up + down - 4 * center);
+        state.velocityGrid[y][x] += laplacian * 0.22;
+        state.velocityGrid[y][x] *= state.damping;
+        next[y][x] = center + state.velocityGrid[y][x];
+      }
+    }
+
+    state.gridValues = next;
+  }
+
+  function drawBackgroundGrid(rect = null) {
+    const W = rect ? rect.w : canvas.clientWidth;
+    const H = rect ? rect.h : canvas.clientHeight;
+    const ox = rect ? rect.x : 0;
+    const oy = rect ? rect.y : 0;
+    const gap = 44;
+
+    ctx.save();
+    ctx.translate(ox, oy);
+    ctx.strokeStyle = "rgba(255,255,255,0.05)";
+    ctx.lineWidth = 1;
+
+    for (let x = 0; x <= W; x += gap) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, H);
+      ctx.stroke();
+    }
+
+    for (let y = 0; y <= H; y += gap) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(W, y);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawContainVideoRect(targetW, targetH) {
+    const vw = state.cameraOn ? (video.videoWidth || 1280) : 1280;
+    const vh = state.cameraOn ? (video.videoHeight || 720) : 720;
+    const scale = Math.min(targetW / vw, targetH / vh);
+    const dw = vw * scale;
+    const dh = vh * scale;
+    const dx = (targetW - dw) / 2;
+    const dy = (targetH - dh) / 2;
+    return { dx, dy, dw, dh, vw, vh };
+  }
+
+  function mapVideoBBoxToCanvas(x, y, w, h, targetW, targetH) {
+    const r = drawContainVideoRect(targetW, targetH);
+    return {
+      x: r.dx + (x / r.vw) * r.dw,
+      y: r.dy + (y / r.vh) * r.dh,
+      w: (w / r.vw) * r.dw,
+      h: (h / r.vh) * r.dh
+    };
+  }
+
+  function waveGray(v) {
+    const t = clamp(Math.abs(v), 0, 2.2) / 2.2;
+    const c = Math.floor(18 + t * 235);
+    const a = 0.15 + t * 0.85;
+    return `rgba(${c},${c},${c},${a})`;
+  }
+
+  function drawDetectionScene(rect = null) {
+    const W = rect ? rect.w : canvas.clientWidth;
+    const H = rect ? rect.h : canvas.clientHeight;
+    const ox = rect ? rect.x : 0;
+    const oy = rect ? rect.y : 0;
+
+    ctx.save();
+    ctx.translate(ox, oy);
+    ctx.fillStyle = "rgba(0,0,0,0.94)";
+    ctx.fillRect(0, 0, W, H);
+    drawBackgroundGrid({ x:0, y:0, w:W, h:H });
+
+    if (state.cameraOn && video.readyState >= 2) {
+      const r = drawContainVideoRect(W, H);
+      ctx.drawImage(video, r.dx, r.dy, r.dw, r.dh);
+      ctx.strokeStyle = "rgba(255,255,255,0.08)";
+      ctx.strokeRect(r.dx, r.dy, r.dw, r.dh);
+    } else {
+      ctx.fillStyle = "rgba(255,255,255,0.04)";
+      ctx.fillRect(18, 18, W - 36, H - 36);
+      ctx.fillStyle = "rgba(255,255,255,0.45)";
+      ctx.font = "14px sans-serif";
+      ctx.fillText("카메라가 꺼져 있어 Mock 사람 데이터로 시뮬레이션 중입니다.", 28, 42);
+    }
+
+    for (const track of state.tracks) {
+      let x = track.x - track.w / 2;
+      let y = track.y - track.h / 2;
+      let w = track.w;
+      let h = track.h;
+
+      if (state.cameraOn) {
+        const m = mapVideoBBoxToCanvas(x, y, w, h, W, H);
+        x = m.x; y = m.y; w = m.w; h = m.h;
       }
 
-      async function loadModel() {
-        try {
-          ui.modelLine.textContent = "모델: COCO-SSD 로딩 중...";
-          state.model = await cocoSsd.load({ base: "lite_mobilenet_v2" });
-          state.modelReady = true;
-          updateUI();
-        } catch (err) {
-          console.error(err);
-          ui.modelLine.textContent = "모델: 로딩 실패 / Mock 모드 사용";
-        }
-      }
-
-      async function startCamera() {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: {
-              facingMode: { ideal: "environment" },
-              width: { ideal: 1280 },
-              height: { ideal: 720 }
-            },
-            audio: false
-          });
-
-          video.srcObject = stream;
-          await video.play();
-
-          state.cameraOn = true;
-          state.usingMock = false;
-          updateUI();
-        } catch (err) {
-          console.error(err);
-          alert("카메라 접근 실패. Mock 모드로 전환합니다.");
-          stopCamera();
-          addMockPeople();
-          state.usingMock = true;
-          updateUI();
-        }
-      }
-
-      function stopCamera() {
-        const stream = video.srcObject;
-        if (stream) {
-          stream.getTracks().forEach(track => track.stop());
-        }
-        video.srcObject = null;
-        state.cameraOn = false;
-      }
-
-      async function runDetection(now) {
-        if (now - state.lastDetectRun < state.detectIntervalMs) return;
-        state.lastDetectRun = now;
-
-        if (state.cameraOn && state.modelReady && video.readyState >= 2) {
-          try {
-            const preds = await state.model.detect(video);
-            state.lastDetections = preds.filter(
-              p => p.class === "person" && p.score >= state.detectThreshold
-            );
-          } catch (err) {
-            console.error(err);
-          }
-        } else if (state.usingMock) {
-          updateMockPeople();
-        } else {
-          state.lastDetections = [];
-        }
-
-        updateTracks(state.lastDetections);
-      }
-
-      function normalizeTrackToGrid(track) {
-        const W = canvas.clientWidth;
-        const H = canvas.clientHeight;
-
-        return {
-          gx: (track.x / Math.max(1, W)) * (state.gridW - 1),
-          gy: (track.y / Math.max(1, H)) * (state.gridH - 1)
-        };
-      }
-
-      function updateGrid() {
-        for (let y = 0; y < state.gridH; y++) {
-          for (let x = 0; x < state.gridW; x++) {
-            state.gridValues[y][x] *= state.damping;
-            if (state.gridValues[y][x] < 0.002) state.gridValues[y][x] = 0;
-          }
-        }
-
-        for (const track of state.tracks) {
-          const p = normalizeTrackToGrid(track);
-          const baseAmp = state.energy * (0.7 + ((track.id * 13) % 5) * 0.12);
-
-          for (let y = 0; y < state.gridH; y++) {
-            for (let x = 0; x < state.gridW; x++) {
-              const dx = x - p.gx;
-              const dy = y - p.gy;
-              const dist = Math.sqrt(dx * dx + dy * dy);
-              const sigma = state.radius;
-              const wave = Math.exp(-(dist * dist) / (2 * sigma * sigma));
-              state.gridValues[y][x] += wave * baseAmp * 0.06;
-            }
-          }
-        }
-      }
-
-      function valueToGray(v) {
-        const t = clamp(v, 0, 1.6) / 1.6;
-        const c = Math.floor(20 + t * 235);
-        const a = 0.15 + t * 0.85;
-        return `rgba(${c},${c},${c},${a})`;
-      }
-
-      function drawBackdropGrid() {
-        const W = canvas.clientWidth;
-        const H = canvas.clientHeight;
-        const gap = 44;
-
-        ctx.save();
-        ctx.strokeStyle = "rgba(255,255,255,0.05)";
-        ctx.lineWidth = 1;
-
-        for (let x = 0; x <= W; x += gap) {
-          ctx.beginPath();
-          ctx.moveTo(x, 0);
-          ctx.lineTo(x, H);
-          ctx.stroke();
-        }
-
-        for (let y = 0; y <= H; y += gap) {
-          ctx.beginPath();
-          ctx.moveTo(0, y);
-          ctx.lineTo(W, y);
-          ctx.stroke();
-        }
-        ctx.restore();
-      }
-
-      function drawContainVideoRect() {
-        const W = canvas.clientWidth;
-        const H = canvas.clientHeight;
-        const vw = state.cameraOn ? (video.videoWidth || 1280) : 1280;
-        const vh = state.cameraOn ? (video.videoHeight || 720) : 720;
-
-        const scale = Math.min(W / vw, H / vh);
-        const dw = vw * scale;
-        const dh = vh * scale;
-        const dx = (W - dw) / 2;
-        const dy = (H - dh) / 2;
-
-        return { dx, dy, dw, dh, vw, vh };
-      }
-
-      function videoBBoxToCanvas(x, y, w, h) {
-        const { dx, dy, dw, dh, vw, vh } = drawContainVideoRect();
-        return {
-          x: dx + (x / vw) * dw,
-          y: dy + (y / vh) * dh,
-          w: (w / vw) * dw,
-          h: (h / vh) * dh
-        };
-      }
-
-      function drawDetectionScene(full = true, rect = null) {
-        const W = rect ? rect.w : canvas.clientWidth;
-        const H = rect ? rect.h : canvas.clientHeight;
-        const ox = rect ? rect.x : 0;
-        const oy = rect ? rect.y : 0;
-
-        ctx.save();
-        ctx.translate(ox, oy);
-
-        ctx.fillStyle = "rgba(0,0,0,0.92)";
-        ctx.fillRect(0, 0, W, H);
-        drawBackdropGrid();
-
-        if (state.cameraOn && video.readyState >= 2) {
-          const vw = video.videoWidth || 1280;
-          const vh = video.videoHeight || 720;
-          const scale = Math.min(W / vw, H / vh);
-          const dw = vw * scale;
-          const dh = vh * scale;
-          const dx = (W - dw) / 2;
-          const dy = (H - dh) / 2;
-
-          ctx.drawImage(video, dx, dy, dw, dh);
-          ctx.strokeStyle = "rgba(255,255,255,0.12)";
-          ctx.strokeRect(dx, dy, dw, dh);
-        } else {
-          ctx.fillStyle = "rgba(255,255,255,0.04)";
-          ctx.fillRect(20, 20, W - 40, H - 40);
-          ctx.fillStyle = "rgba(255,255,255,0.5)";
-          ctx.font = "14px sans-serif";
-          ctx.fillText("카메라가 꺼져 있어 Mock 사람 데이터로 시뮬레이션 중입니다.", 30, 46);
-        }
-
-        for (const track of state.tracks) {
-          let x = track.x - track.w / 2;
-          let y = track.y - track.h / 2;
-          let w = track.w;
-          let h = track.h;
-
-          if (state.cameraOn) {
-            const m = videoBBoxToCanvas(x, y, w, h);
-            x = m.x; y = m.y; w = m.w; h = m.h;
-          }
-
-          ctx.strokeStyle = "rgba(255,255,255,0.85)";
-          ctx.lineWidth = 2;
-          ctx.strokeRect(x, y, w, h);
-
-          ctx.fillStyle = "rgba(255,255,255,0.08)";
-          ctx.fillRect(x, y, w, h);
-
-          const label = "ID " + track.id;
-          ctx.font = "bold 14px sans-serif";
-          const tw = ctx.measureText(label).width;
-          ctx.fillStyle = "rgba(0,0,0,0.92)";
-          ctx.fillRect(x, y - 24, tw + 16, 20);
-          ctx.strokeStyle = "rgba(255,255,255,0.6)";
-          ctx.strokeRect(x, y - 24, tw + 16, 20);
-          ctx.fillStyle = "#ffffff";
-          ctx.fillText(label, x + 8, y - 9);
-
-          const cx = x + w / 2;
-          const cy = y + h / 2;
-
-          ctx.beginPath();
-          ctx.arc(cx, cy, 4, 0, Math.PI * 2);
-          ctx.fillStyle = "#ffffff";
-          ctx.fill();
-
-          ctx.beginPath();
-          ctx.moveTo(cx - 10, cy);
-          ctx.lineTo(cx + 10, cy);
-          ctx.moveTo(cx, cy - 10);
-          ctx.lineTo(cx, cy + 10);
-          ctx.strokeStyle = "rgba(255,255,255,0.6)";
-          ctx.stroke();
-        }
-
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 16px sans-serif";
-        ctx.fillText("관객 디텍팅 / ID 고정", 20, H - 20);
-
-        ctx.restore();
-      }
-
-      function drawRipple2D(rect = null) {
-        const W = rect ? rect.w : canvas.clientWidth;
-        const H = rect ? rect.h : canvas.clientHeight;
-        const ox = rect ? rect.x : 0;
-        const oy = rect ? rect.y : 0;
-
-        const leftPad = 42;
-        const topPad = 52;
-        const rightPad = 24;
-        const bottomPad = 34;
-
-        const gw = W - leftPad - rightPad;
-        const gh = H - topPad - bottomPad;
-        const cellW = gw / state.gridW;
-        const cellH = gh / state.gridH;
-
-        ctx.save();
-        ctx.translate(ox, oy);
-        ctx.fillStyle = "rgba(0,0,0,0.95)";
-        ctx.fillRect(0, 0, W, H);
-
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 16px sans-serif";
-        ctx.fillText("파동 시각화 / 10×10 Grid", 18, 28);
-
-        for (let y = 0; y < state.gridH; y++) {
-          for (let x = 0; x < state.gridW; x++) {
-            const v = state.gridValues[y][x];
-            const px = leftPad + x * cellW;
-            const py = topPad + y * cellH;
-            const m = 4;
-
-            ctx.fillStyle = valueToGray(v);
-            ctx.fillRect(px + m, py + m, cellW - m * 2, cellH - m * 2);
-            ctx.strokeStyle = "rgba(255,255,255,0.08)";
-            ctx.strokeRect(px + m, py + m, cellW - m * 2, cellH - m * 2);
-          }
-        }
-
-        for (const track of state.tracks) {
-          const p = normalizeTrackToGrid(track);
-          const px = leftPad + (p.gx + 0.5) * cellW;
-          const py = topPad + (p.gy + 0.5) * cellH;
-
-          ctx.beginPath();
-          ctx.arc(px, py, 7, 0, Math.PI * 2);
-          ctx.fillStyle = "#ffffff";
-          ctx.fill();
-
-          const label = "ID " + track.id;
-          ctx.font = "bold 12px sans-serif";
-          const tw = ctx.measureText(label).width;
-          ctx.fillStyle = "rgba(0,0,0,0.95)";
-          ctx.fillRect(px - tw / 2 - 7, py - 28, tw + 14, 18);
-          ctx.strokeStyle = "rgba(255,255,255,0.5)";
-          ctx.strokeRect(px - tw / 2 - 7, py - 28, tw + 14, 18);
-          ctx.fillStyle = "#ffffff";
-          ctx.fillText(label, px - tw / 2, py - 15);
-        }
-
-        ctx.restore();
-      }
-
-      function drawRipple3D(rect = null) {
-        const W = rect ? rect.w : canvas.clientWidth;
-        const H = rect ? rect.h : canvas.clientHeight;
-        const ox = rect ? rect.x : 0;
-        const oy = rect ? rect.y : 0;
-
-        const centerX = W * 0.5;
-        const startY = H * 0.22;
-        const tileW = Math.min(40, W / 18);
-        const tileH = tileW * 0.55;
-        const baseHeight = Math.min(18, H / 32);
-
-        ctx.save();
-        ctx.translate(ox, oy);
-        ctx.fillStyle = "rgba(0,0,0,0.96)";
-        ctx.fillRect(0, 0, W, H);
-
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 16px sans-serif";
-        ctx.fillText("파동 시각화 / 3D Module", 18, 28);
-
-        for (let gy = 0; gy < state.gridH; gy++) {
-          for (let gx = 0; gx < state.gridW; gx++) {
-            const v = clamp(state.gridValues[gy][gx], 0, 1.5);
-            const h = baseHeight + v * 70;
-
-            const sx = centerX + (gx - gy) * tileW * 0.5;
-            const sy = startY + (gx + gy) * tileH * 0.5;
-
-            const top = [
-              [sx, sy - h],
-              [sx + tileW * 0.5, sy - tileH * 0.5 - h],
-              [sx, sy - tileH - h],
-              [sx - tileW * 0.5, sy - tileH * 0.5 - h]
-            ];
-
-            const right = [
-              [sx, sy - h],
-              [sx + tileW * 0.5, sy - tileH * 0.5 - h],
-              [sx + tileW * 0.5, sy - tileH * 0.5],
-              [sx, sy]
-            ];
-
-            const left = [
-              [sx, sy - h],
-              [sx - tileW * 0.5, sy - tileH * 0.5 - h],
-              [sx - tileW * 0.5, sy - tileH * 0.5],
-              [sx, sy]
-            ];
-
-            const topGray = Math.floor(50 + v * 130);
-            const rightGray = Math.floor(34 + v * 70);
-            const leftGray = Math.floor(20 + v * 50);
-
-            ctx.beginPath();
-            ctx.moveTo(top[0][0], top[0][1]);
-            top.slice(1).forEach(p => ctx.lineTo(p[0], p[1]));
-            ctx.closePath();
-            ctx.fillStyle = `rgba(${topGray},${topGray},${topGray},0.95)`;
-            ctx.fill();
-
-            ctx.beginPath();
-            ctx.moveTo(right[0][0], right[0][1]);
-            right.slice(1).forEach(p => ctx.lineTo(p[0], p[1]));
-            ctx.closePath();
-            ctx.fillStyle = `rgba(${rightGray},${rightGray},${rightGray},0.9)`;
-            ctx.fill();
-
-            ctx.beginPath();
-            ctx.moveTo(left[0][0], left[0][1]);
-            left.slice(1).forEach(p => ctx.lineTo(p[0], p[1]));
-            ctx.closePath();
-            ctx.fillStyle = `rgba(${leftGray},${leftGray},${leftGray},0.92)`;
-            ctx.fill();
-
-            ctx.strokeStyle = "rgba(255,255,255,0.06)";
-            ctx.stroke();
-          }
-        }
-
-        for (const track of state.tracks) {
-          const p = normalizeTrackToGrid(track);
-          const sx = centerX + (p.gx - p.gy) * tileW * 0.5;
-          const sy = startY + (p.gx + p.gy) * tileH * 0.5 - 96;
-
-          ctx.beginPath();
-          ctx.arc(sx, sy, 7, 0, Math.PI * 2);
-          ctx.fillStyle = "#ffffff";
-          ctx.fill();
-
-          const label = "ID " + track.id;
-          ctx.font = "bold 12px sans-serif";
-          const tw = ctx.measureText(label).width;
-          ctx.fillStyle = "rgba(0,0,0,0.95)";
-          ctx.fillRect(sx - tw / 2 - 7, sy - 28, tw + 14, 18);
-          ctx.strokeStyle = "rgba(255,255,255,0.5)";
-          ctx.strokeRect(sx - tw / 2 - 7, sy - 28, tw + 14, 18);
-          ctx.fillStyle = "#ffffff";
-          ctx.fillText(label, sx - tw / 2, sy - 15);
-        }
-
-        ctx.restore();
-      }
-
-      function drawRippleScene() {
-        const W = canvas.clientWidth;
-        const H = canvas.clientHeight;
-
-        if (window.innerWidth < 800) {
-          if (state.view === "2d") drawRipple2D();
-          else drawRipple3D();
-          return;
-        }
-
-        const leftW = Math.max(260, W * 0.28);
-        const rightW = W - leftW;
-
-        drawDetectionScene(false, { x: 0, y: 0, w: leftW, h: H });
-
-        if (state.view === "2d") {
-          drawRipple2D({ x: leftW, y: 0, w: rightW, h: H });
-        } else {
-          drawRipple3D({ x: leftW, y: 0, w: rightW, h: H });
-        }
-
-        ctx.save();
+      // 파란 박스
+      ctx.strokeStyle = "rgba(79,140,255,0.95)";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, w, h);
+
+      ctx.fillStyle = "rgba(79,140,255,0.15)";
+      ctx.fillRect(x, y, w, h);
+
+      const label = `ID ${track.id}`;
+      ctx.font = "bold 14px sans-serif";
+      const tw = ctx.measureText(label).width;
+      ctx.fillStyle = "rgba(0,0,0,0.92)";
+      ctx.fillRect(x, y - 24, tw + 16, 20);
+      ctx.strokeStyle = "rgba(79,140,255,0.8)";
+      ctx.strokeRect(x, y - 24, tw + 16, 20);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(label, x + 8, y - 9);
+
+      const cx = x + w / 2;
+      const cy = y + h / 2;
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+      ctx.fillStyle = "#4f8cff";
+      ctx.fill();
+
+      ctx.strokeStyle = "rgba(79,140,255,0.55)";
+      ctx.beginPath();
+      ctx.moveTo(cx - 10, cy);
+      ctx.lineTo(cx + 10, cy);
+      ctx.moveTo(cx, cy - 10);
+      ctx.lineTo(cx, cy + 10);
+      ctx.stroke();
+
+      // 움직임 강도 막대
+      const motion = clamp((track.motion || 0) / 0.08, 0, 1);
+      const barW = Math.max(20, w);
+      const bx = x;
+      const by = y + h + 8;
+      ctx.fillStyle = "rgba(255,255,255,0.10)";
+      ctx.fillRect(bx, by, barW, 4);
+      ctx.fillStyle = motion >= (state.motionThreshold / 0.08) ? "#4f8cff" : "rgba(255,255,255,0.35)";
+      ctx.fillRect(bx, by, barW * motion, 4);
+    }
+
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 16px sans-serif";
+    ctx.fillText("관객 디텍팅 / ID 기억", 18, H - 18);
+
+    ctx.restore();
+  }
+
+  function drawRipple2D(rect = null) {
+    const W = rect ? rect.w : canvas.clientWidth;
+    const H = rect ? rect.h : canvas.clientHeight;
+    const ox = rect ? rect.x : 0;
+    const oy = rect ? rect.y : 0;
+
+    const leftPad = 44;
+    const topPad = 54;
+    const rightPad = 24;
+    const bottomPad = 30;
+    const gw = W - leftPad - rightPad;
+    const gh = H - topPad - bottomPad;
+    const cellW = gw / state.gridW;
+    const cellH = gh / state.gridH;
+
+    ctx.save();
+    ctx.translate(ox, oy);
+    ctx.fillStyle = "rgba(0,0,0,0.96)";
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 16px sans-serif";
+    ctx.fillText("파동 시각화 / 10×10 Grid", 18, 28);
+
+    for (let y = 0; y < state.gridH; y++) {
+      for (let x = 0; x < state.gridW; x++) {
+        const v = state.gridValues[y][x];
+        const px = leftPad + x * cellW;
+        const py = topPad + y * cellH;
+        const m = 4;
+
+        ctx.fillStyle = waveGray(v);
+        ctx.fillRect(px + m, py + m, cellW - m * 2, cellH - m * 2);
         ctx.strokeStyle = "rgba(255,255,255,0.08)";
+        ctx.strokeRect(px + m, py + m, cellW - m * 2, cellH - m * 2);
+      }
+    }
+
+    for (const track of state.tracks) {
+      const p = normalizeTrackToGrid(track);
+      const px = leftPad + (p.gx + 0.5) * cellW;
+      const py = topPad + (p.gy + 0.5) * cellH;
+      const active = (track.motion || 0) >= state.motionThreshold;
+
+      ctx.beginPath();
+      ctx.arc(px, py, active ? 7 : 5, 0, Math.PI * 2);
+      ctx.fillStyle = active ? "#4f8cff" : "rgba(255,255,255,0.45)";
+      ctx.fill();
+
+      if (active) {
         ctx.beginPath();
-        ctx.moveTo(leftW, 0);
-        ctx.lineTo(leftW, H);
+        ctx.arc(px, py, 16 + (track.pulse || 0) * 12, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(79,140,255,0.35)";
         ctx.stroke();
+      }
+
+      const label = `ID ${track.id}`;
+      ctx.font = "bold 12px sans-serif";
+      const tw = ctx.measureText(label).width;
+      ctx.fillStyle = "rgba(0,0,0,0.92)";
+      ctx.fillRect(px - tw/2 - 7, py - 28, tw + 14, 18);
+      ctx.strokeStyle = active ? "rgba(79,140,255,0.75)" : "rgba(255,255,255,0.35)";
+      ctx.strokeRect(px - tw/2 - 7, py - 28, tw + 14, 18);
+      ctx.fillStyle = "#fff";
+      ctx.fillText(label, px - tw/2, py - 15);
+    }
+
+    ctx.restore();
+  }
+
+  function drawRipple3D(rect = null) {
+    const W = rect ? rect.w : canvas.clientWidth;
+    const H = rect ? rect.h : canvas.clientHeight;
+    const ox = rect ? rect.x : 0;
+    const oy = rect ? rect.y : 0;
+
+    const centerX = W * 0.5;
+    const startY = H * 0.22;
+    const tileW = Math.min(42, W / 18);
+    const tileH = tileW * 0.55;
+    const baseHeight = Math.min(18, H / 30);
+
+    ctx.save();
+    ctx.translate(ox, oy);
+    ctx.fillStyle = "rgba(0,0,0,0.96)";
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 16px sans-serif";
+    ctx.fillText("파동 시각화 / 3D Module", 18, 28);
+
+    for (let gy = 0; gy < state.gridH; gy++) {
+      for (let gx = 0; gx < state.gridW; gx++) {
+        const v = clamp(Math.abs(state.gridValues[gy][gx]), 0, 2.2);
+        const h = baseHeight + v * 34;
+
+        const sx = centerX + (gx - gy) * tileW * 0.5;
+        const sy = startY + (gx + gy) * tileH * 0.5;
+
+        const top = [
+          [sx, sy - h],
+          [sx + tileW * 0.5, sy - tileH * 0.5 - h],
+          [sx, sy - tileH - h],
+          [sx - tileW * 0.5, sy - tileH * 0.5 - h]
+        ];
+
+        const right = [
+          [sx, sy - h],
+          [sx + tileW * 0.5, sy - tileH * 0.5 - h],
+          [sx + tileW * 0.5, sy - tileH * 0.5],
+          [sx, sy]
+        ];
+
+        const left = [
+          [sx, sy - h],
+          [sx - tileW * 0.5, sy - tileH * 0.5 - h],
+          [sx - tileW * 0.5, sy - tileH * 0.5],
+          [sx, sy]
+        ];
+
+        const topGray = Math.floor(40 + v * 90);
+        const rightGray = Math.floor(24 + v * 54);
+        const leftGray = Math.floor(14 + v * 36);
+
+        ctx.beginPath();
+        ctx.moveTo(top[0][0], top[0][1]);
+        top.slice(1).forEach(p => ctx.lineTo(p[0], p[1]));
+        ctx.closePath();
+        ctx.fillStyle = `rgba(${topGray},${topGray},${topGray},0.96)`;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(right[0][0], right[0][1]);
+        right.slice(1).forEach(p => ctx.lineTo(p[0], p[1]));
+        ctx.closePath();
+        ctx.fillStyle = `rgba(${rightGray},${rightGray},${rightGray},0.92)`;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(left[0][0], left[0][1]);
+        left.slice(1).forEach(p => ctx.lineTo(p[0], p[1]));
+        ctx.closePath();
+        ctx.fillStyle = `rgba(${leftGray},${leftGray},${leftGray},0.94)`;
+        ctx.fill();
+
+        ctx.strokeStyle = "rgba(255,255,255,0.06)";
+        ctx.stroke();
+      }
+    }
+
+    for (const track of state.tracks) {
+      const p = normalizeTrackToGrid(track);
+      const sx = centerX + (p.gx - p.gy) * tileW * 0.5;
+      const sy = startY + (p.gx + p.gy) * tileH * 0.5 - 98;
+      const active = (track.motion || 0) >= state.motionThreshold;
+
+      ctx.beginPath();
+      ctx.arc(sx, sy, active ? 7 : 5, 0, Math.PI * 2);
+      ctx.fillStyle = active ? "#4f8cff" : "rgba(255,255,255,0.45)";
+      ctx.fill();
+
+      const label = `ID ${track.id}`;
+      ctx.font = "bold 12px sans-serif";
+      const tw = ctx.measureText(label).width;
+      ctx.fillStyle = "rgba(0,0,0,0.92)";
+      ctx.fillRect(sx - tw/2 - 7, sy - 28, tw + 14, 18);
+      ctx.strokeStyle = active ? "rgba(79,140,255,0.75)" : "rgba(255,255,255,0.35)";
+      ctx.strokeRect(sx - tw/2 - 7, sy - 28, tw + 14, 18);
+      ctx.fillStyle = "#fff";
+      ctx.fillText(label, sx - tw/2, sy - 15);
+    }
+
+    ctx.restore();
+  }
+
+  function drawRippleScene() {
+    const W = canvas.clientWidth;
+    const H = canvas.clientHeight;
+
+    // 가로 모드면 동시에 보기
+    if (isLandscape() && state.landscapeDual) {
+      const leftW = Math.max(280, W * 0.34);
+      const rightW = W - leftW;
+
+      if (state.showMiniDetect) {
+        drawDetectionScene({ x: 0, y: 0, w: leftW, h: H });
+      } else {
+        ctx.save();
+        ctx.fillStyle = "rgba(0,0,0,0.95)";
+        ctx.fillRect(0, 0, leftW, H);
         ctx.restore();
       }
 
-      function animate(now) {
-        const dt = now - state.lastFrameTime;
-        state.lastFrameTime = now;
-        state.fps = 1000 / Math.max(1, dt);
-
-        runDetection(now);
-        updateGrid();
-
-        ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
-
-        if (state.mode === "detect") drawDetectionScene(true);
-        else drawRippleScene();
-
-        updateUI();
-        requestAnimationFrame(animate);
+      if (state.view === "2d") {
+        drawRipple2D({ x: leftW, y: 0, w: rightW, h: H });
+      } else {
+        drawRipple3D({ x: leftW, y: 0, w: rightW, h: H });
       }
 
-      async function tryFullscreen() {
-        const el = document.documentElement;
-        try {
-          if (el.requestFullscreen) {
-            await el.requestFullscreen();
-          }
-        } catch (err) {
-          console.log("fullscreen not available", err);
-        }
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,255,255,0.08)";
+      ctx.beginPath();
+      ctx.moveTo(leftW, 0);
+      ctx.lineTo(leftW, H);
+      ctx.stroke();
+      ctx.restore();
+      return;
+    }
+
+    // 세로 모드면 파동만 크게
+    if (state.view === "2d") drawRipple2D();
+    else drawRipple3D();
+  }
+
+  function animate(now) {
+    const dt = now - state.lastFrameTime;
+    state.lastFrameTime = now;
+    state.fps = 1000 / Math.max(1, dt);
+
+    runDetection(now);
+    updateWaveField();
+
+    ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+
+    if (state.mode === "detect") {
+      drawDetectionScene();
+    } else {
+      drawRippleScene();
+    }
+
+    updateUI();
+    requestAnimationFrame(animate);
+  }
+
+  async function tryFullscreen() {
+    const el = document.documentElement;
+    try {
+      if (el.requestFullscreen) {
+        await el.requestFullscreen();
       }
+    } catch (err) {
+      console.log(err);
+    }
+  }
 
-      function bindEvents() {
-        ui.menuToggleBtn.addEventListener("click", () => toggleSidebar());
-        ui.overlay.addEventListener("click", () => toggleSidebar(false));
+  function bindEvents() {
+    ui.menuBtn.addEventListener("click", () => toggleSidebar());
+    ui.overlay.addEventListener("click", () => toggleSidebar(false));
 
-        ui.modeDetectBtn.addEventListener("click", () => {
-          state.mode = "detect";
-          if (window.innerWidth < 800) toggleSidebar(false);
-          updateUI();
-        });
+    ui.modeDetectBtn.addEventListener("click", () => {
+      state.mode = "detect";
+      if (window.innerWidth < 800) toggleSidebar(false);
+      updateUI();
+    });
 
-        ui.modeRippleBtn.addEventListener("click", () => {
-          state.mode = "ripple";
-          if (window.innerWidth < 800) toggleSidebar(false);
-          updateUI();
-        });
+    ui.modeRippleBtn.addEventListener("click", () => {
+      state.mode = "ripple";
+      if (window.innerWidth < 800) toggleSidebar(false);
+      updateUI();
+    });
 
-        ui.view2DBtn.addEventListener("click", () => {
-          state.view = "2d";
-          updateUI();
-        });
+    ui.view2DBtn.addEventListener("click", () => {
+      state.view = "2d";
+      updateUI();
+    });
 
-        ui.view3DBtn.addEventListener("click", () => {
-          state.view = "3d";
-          updateUI();
-        });
+    ui.view3DBtn.addEventListener("click", () => {
+      state.view = "3d";
+      updateUI();
+    });
 
-        ui.cameraBtn.addEventListener("click", async () => {
-          if (state.cameraOn) {
-            stopCamera();
-            addMockPeople();
-            state.usingMock = true;
-          } else {
-            await startCamera();
-          }
-          if (window.innerWidth < 800) toggleSidebar(false);
-          updateUI();
-        });
-
-        ui.mockBtn.addEventListener("click", () => {
-          stopCamera();
-          resetAll();
-          addMockPeople();
-          state.usingMock = true;
-          if (window.innerWidth < 800) toggleSidebar(false);
-          updateUI();
-        });
-
-        ui.resetBtn.addEventListener("click", () => {
-          resetAll();
-          if (state.usingMock) addMockPeople();
-          updateUI();
-        });
-
-        ui.energyRange.addEventListener("input", (e) => {
-          state.energy = parseFloat(e.target.value);
-          updateUI();
-        });
-
-        ui.dampingRange.addEventListener("input", (e) => {
-          state.damping = parseFloat(e.target.value);
-          updateUI();
-        });
-
-        ui.radiusRange.addEventListener("input", (e) => {
-          state.radius = parseFloat(e.target.value);
-          updateUI();
-        });
-
-        ui.thresholdRange.addEventListener("input", (e) => {
-          state.detectThreshold = parseFloat(e.target.value);
-          updateUI();
-        });
-
-        ui.fullscreenBtn.addEventListener("click", tryFullscreen);
-
-        window.addEventListener("resize", resizeCanvas);
-        window.addEventListener("orientationchange", () => {
-          setTimeout(resizeCanvas, 200);
-        });
-
-        document.addEventListener("visibilitychange", () => {
-          if (!document.hidden) setTimeout(resizeCanvas, 100);
-        });
-      }
-
-      function boot() {
-        initGrid();
-        resizeCanvas();
+    ui.cameraBtn.addEventListener("click", async () => {
+      if (state.cameraOn) {
+        stopCamera();
         addMockPeople();
-        bindEvents();
-        updateUI();
-        loadModel();
-        requestAnimationFrame(animate);
+        state.usingMock = true;
+      } else {
+        await startCamera();
       }
+      if (window.innerWidth < 800) toggleSidebar(false);
+      updateUI();
+    });
 
-      boot();
-    })();
-  </script>
+    ui.mockBtn.addEventListener("click", () => {
+      stopCamera();
+      resetAll();
+      addMockPeople();
+      state.usingMock = true;
+      if (window.innerWidth < 800) toggleSidebar(false);
+      updateUI();
+    });
+
+    ui.resetBtn.addEventListener("click", () => {
+      resetAll();
+      if (state.usingMock) addMockPeople();
+      updateUI();
+    });
+
+    ui.energyRange.addEventListener("input", (e) => {
+      state.energy = parseFloat(e.target.value);
+      updateUI();
+    });
+
+    ui.dampingRange.addEventListener("input", (e) => {
+      state.damping = parseFloat(e.target.value);
+      updateUI();
+    });
+
+    ui.radiusRange.addEventListener("input", (e) => {
+      state.radius = parseFloat(e.target.value);
+      updateUI();
+    });
+
+    ui.thresholdRange.addEventListener("input", (e) => {
+      state.detectThreshold = parseFloat(e.target.value);
+      updateUI();
+    });
+
+    ui.motionRange.addEventListener("input", (e) => {
+      state.motionThreshold = parseFloat(e.target.value);
+      updateUI();
+    });
+
+    ui.showStatusCheck.addEventListener("change", (e) => {
+      state.showStatus = e.target.checked;
+      updateUI();
+    });
+
+    ui.showMiniDetectCheck.addEventListener("change", (e) => {
+      state.showMiniDetect = e.target.checked;
+      updateUI();
+    });
+
+    ui.landscapeDualCheck.addEventListener("change", (e) => {
+      state.landscapeDual = e.target.checked;
+      updateUI();
+    });
+
+    ui.fullscreenBtn.addEventListener("click", tryFullscreen);
+
+    window.addEventListener("resize", resizeCanvas);
+    window.addEventListener("orientationchange", () => {
+      setTimeout(resizeCanvas, 150);
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) setTimeout(resizeCanvas, 100);
+    });
+  }
+
+  function boot() {
+    initWaveField();
+    resizeCanvas();
+    addMockPeople();
+    bindEvents();
+    updateUI();
+    loadModel();
+    requestAnimationFrame(animate);
+  }
+
+  boot();
+})();
+</script>
 </body>
 </html>
