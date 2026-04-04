@@ -222,7 +222,7 @@
 
     .sliderWrap{
       display:grid;
-      grid-template-columns: 84px 1fr 48px;
+      grid-template-columns: 90px 1fr 52px;
       gap:10px;
       align-items:center;
       margin-bottom:10px;
@@ -310,9 +310,9 @@
   <aside id="sidebar" class="sidebar open">
     <div class="title">인기척: 사람 디텍팅</div>
     <div class="subtitle">
-      사람만 파란 박스로 감지하고, 같은 사람은 ID를 유지합니다.
-      박스는 바로 튀지 않고 부드럽게 따라가며,
-      가로 모드에서는 디텍팅과 3D 파동을 같이 볼 수 있습니다.
+      사람만 파란 박스로 감지하고 같은 사람은 ID를 유지합니다.
+      파동은 사람마다 따로 쏘지 않고, 전체 움직임의 대표 중심점 하나에서만 천천히 발화합니다.
+      가로 모드에서는 디텍팅과 3D 파동을 동시에 볼 수 있습니다.
     </div>
 
     <div class="section">
@@ -341,8 +341,8 @@
       </div>
       <div class="sliderWrap">
         <span>움직임</span>
-        <input id="motionRange" type="range" min="0.002" max="0.08" step="0.001" value="0.012">
-        <span id="motionVal">0.012</span>
+        <input id="motionRange" type="range" min="0.002" max="0.08" step="0.001" value="0.018">
+        <span id="motionVal">0.018</span>
       </div>
       <div class="sliderWrap">
         <span>트래킹</span>
@@ -360,13 +360,23 @@
       <div class="label">파동</div>
       <div class="sliderWrap">
         <span>강도</span>
-        <input id="energyRange" type="range" min="0.4" max="3.0" step="0.1" value="1.4">
-        <span id="energyVal">1.4</span>
+        <input id="energyRange" type="range" min="0.6" max="3.2" step="0.1" value="1.9">
+        <span id="energyVal">1.9</span>
       </div>
       <div class="sliderWrap">
         <span>감쇠</span>
-        <input id="dampingRange" type="range" min="0.90" max="0.995" step="0.001" value="0.968">
-        <span id="dampingVal">0.968</span>
+        <input id="dampingRange" type="range" min="0.960" max="0.992" step="0.001" value="0.982">
+        <span id="dampingVal">0.982</span>
+      </div>
+      <div class="sliderWrap">
+        <span>발화문턱</span>
+        <input id="globalMotionRange" type="range" min="0.010" max="0.080" step="0.001" value="0.025">
+        <span id="globalMotionVal">0.025</span>
+      </div>
+      <div class="sliderWrap">
+        <span>쿨다운</span>
+        <input id="cooldownRange" type="range" min="200" max="1200" step="20" value="520">
+        <span id="cooldownVal">520</span>
       </div>
     </div>
 
@@ -388,8 +398,8 @@
         • 사람만 표시<br/>
         • 박스 / 라벨 / 포인트는 진한 파랑<br/>
         • 박스는 smoothing으로 부드럽게 따라감<br/>
-        • 2D는 제거, 3D 파동만 유지<br/>
-        • 하나의 HTML만 올리면 됨
+        • 파동은 여러 개가 아니라 대표 포인트 하나에서 발화<br/>
+        • 2D는 제거, 3D 파동만 유지
       </div>
     </div>
   </aside>
@@ -441,12 +451,17 @@
     velocityGrid: new Float32Array(GRID_SIZE),
 
     detectThreshold: 0.46,
-    motionThreshold: 0.012,
+    motionThreshold: 0.018,
     trackingSmoothness: 0.18,
     confirmFrames: 2,
 
-    energy: 1.4,
-    damping: 0.968,
+    energy: 1.9,
+    damping: 0.982,
+    globalMotionThreshold: 0.025,
+    lastImpulseTime: 0,
+    impulseCooldownMs: 520,
+    globalFocusX: 0.5,
+    globalFocusY: 0.5,
 
     lastDetectRun: 0,
     detectIntervalMs: 150,
@@ -489,9 +504,13 @@
 
     energyRange: document.getElementById("energyRange"),
     dampingRange: document.getElementById("dampingRange"),
+    globalMotionRange: document.getElementById("globalMotionRange"),
+    cooldownRange: document.getElementById("cooldownRange"),
 
     energyVal: document.getElementById("energyVal"),
     dampingVal: document.getElementById("dampingVal"),
+    globalMotionVal: document.getElementById("globalMotionVal"),
+    cooldownVal: document.getElementById("cooldownVal"),
 
     showStatusCheck: document.getElementById("showStatusCheck"),
     landscapeDualCheck: document.getElementById("landscapeDualCheck"),
@@ -542,6 +561,9 @@
     state.gridValues.fill(0);
     state.nextGridValues.fill(0);
     state.velocityGrid.fill(0);
+    state.lastImpulseTime = 0;
+    state.globalFocusX = 0.5;
+    state.globalFocusY = 0.5;
   }
 
   function isLandscape() {
@@ -568,6 +590,8 @@
 
     ui.energyVal.textContent = state.energy.toFixed(1);
     ui.dampingVal.textContent = state.damping.toFixed(3);
+    ui.globalMotionVal.textContent = state.globalMotionThreshold.toFixed(3);
+    ui.cooldownVal.textContent = String(Math.round(state.impulseCooldownMs));
 
     ui.showStatusCheck.checked = state.showStatus;
     ui.landscapeDualCheck.checked = state.landscapeDual;
@@ -581,7 +605,8 @@
       `카메라 ${state.cameraOn ? "켜짐" : "꺼짐"} / ` +
       `사람 ${confirmedTracks.length}명 / ` +
       `활성 움직임 ${movingCount}명 / ` +
-      `FPS ${Math.round(state.fps)}`;
+      `FPS ${Math.round(state.fps)} / ` +
+      `대표발화 ${Math.round(state.impulseCooldownMs)}ms`;
   }
 
   function toggleSidebar(forceValue = null) {
@@ -851,26 +876,63 @@
     };
   }
 
-  function injectMotionRipples() {
+  function getGlobalMotionFocus() {
+    let sumWeight = 0;
+    let sumX = 0;
+    let sumY = 0;
+    let peakMotion = 0;
+
     for (const track of state.tracks) {
       if (!track.confirmed) continue;
-      if ((track.motion || 0) < state.motionThreshold) continue;
 
-      const p = normalizeTrackToGrid(track);
-      const intensity = clamp(track.pulse || 0, 0, 1.5);
-      const impulse = state.energy * (0.18 + intensity * 0.85);
+      const m = track.motion || 0;
+      if (m < state.motionThreshold) continue;
 
-      const cx = Math.round(p.gx);
-      const cy = Math.round(p.gy);
+      const weight = Math.max(0, m - state.motionThreshold);
+      sumWeight += weight;
+      sumX += track.displayX * weight;
+      sumY += track.displayY * weight;
+      peakMotion = Math.max(peakMotion, m);
+    }
 
-      if (cx >= 0 && cx < state.gridW && cy >= 0 && cy < state.gridH) {
-        state.velocityGrid[idx(cx, cy)] += impulse;
-      }
+    if (sumWeight <= 0) return null;
+
+    return {
+      x: sumX / sumWeight,
+      y: sumY / sumWeight,
+      strength: sumWeight,
+      peakMotion
+    };
+  }
+
+  function injectMotionRipples(now) {
+    const focus = getGlobalMotionFocus();
+    if (!focus) return;
+
+    const rectW = Math.max(1, canvas.clientWidth);
+    const rectH = Math.max(1, canvas.clientHeight);
+
+    state.globalFocusX = focus.x / rectW;
+    state.globalFocusY = focus.y / rectH;
+
+    if (focus.peakMotion < state.globalMotionThreshold) return;
+    if (now - state.lastImpulseTime < state.impulseCooldownMs) return;
+
+    state.lastImpulseTime = now;
+
+    const gx = Math.round(state.globalFocusX * (state.gridW - 1));
+    const gy = Math.round(state.globalFocusY * (state.gridH - 1));
+
+    const clampedStrength = clamp(focus.strength * 18, 0.7, 2.4);
+    const impulse = state.energy * clampedStrength;
+
+    if (gx >= 0 && gx < state.gridW && gy >= 0 && gy < state.gridH) {
+      state.velocityGrid[idx(gx, gy)] += impulse;
     }
   }
 
-  function updateWaveField() {
-    injectMotionRipples();
+  function updateWaveField(now) {
+    injectMotionRipples(now);
 
     for (let y = 0; y < state.gridH; y++) {
       for (let x = 0; x < state.gridW; x++) {
@@ -883,7 +945,7 @@
         const down  = y < state.gridH - 1 ? state.gridValues[idx(x, y + 1)] : 0;
 
         const laplacian = left + right + up + down - 4 * center;
-        state.velocityGrid[i] += laplacian * 0.22;
+        state.velocityGrid[i] += laplacian * 0.11;
         state.velocityGrid[i] *= state.damping;
         state.nextGridValues[i] = center + state.velocityGrid[i];
       }
@@ -1137,14 +1199,23 @@
       ctx.strokeRect(sx - tw/2 - 7, sy - 28, tw + 14, 18);
       ctx.fillStyle = BLUE;
       ctx.fillText(label, sx - tw/2, sy - 15);
-
-      if (active) {
-        ctx.beginPath();
-        ctx.arc(sx, sy, 16 + (track.pulse || 0) * 12, 0, Math.PI * 2);
-        ctx.strokeStyle = BLUE_SOFT;
-        ctx.stroke();
-      }
     }
+
+    const focusGX = state.globalFocusX * (state.gridW - 1);
+    const focusGY = state.globalFocusY * (state.gridH - 1);
+    const fx = centerX + (focusGX - focusGY) * tileW * 0.5;
+    const fy = startY + (focusGX + focusGY) * tileH * 0.5 - 108;
+
+    ctx.beginPath();
+    ctx.arc(fx, fy, 11, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(23,59,255,0.95)";
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(fx, fy, 24, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(23,59,255,0.28)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
 
     ctx.restore();
   }
@@ -1178,7 +1249,7 @@
 
     runDetection(now);
     smoothTracks();
-    updateWaveField();
+    updateWaveField(now);
 
     ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
 
@@ -1268,6 +1339,16 @@
 
     ui.dampingRange.addEventListener("input", (e) => {
       state.damping = parseFloat(e.target.value);
+      updateUI(true);
+    });
+
+    ui.globalMotionRange.addEventListener("input", (e) => {
+      state.globalMotionThreshold = parseFloat(e.target.value);
+      updateUI(true);
+    });
+
+    ui.cooldownRange.addEventListener("input", (e) => {
+      state.impulseCooldownMs = parseInt(e.target.value, 10);
       updateUI(true);
     });
 
