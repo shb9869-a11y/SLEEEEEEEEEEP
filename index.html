@@ -6,7 +6,7 @@
     name="viewport"
     content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
   />
-  <title>인기척: YOLO 사람 트래킹</title>
+  <title>인기척: 사람 디텍팅 / 3D 파동</title>
 
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -21,10 +21,10 @@
       --muted:#a6a6a6;
 
       --blue:#173BFF;
-      --blueFill:rgba(23,59,255,0.14);
+      --blueFill:rgba(23,59,255,0.15);
       --blueLine:rgba(23,59,255,0.98);
-      --blueSoft:rgba(23,59,255,0.24);
-      --blueSoft2:rgba(23,59,255,0.52);
+      --blueSoft:rgba(23,59,255,0.25);
+      --blueSoft2:rgba(23,59,255,0.55);
     }
 
     *{
@@ -278,7 +278,6 @@
       font-size:12px;
       line-height:1.5;
       backdrop-filter:blur(10px);
-      white-space:pre-line;
     }
 
     .floatingInfo strong{
@@ -299,7 +298,7 @@
   <div class="topbar">
     <div class="topbarLeft">
       <button id="menuBtn" class="iconBtn" aria-label="메뉴">☰</button>
-      <div id="modeChip" class="chip">YOLO 사람 디텍팅</div>
+      <div id="modeChip" class="chip">사람 디텍팅</div>
     </div>
     <div class="topbarRight">
       <button id="fullscreenBtn" class="iconBtn" aria-label="전체화면">⤢</button>
@@ -309,11 +308,11 @@
   <div id="overlay" class="overlay"></div>
 
   <aside id="sidebar" class="sidebar open">
-    <div class="title">인기척: YOLO 사람 트래킹</div>
+    <div class="title">인기척: 사람 디텍팅</div>
     <div class="subtitle">
-      YOLO ONNX 모델로 사람만 감지하고, 같은 사람은 ID를 유지합니다.
-      박스와 라벨은 진한 파랑으로 표시되며, 바로 튀지 않고 부드럽게 따라갑니다.
-      3D 모듈은 사람 위치를 10×10 그리드에 맵핑해 반응합니다.
+      사람만 파란 박스로 감지하고, 같은 사람은 ID를 유지합니다.
+      박스는 바로 튀지 않고 부드럽게 따라가며,
+      가로 모드에서는 디텍팅과 3D 파동을 같이 볼 수 있습니다.
     </div>
 
     <div class="section">
@@ -337,22 +336,22 @@
       <div class="label">감지 / 트래킹</div>
       <div class="sliderWrap">
         <span>신뢰도</span>
-        <input id="confRange" type="range" min="0.15" max="0.80" step="0.01" value="0.32">
-        <span id="confVal">0.32</span>
+        <input id="thresholdRange" type="range" min="0.30" max="0.85" step="0.01" value="0.46">
+        <span id="thresholdVal">0.46</span>
       </div>
       <div class="sliderWrap">
-        <span>NMS</span>
-        <input id="iouRange" type="range" min="0.20" max="0.80" step="0.01" value="0.45">
-        <span id="iouVal">0.45</span>
+        <span>움직임</span>
+        <input id="motionRange" type="range" min="0.002" max="0.08" step="0.001" value="0.012">
+        <span id="motionVal">0.012</span>
       </div>
       <div class="sliderWrap">
         <span>트래킹</span>
-        <input id="smoothRange" type="range" min="0.08" max="0.45" step="0.01" value="0.20">
-        <span id="smoothVal">0.20</span>
+        <input id="smoothRange" type="range" min="0.08" max="0.45" step="0.01" value="0.18">
+        <span id="smoothVal">0.18</span>
       </div>
       <div class="sliderWrap">
         <span>확정프레임</span>
-        <input id="confirmRange" type="range" min="1" max="5" step="1" value="2">
+        <input id="confirmRange" type="range" min="1" max="4" step="1" value="2">
         <span id="confirmVal">2</span>
       </div>
     </div>
@@ -368,11 +367,6 @@
         <span>감쇠</span>
         <input id="dampingRange" type="range" min="0.90" max="0.995" step="0.001" value="0.968">
         <span id="dampingVal">0.968</span>
-      </div>
-      <div class="sliderWrap">
-        <span>움직임</span>
-        <input id="motionRange" type="range" min="0.002" max="0.08" step="0.001" value="0.012">
-        <span id="motionVal">0.012</span>
       </div>
     </div>
 
@@ -391,11 +385,11 @@
     <div class="section">
       <div class="label">설명</div>
       <div style="font-size:13px; line-height:1.55; color:var(--muted);">
-        • YOLO ONNX 모델 필요: <span style="color:#173BFF;">yolo11n.onnx</span><br/>
-        • 사람 class만 사용<br/>
-        • 박스/라벨/포인트 전부 진한 파랑<br/>
-        • 박스는 부드럽게 따라감<br/>
-        • 가로 모드에서는 디텍팅 + 3D 파동 동시 표시
+        • 사람만 표시<br/>
+        • 박스 / 라벨 / 포인트는 진한 파랑<br/>
+        • 박스는 smoothing으로 부드럽게 따라감<br/>
+        • 2D는 제거, 3D 파동만 유지<br/>
+        • 하나의 HTML만 올리면 됨
       </div>
     </div>
   </aside>
@@ -409,27 +403,26 @@
   <video id="video" playsinline autoplay muted></video>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
 
 <script>
 (() => {
   const BLUE = "#173BFF";
   const BLUE_LINE = "rgba(23,59,255,0.98)";
-  const BLUE_FILL = "rgba(23,59,255,0.14)";
-  const BLUE_SOFT = "rgba(23,59,255,0.24)";
-  const BLUE_SOFT_2 = "rgba(23,59,255,0.52)";
+  const BLUE_FILL = "rgba(23,59,255,0.15)";
+  const BLUE_SOFT = "rgba(23,59,255,0.25)";
+  const BLUE_SOFT_2 = "rgba(23,59,255,0.55)";
 
   const GRID_W = 10;
   const GRID_H = 10;
   const GRID_SIZE = GRID_W * GRID_H;
-  const MODEL_SIZE = 640;
-  const PERSON_CLASS_ID = 0; // COCO person
 
   const state = {
     mode: "detect",
     sidebarOpen: true,
 
-    session: null,
+    model: null,
     modelReady: false,
     detecting: false,
 
@@ -447,21 +440,19 @@
     nextGridValues: new Float32Array(GRID_SIZE),
     velocityGrid: new Float32Array(GRID_SIZE),
 
-    confThreshold: 0.32,
-    iouThreshold: 0.45,
+    detectThreshold: 0.46,
     motionThreshold: 0.012,
-    trackingSmoothness: 0.20,
+    trackingSmoothness: 0.18,
     confirmFrames: 2,
 
     energy: 1.4,
     damping: 0.968,
 
     lastDetectRun: 0,
-    detectIntervalMs: 110,
+    detectIntervalMs: 150,
 
     lastFrameTime: performance.now(),
     fps: 0,
-    inferMs: 0,
     lastUiUpdate: 0,
 
     showStatus: true,
@@ -486,23 +477,21 @@
     mockBtn: document.getElementById("mockBtn"),
     resetBtn: document.getElementById("resetBtn"),
 
-    confRange: document.getElementById("confRange"),
-    iouRange: document.getElementById("iouRange"),
+    thresholdRange: document.getElementById("thresholdRange"),
+    motionRange: document.getElementById("motionRange"),
     smoothRange: document.getElementById("smoothRange"),
     confirmRange: document.getElementById("confirmRange"),
 
-    confVal: document.getElementById("confVal"),
-    iouVal: document.getElementById("iouVal"),
+    thresholdVal: document.getElementById("thresholdVal"),
+    motionVal: document.getElementById("motionVal"),
     smoothVal: document.getElementById("smoothVal"),
     confirmVal: document.getElementById("confirmVal"),
 
     energyRange: document.getElementById("energyRange"),
     dampingRange: document.getElementById("dampingRange"),
-    motionRange: document.getElementById("motionRange"),
 
     energyVal: document.getElementById("energyVal"),
     dampingVal: document.getElementById("dampingVal"),
-    motionVal: document.getElementById("motionVal"),
 
     showStatusCheck: document.getElementById("showStatusCheck"),
     landscapeDualCheck: document.getElementById("landscapeDualCheck"),
@@ -510,11 +499,6 @@
     floatingInfo: document.getElementById("floatingInfo"),
     statusText: document.getElementById("statusText")
   };
-
-  const offCanvas = document.createElement("canvas");
-  offCanvas.width = MODEL_SIZE;
-  offCanvas.height = MODEL_SIZE;
-  const offCtx = offCanvas.getContext("2d", { willReadFrequently: true });
 
   function idx(x, y) {
     return y * state.gridW + x;
@@ -575,16 +559,15 @@
     setActive(ui.modeDetectBtn, state.mode === "detect");
     setActive(ui.modeRippleBtn, state.mode === "ripple");
 
-    ui.modeChip.textContent = state.mode === "detect" ? "YOLO 사람 디텍팅" : "파동 시각화";
+    ui.modeChip.textContent = state.mode === "detect" ? "사람 디텍팅" : "파동 시각화";
 
-    ui.confVal.textContent = state.confThreshold.toFixed(2);
-    ui.iouVal.textContent = state.iouThreshold.toFixed(2);
+    ui.thresholdVal.textContent = state.detectThreshold.toFixed(2);
+    ui.motionVal.textContent = state.motionThreshold.toFixed(3);
     ui.smoothVal.textContent = state.trackingSmoothness.toFixed(2);
     ui.confirmVal.textContent = String(state.confirmFrames);
 
     ui.energyVal.textContent = state.energy.toFixed(1);
     ui.dampingVal.textContent = state.damping.toFixed(3);
-    ui.motionVal.textContent = state.motionThreshold.toFixed(3);
 
     ui.showStatusCheck.checked = state.showStatus;
     ui.landscapeDualCheck.checked = state.landscapeDual;
@@ -598,8 +581,7 @@
       `카메라 ${state.cameraOn ? "켜짐" : "꺼짐"} / ` +
       `사람 ${confirmedTracks.length}명 / ` +
       `활성 움직임 ${movingCount}명 / ` +
-      `FPS ${Math.round(state.fps)} / ` +
-      `추론 ${Math.round(state.inferMs)}ms`;
+      `FPS ${Math.round(state.fps)}`;
   }
 
   function toggleSidebar(forceValue = null) {
@@ -648,63 +630,21 @@
           p.w * W,
           p.h * H
         ],
-        score: 0.99,
-        classId: 0
+        class: "person",
+        score: 0.99
       });
     }
+  }
+
+  function centroidOfDet(det) {
+    const [x, y, w, h] = det.bbox;
+    return { x: x + w / 2, y: y + h / 2, w, h };
   }
 
   function distance(a, b) {
     const dx = a.x - b.x;
     const dy = a.y - b.y;
     return Math.sqrt(dx * dx + dy * dy);
-  }
-
-  function xywhToXyxy(box) {
-    const [cx, cy, w, h] = box;
-    const x1 = cx - w / 2;
-    const y1 = cy - h / 2;
-    const x2 = cx + w / 2;
-    const y2 = cy + h / 2;
-    return [x1, y1, x2, y2];
-  }
-
-  function iou(boxA, boxB) {
-    const [ax1, ay1, ax2, ay2] = boxA;
-    const [bx1, by1, bx2, by2] = boxB;
-
-    const interX1 = Math.max(ax1, bx1);
-    const interY1 = Math.max(ay1, by1);
-    const interX2 = Math.min(ax2, bx2);
-    const interY2 = Math.min(ay2, by2);
-
-    const interW = Math.max(0, interX2 - interX1);
-    const interH = Math.max(0, interY2 - interY1);
-    const interArea = interW * interH;
-
-    const areaA = Math.max(0, ax2 - ax1) * Math.max(0, ay2 - ay1);
-    const areaB = Math.max(0, bx2 - bx1) * Math.max(0, by2 - by1);
-    const union = areaA + areaB - interArea;
-
-    if (union <= 0) return 0;
-    return interArea / union;
-  }
-
-  function nms(dets, iouThreshold) {
-    const sorted = [...dets].sort((a, b) => b.score - a.score);
-    const picked = [];
-
-    while (sorted.length > 0) {
-      const current = sorted.shift();
-      picked.push(current);
-
-      for (let i = sorted.length - 1; i >= 0; i--) {
-        if (iou(current.xyxy, sorted[i].xyxy) > iouThreshold) {
-          sorted.splice(i, 1);
-        }
-      }
-    }
-    return picked;
   }
 
   function isLikelyHumanBox(det, frameW, frameH) {
@@ -714,37 +654,30 @@
     const area = w * h;
     const aspect = h / Math.max(1, w);
 
-    if (area < frameW * frameH * 0.004) return false;
-    if (aspect < 0.7) return false;
-    if (aspect > 5.2) return false;
-    if (w > frameW * 0.95) return false;
-    if (h > frameH * 0.99) return false;
+    if (area < frameW * frameH * 0.006) return false;
+    if (aspect < 0.8) return false;
+    if (aspect > 4.8) return false;
+    if (w > frameW * 0.92) return false;
+    if (h > frameH * 0.98) return false;
 
     return true;
   }
 
   function updateTracks(detections) {
-    const centers = detections.map(det => {
-      const [x, y, w, h] = det.bbox;
-      return {
-        x: x + w / 2,
-        y: y + h / 2,
-        w,
-        h
-      };
-    });
+    const centroids = detections.map(centroidOfDet);
 
-    const maxDist = Math.min(canvas.clientWidth, canvas.clientHeight) * 0.14;
-    const unmatchedDet = new Set(centers.map((_, i) => i));
+    const unmatchedDet = new Set(centroids.map((_, i) => i));
     const unmatchedTracks = new Set(state.tracks.map((_, i) => i));
 
     const pairs = [];
+    const maxDist = Math.min(canvas.clientWidth, canvas.clientHeight) * 0.14;
+
     for (let ti = 0; ti < state.tracks.length; ti++) {
-      for (let di = 0; di < centers.length; di++) {
+      for (let di = 0; di < centroids.length; di++) {
         pairs.push({
           ti,
           di,
-          dist: distance(state.tracks[ti], centers[di])
+          dist: distance(state.tracks[ti], centroids[di])
         });
       }
     }
@@ -755,7 +688,7 @@
       if (p.dist > maxDist) continue;
 
       const t = state.tracks[p.ti];
-      const c = centers[p.di];
+      const c = centroids[p.di];
 
       const prevX = t.x;
       const prevY = t.y;
@@ -779,7 +712,7 @@
     }
 
     for (const di of unmatchedDet) {
-      const c = centers[di];
+      const c = centroids[di];
       state.tracks.push({
         id: state.nextTrackId++,
         x: c.x,
@@ -829,17 +762,14 @@
     }
   }
 
-  async function loadYoloModel() {
+  async function loadModel() {
     try {
-      ort.env.wasm.numThreads = 1;
-      state.session = await ort.InferenceSession.create("./yolo11n.onnx", {
-        executionProviders: ["wasm"]
-      });
+      state.model = await cocoSsd.load({ base: "lite_mobilenet_v2" });
       state.modelReady = true;
       updateUI(true);
     } catch (err) {
       console.error(err);
-      alert("yolo11n.onnx 로딩 실패. index.html과 같은 폴더에 모델 파일이 있는지 확인해.");
+      alert("모델 로딩 실패");
     }
   }
 
@@ -863,7 +793,7 @@
       updateUI(true);
     } catch (err) {
       console.error(err);
-      alert("카메라 접근 실패. Mock 모드로 전환한다.");
+      alert("카메라 접근 실패. Mock 모드로 전환합니다.");
       stopCamera();
       addMockPeople();
       state.usingMock = true;
@@ -873,152 +803,36 @@
 
   function stopCamera() {
     const stream = video.srcObject;
-    if (stream) stream.getTracks().forEach(track => track.stop());
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+    }
     video.srcObject = null;
     state.cameraOn = false;
-  }
-
-  function preprocessFrameToTensor(source) {
-    const srcW = source.videoWidth || source.width;
-    const srcH = source.videoHeight || source.height;
-
-    const scale = Math.min(MODEL_SIZE / srcW, MODEL_SIZE / srcH);
-    const drawW = Math.round(srcW * scale);
-    const drawH = Math.round(srcH * scale);
-    const padX = Math.floor((MODEL_SIZE - drawW) / 2);
-    const padY = Math.floor((MODEL_SIZE - drawH) / 2);
-
-    offCtx.fillStyle = "black";
-    offCtx.fillRect(0, 0, MODEL_SIZE, MODEL_SIZE);
-    offCtx.drawImage(source, 0, 0, srcW, srcH, padX, padY, drawW, drawH);
-
-    const imageData = offCtx.getImageData(0, 0, MODEL_SIZE, MODEL_SIZE).data;
-    const float = new Float32Array(1 * 3 * MODEL_SIZE * MODEL_SIZE);
-    const channelSize = MODEL_SIZE * MODEL_SIZE;
-
-    for (let i = 0; i < channelSize; i++) {
-      const px = i * 4;
-      float[i] = imageData[px] / 255.0;
-      float[channelSize + i] = imageData[px + 1] / 255.0;
-      float[channelSize * 2 + i] = imageData[px + 2] / 255.0;
-    }
-
-    return {
-      tensor: new ort.Tensor("float32", float, [1, 3, MODEL_SIZE, MODEL_SIZE]),
-      meta: { srcW, srcH, scale, padX, padY, drawW, drawH }
-    };
-  }
-
-  function getOutputTensor(outputs) {
-    const keys = Object.keys(outputs);
-    if (!keys.length) throw new Error("모델 출력이 없음");
-    return outputs[keys[0]];
-  }
-
-  function transposeIfNeeded(data, dims) {
-    if (dims.length !== 3) return { rows: 0, cols: 0, accessor: null };
-
-    const a = dims[1];
-    const b = dims[2];
-
-    if (a < b) {
-      return {
-        rows: a,
-        cols: b,
-        accessor: (r, c) => data[r * b + c]
-      };
-    }
-
-    return {
-      rows: b,
-      cols: a,
-      accessor: (r, c) => data[c * b + r]
-    };
-  }
-
-  function decodeYoloDetections(outputTensor, meta) {
-    const { data, dims } = outputTensor;
-    const { srcW, srcH, scale, padX, padY } = meta;
-
-    const { rows, cols, accessor } = transposeIfNeeded(data, dims);
-    if (!accessor || cols < 6) return [];
-
-    const detections = [];
-
-    for (let r = 0; r < rows; r++) {
-      const cx = accessor(r, 0);
-      const cy = accessor(r, 1);
-      const w = accessor(r, 2);
-      const h = accessor(r, 3);
-
-      let bestClass = -1;
-      let bestScore = 0;
-
-      for (let c = 4; c < cols; c++) {
-        const score = accessor(r, c);
-        if (score > bestScore) {
-          bestScore = score;
-          bestClass = c - 4;
-        }
-      }
-
-      if (bestClass !== PERSON_CLASS_ID) continue;
-      if (bestScore < state.confThreshold) continue;
-
-      const x1 = cx - w / 2;
-      const y1 = cy - h / 2;
-      const x2 = cx + w / 2;
-      const y2 = cy + h / 2;
-
-      let fx1 = (x1 - padX) / scale;
-      let fy1 = (y1 - padY) / scale;
-      let fx2 = (x2 - padX) / scale;
-      let fy2 = (y2 - padY) / scale;
-
-      fx1 = clamp(fx1, 0, srcW);
-      fy1 = clamp(fy1, 0, srcH);
-      fx2 = clamp(fx2, 0, srcW);
-      fy2 = clamp(fy2, 0, srcH);
-
-      const bw = fx2 - fx1;
-      const bh = fy2 - fy1;
-      if (bw <= 0 || bh <= 0) continue;
-
-      const det = {
-        bbox: [fx1, fy1, bw, bh],
-        score: bestScore,
-        classId: 0
-      };
-
-      if (!isLikelyHumanBox(det, srcW, srcH)) continue;
-
-      det.xyxy = [fx1, fy1, fx2, fy2];
-      detections.push(det);
-    }
-
-    return nms(detections, state.iouThreshold);
   }
 
   async function runDetection(now) {
     if (state.detecting) return;
     if (now - state.lastDetectRun < state.detectIntervalMs) return;
+
     state.lastDetectRun = now;
 
     if (state.cameraOn && state.modelReady && video.readyState >= 2) {
       state.detecting = true;
-      const t0 = performance.now();
-
       try {
-        const { tensor, meta } = preprocessFrameToTensor(video);
-        const inputName = state.session.inputNames[0];
-        const outputs = await state.session.run({ [inputName]: tensor });
-        const outputTensor = getOutputTensor(outputs);
-        state.lastDetections = decodeYoloDetections(outputTensor, meta);
+        const preds = await state.model.detect(video);
+        const vw = video.videoWidth || 1280;
+        const vh = video.videoHeight || 720;
+
+        state.lastDetections = preds.filter(p => {
+          if (p.class !== "person") return false;
+          if (p.score < state.detectThreshold) return false;
+          if (!isLikelyHumanBox(p, vw, vh)) return false;
+          return true;
+        });
       } catch (err) {
         console.error(err);
         state.lastDetections = [];
       } finally {
-        state.inferMs = performance.now() - t0;
         state.detecting = false;
       }
     } else if (state.usingMock) {
@@ -1216,7 +1030,7 @@
 
     ctx.fillStyle = BLUE;
     ctx.font = "bold 16px sans-serif";
-    ctx.fillText("YOLO 사람 디텍팅 / ID 트래킹", 18, H - 18);
+    ctx.fillText("사람 디텍팅 / ID 트래킹", 18, H - 18);
 
     ctx.restore();
   }
@@ -1427,13 +1241,13 @@
       updateUI(true);
     });
 
-    ui.confRange.addEventListener("input", (e) => {
-      state.confThreshold = parseFloat(e.target.value);
+    ui.thresholdRange.addEventListener("input", (e) => {
+      state.detectThreshold = parseFloat(e.target.value);
       updateUI(true);
     });
 
-    ui.iouRange.addEventListener("input", (e) => {
-      state.iouThreshold = parseFloat(e.target.value);
+    ui.motionRange.addEventListener("input", (e) => {
+      state.motionThreshold = parseFloat(e.target.value);
       updateUI(true);
     });
 
@@ -1454,11 +1268,6 @@
 
     ui.dampingRange.addEventListener("input", (e) => {
       state.damping = parseFloat(e.target.value);
-      updateUI(true);
-    });
-
-    ui.motionRange.addEventListener("input", (e) => {
-      state.motionThreshold = parseFloat(e.target.value);
       updateUI(true);
     });
 
@@ -1497,7 +1306,7 @@
     addMockPeople();
     bindEvents();
     updateUI(true);
-    loadYoloModel();
+    loadModel();
     requestAnimationFrame(animate);
   }
 
