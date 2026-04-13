@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-  <title>인기척 - Detection + Sound</title>
+  <title>인기척 - Detection + Richter-style Sound</title>
   <meta name="theme-color" content="#000000" />
   <style>
     :root{
@@ -41,7 +41,7 @@
 
     .panel{
       position:absolute; left:10px; bottom:calc(env(safe-area-inset-bottom, 0px) + 10px);
-      z-index:20; width:min(420px, calc(100vw - 20px));
+      z-index:20; width:min(430px, calc(100vw - 20px));
       border:1px solid var(--panelBorder); border-radius:16px;
       background:var(--panel); backdrop-filter:blur(10px); padding:14px;
     }
@@ -63,7 +63,7 @@
 
     .status{
       position:absolute; right:10px; bottom:calc(env(safe-area-inset-bottom, 0px) + 10px);
-      z-index:20; width:min(380px, calc(100vw - 20px));
+      z-index:20; width:min(390px, calc(100vw - 20px));
       border:1px solid var(--panelBorder); border-radius:16px;
       background:rgba(8,8,8,0.84); backdrop-filter:blur(10px);
       padding:12px 14px; font-size:12px; line-height:1.55; color:var(--muted);
@@ -79,7 +79,7 @@
 <div id="app">
   <div class="topbar">
     <div class="group">
-      <div class="chip">사람 디텍팅 + 사운드 출력</div>
+      <div class="chip">사람 디텍팅 + 리히터풍 드론 사운드</div>
     </div>
     <div class="group">
       <button id="cameraBtn" class="btn">카메라 시작</button>
@@ -95,8 +95,8 @@
   <div class="panel">
     <div class="title">인기척</div>
     <div class="desc">
-      사람 움직임을 감지해서 하나의 대표 주파수로 소리를 냅니다.
-      먼저 오디오 시작을 누르고, 그 다음 카메라 시작을 누르세요.
+      사람 움직임을 감지해 느린 드론, 반복되는 피드백, 울림이 있는 사운드를 생성합니다.
+      먼저 <strong>오디오 시작</strong>을 누르고, 그 다음 <strong>카메라 시작</strong>을 누르세요.
     </div>
 
     <div class="sliderWrap">
@@ -183,9 +183,21 @@
     fps: 0,
 
     audioCtx: null,
-    oscillator: null,
-    gainNode: null,
-    audioStarted: false
+    audioStarted: false,
+
+    masterGain: null,
+    dryGain: null,
+    delaySend: null,
+    reverbSend: null,
+    delayNode: null,
+    feedbackGain: null,
+    convolver: null,
+    lowpass: null,
+    compressor: null,
+
+    osc1: null,
+    osc2: null,
+    osc3: null
   };
 
   const canvas = document.getElementById("canvas");
@@ -388,6 +400,21 @@
     }
   }
 
+  function createReverbBuffer(ctx, seconds = 3.2) {
+    const rate = ctx.sampleRate;
+    const length = Math.floor(rate * seconds);
+    const impulse = ctx.createBuffer(2, length, rate);
+
+    for (let c = 0; c < 2; c++) {
+      const channel = impulse.getChannelData(c);
+      for (let i = 0; i < length; i++) {
+        const decay = Math.pow(1 - i / length, 2.8);
+        channel[i] = (Math.random() * 2 - 1) * decay;
+      }
+    }
+    return impulse;
+  }
+
   async function loadModel() {
     try {
       state.model = await cocoSsd.load({ base: "mobilenet_v2" });
@@ -461,7 +488,7 @@
   function computeMotionEnergy() {
     const confirmed = state.tracks.filter(t => t.confirmed);
     if (!confirmed.length) {
-      state.currentMotionEnergy = lerp(state.currentMotionEnergy, 0, 0.08);
+      state.currentMotionEnergy = lerp(state.currentMotionEnergy, 0, 0.06);
       return;
     }
 
@@ -472,48 +499,156 @@
     }
 
     const avg = sum / confirmed.length;
-    state.currentMotionEnergy = lerp(state.currentMotionEnergy, avg, 0.18);
-  }
-
-  function updateAudioTarget() {
-    const normalized = clamp(state.currentMotionEnergy / 0.04, 0, 1);
-    state.targetFreq = state.minFreq + (state.maxFreq - state.minFreq) * normalized;
-    state.currentFreq = lerp(state.currentFreq, state.targetFreq, 0.12);
-
-    if (state.audioStarted && state.oscillator && state.gainNode && state.audioCtx) {
-      const now = state.audioCtx.currentTime;
-      state.oscillator.frequency.cancelScheduledValues(now);
-      state.oscillator.frequency.linearRampToValueAtTime(state.currentFreq, now + 0.06);
-
-      const targetGain = normalized > 0.01 ? state.gain : 0.0;
-      state.gainNode.gain.cancelScheduledValues(now);
-      state.gainNode.gain.linearRampToValueAtTime(targetGain, now + 0.08);
-    }
+    state.currentMotionEnergy = lerp(state.currentMotionEnergy, avg, 0.14);
   }
 
   async function startAudio() {
     try {
+      if (state.audioStarted) {
+        if (state.audioCtx && state.audioCtx.state === "suspended") {
+          await state.audioCtx.resume();
+        }
+        return;
+      }
+
       if (!state.audioCtx) {
         state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       }
-      if (state.audioCtx.state === "suspended") {
-        await state.audioCtx.resume();
+
+      const ac = state.audioCtx;
+      if (ac.state === "suspended") {
+        await ac.resume();
       }
-      if (!state.oscillator) {
-        state.oscillator = state.audioCtx.createOscillator();
-        state.gainNode = state.audioCtx.createGain();
-        state.oscillator.type = "sine";
-        state.oscillator.frequency.value = state.currentFreq;
-        state.gainNode.gain.value = 0.0;
-        state.oscillator.connect(state.gainNode);
-        state.gainNode.connect(state.audioCtx.destination);
-        state.oscillator.start();
-      }
+
+      // 메인 출력 체인
+      state.masterGain = ac.createGain();
+      state.dryGain = ac.createGain();
+      state.delaySend = ac.createGain();
+      state.reverbSend = ac.createGain();
+
+      state.delayNode = ac.createDelay(2.0);
+      state.feedbackGain = ac.createGain();
+      state.convolver = ac.createConvolver();
+      state.lowpass = ac.createBiquadFilter();
+      state.compressor = ac.createDynamicsCompressor();
+
+      state.lowpass.type = "lowpass";
+      state.lowpass.frequency.value = 1400;
+      state.lowpass.Q.value = 0.7;
+
+      state.delayNode.delayTime.value = 0.42;
+      state.feedbackGain.gain.value = 0.52;
+
+      state.convolver.buffer = createReverbBuffer(ac, 3.2);
+
+      state.masterGain.gain.value = 0.0;
+      state.dryGain.gain.value = 0.22;
+      state.delaySend.gain.value = 0.75;
+      state.reverbSend.gain.value = 0.45;
+
+      state.compressor.threshold.value = -22;
+      state.compressor.knee.value = 18;
+      state.compressor.ratio.value = 3;
+      state.compressor.attack.value = 0.02;
+      state.compressor.release.value = 0.35;
+
+      // 오실레이터 3층
+      state.osc1 = ac.createOscillator();
+      state.osc2 = ac.createOscillator();
+      state.osc3 = ac.createOscillator();
+
+      state.osc1.type = "sine";
+      state.osc2.type = "triangle";
+      state.osc3.type = "sine";
+
+      state.osc1.frequency.value = state.currentFreq;
+      state.osc2.frequency.value = state.currentFreq * 0.5;
+      state.osc3.frequency.value = state.currentFreq * 1.5;
+
+      state.osc2.detune.value = 4;
+      state.osc3.detune.value = -6;
+
+      // 연결
+      state.osc1.connect(state.lowpass);
+      state.osc2.connect(state.lowpass);
+      state.osc3.connect(state.lowpass);
+
+      state.lowpass.connect(state.masterGain);
+
+      state.masterGain.connect(state.dryGain);
+      state.masterGain.connect(state.delaySend);
+      state.masterGain.connect(state.reverbSend);
+
+      state.dryGain.connect(state.compressor);
+
+      state.delaySend.connect(state.delayNode);
+      state.delayNode.connect(state.feedbackGain);
+      state.feedbackGain.connect(state.delayNode);
+      state.delayNode.connect(state.compressor);
+      state.delayNode.connect(state.convolver);
+
+      state.reverbSend.connect(state.convolver);
+      state.convolver.connect(state.compressor);
+
+      state.compressor.connect(ac.destination);
+
+      state.osc1.start();
+      state.osc2.start();
+      state.osc3.start();
+
       state.audioStarted = true;
       updateUI();
     } catch (err) {
       console.error(err);
       alert("오디오 시작 실패");
+    }
+  }
+
+  function updateAudioTarget(nowMs) {
+    const normalized = clamp(state.currentMotionEnergy / 0.04, 0, 1);
+
+    state.targetFreq = state.minFreq + (state.maxFreq - state.minFreq) * normalized;
+
+    // 빠르게 쫓아가지 않고 드론처럼 천천히
+    state.currentFreq = lerp(state.currentFreq, state.targetFreq, 0.04);
+
+    if (state.audioStarted && state.audioCtx && state.osc1 && state.osc2 && state.osc3 && state.masterGain) {
+      const now = state.audioCtx.currentTime;
+
+      // 느린 흔들림
+      const lfo1 = Math.sin(nowMs * 0.00023) * 2.8;
+      const lfo2 = Math.sin(nowMs * 0.00011 + 1.1) * 1.6;
+      const base = state.currentFreq + lfo1 + lfo2;
+
+      const f1 = Math.max(20, base);
+      const f2 = Math.max(20, base * 0.5);
+      const f3 = Math.max(20, base * 1.498);
+
+      state.osc1.frequency.cancelScheduledValues(now);
+      state.osc2.frequency.cancelScheduledValues(now);
+      state.osc3.frequency.cancelScheduledValues(now);
+
+      state.osc1.frequency.setTargetAtTime(f1, now, 0.18);
+      state.osc2.frequency.setTargetAtTime(f2, now, 0.22);
+      state.osc3.frequency.setTargetAtTime(f3, now, 0.24);
+
+      // 움직임에 따라 울림/피드백도 같이 조금 열림
+      const targetMaster = normalized > 0.01 ? state.gain : 0.0;
+      const targetDelayFeedback = 0.35 + normalized * 0.32;
+      const targetDelayTime = 0.32 + normalized * 0.18;
+      const targetCutoff = 900 + normalized * 1700;
+
+      state.masterGain.gain.cancelScheduledValues(now);
+      state.masterGain.gain.setTargetAtTime(targetMaster, now, 0.22);
+
+      state.feedbackGain.gain.cancelScheduledValues(now);
+      state.feedbackGain.gain.setTargetAtTime(clamp(targetDelayFeedback, 0.2, 0.78), now, 0.25);
+
+      state.delayNode.delayTime.cancelScheduledValues(now);
+      state.delayNode.delayTime.setTargetAtTime(targetDelayTime, now, 0.2);
+
+      state.lowpass.frequency.cancelScheduledValues(now);
+      state.lowpass.frequency.setTargetAtTime(targetCutoff, now, 0.28);
     }
   }
 
@@ -677,7 +812,7 @@
     await runDetection(now);
     smoothTracks();
     computeMotionEnergy();
-    updateAudioTarget();
+    updateAudioTarget(now);
     drawScene();
     updateUI();
 
