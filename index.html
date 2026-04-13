@@ -3,13 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-  <title>인기척 - 움직임을 진동 주파수로</title>
-
+  <title>인기척 - Detection + Sound</title>
   <meta name="theme-color" content="#000000" />
   <style>
     :root{
       --bg:#000;
-      --panel:rgba(10,10,10,0.92);
+      --panel:rgba(10,10,10,0.9);
       --panelBorder:rgba(255,255,255,0.12);
       --text:#f3f3f3;
       --muted:#aaaaaa;
@@ -19,80 +18,169 @@
     }
 
     *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
     html,body{
-      margin:0; width:100%; height:100%; overflow:hidden;
-      background:#000; color:var(--text);
+      margin:0;
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      background:#000;
+      color:var(--text);
       font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR","Segoe UI",sans-serif;
     }
-    body{
-      background:
-        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px),
-        linear-gradient(0deg, rgba(255,255,255,0.03) 1px, transparent 1px),
-        #000;
-      background-size:44px 44px, 44px 44px, auto;
+
+    #app{
+      position:relative;
+      width:100vw;
+      height:100vh;
+      overflow:hidden;
+      background:#000;
     }
 
-    #app{ position:relative; width:100vw; height:100vh; overflow:hidden; }
-    video{ display:none; }
-    canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+    canvas{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      display:block;
+      background:#000;
+    }
+
+    video{
+      display:none;
+    }
 
     .topbar{
-      position:absolute; top:calc(env(safe-area-inset-top, 0px) + 10px); left:10px; right:10px;
-      z-index:50; display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;
+      position:absolute;
+      top:calc(env(safe-area-inset-top, 0px) + 10px);
+      left:10px;
+      right:10px;
+      z-index:20;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
     }
-    .group{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+
+    .group{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
 
     .btn,.chip{
-      min-height:44px; border-radius:12px; border:1px solid var(--panelBorder);
-      background:rgba(8,8,8,0.92); color:#fff; backdrop-filter:blur(10px);
+      min-height:44px;
+      border-radius:12px;
+      border:1px solid var(--panelBorder);
+      background:var(--panel);
+      color:#fff;
+      backdrop-filter:blur(10px);
     }
+
     .btn{
-      padding:0 14px; cursor:pointer; font-size:14px; font-weight:600;
+      padding:0 14px;
+      cursor:pointer;
+      font-size:14px;
+      font-weight:600;
     }
+
     .btn.active{
-      background:#fff; color:#000; border-color:#fff;
+      background:#fff;
+      color:#000;
+      border-color:#fff;
     }
+
     .chip{
-      display:flex; align-items:center; padding:0 12px; font-size:13px;
+      display:flex;
+      align-items:center;
+      padding:0 12px;
+      font-size:13px;
     }
 
     .panel{
-      position:absolute; left:10px; bottom:calc(env(safe-area-inset-bottom, 0px) + 10px);
-      z-index:40; width:min(420px, calc(100vw - 20px));
-      border:1px solid var(--panelBorder); border-radius:16px;
-      background:var(--panel); backdrop-filter:blur(12px); padding:14px;
+      position:absolute;
+      left:10px;
+      bottom:calc(env(safe-area-inset-bottom, 0px) + 10px);
+      z-index:20;
+      width:min(420px, calc(100vw - 20px));
+      border:1px solid var(--panelBorder);
+      border-radius:16px;
+      background:var(--panel);
+      backdrop-filter:blur(10px);
+      padding:14px;
     }
 
-    .title{ font-size:18px; font-weight:700; margin-bottom:6px; }
-    .desc{ font-size:12px; color:var(--muted); line-height:1.5; margin-bottom:12px; }
+    .title{
+      font-size:18px;
+      font-weight:700;
+      margin-bottom:6px;
+    }
 
-    .row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
-    .row:last-child{ margin-bottom:0; }
+    .desc{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.5;
+      margin-bottom:12px;
+    }
 
     .sliderWrap{
-      display:grid; grid-template-columns:86px 1fr 56px; gap:10px;
-      align-items:center; margin-bottom:10px; font-size:12px; color:var(--muted);
+      display:grid;
+      grid-template-columns:90px 1fr 58px;
+      gap:10px;
+      align-items:center;
+      margin-bottom:10px;
+      font-size:12px;
+      color:var(--muted);
     }
-    .sliderWrap:last-child{ margin-bottom:0; }
+
+    .sliderWrap:last-child{
+      margin-bottom:0;
+    }
 
     input[type="range"]{
-      width:100%; appearance:none; height:6px; border-radius:999px; background:#2a2a2a; outline:none;
+      width:100%;
+      appearance:none;
+      height:6px;
+      border-radius:999px;
+      background:#2a2a2a;
+      outline:none;
     }
+
     input[type="range"]::-webkit-slider-thumb{
-      appearance:none; width:18px; height:18px; border-radius:50%; background:#fff; border:none;
+      appearance:none;
+      width:18px;
+      height:18px;
+      border-radius:50%;
+      background:#fff;
+      border:none;
     }
 
     .status{
-      position:absolute; right:10px; bottom:calc(env(safe-area-inset-bottom, 0px) + 10px);
-      z-index:40; width:min(420px, calc(100vw - 20px));
-      border:1px solid var(--panelBorder); border-radius:16px;
-      background:rgba(8,8,8,0.86); backdrop-filter:blur(10px);
-      padding:12px 14px; font-size:12px; line-height:1.55; color:var(--muted);
+      position:absolute;
+      right:10px;
+      bottom:calc(env(safe-area-inset-bottom, 0px) + 10px);
+      z-index:20;
+      width:min(380px, calc(100vw - 20px));
+      border:1px solid var(--panelBorder);
+      border-radius:16px;
+      background:rgba(8,8,8,0.84);
+      backdrop-filter:blur(10px);
+      padding:12px 14px;
+      font-size:12px;
+      line-height:1.55;
+      color:var(--muted);
     }
-    .status strong{ color:#fff; }
+
+    .status strong{
+      color:#fff;
+    }
 
     @media (max-width: 900px){
-      .status{ display:none; }
+      .status{
+        display:none;
+      }
     }
   </style>
 </head>
@@ -100,7 +188,7 @@
 <div id="app">
   <div class="topbar">
     <div class="group">
-      <div id="modeChip" class="chip">움직임 → 진동 주파수</div>
+      <div class="chip">사람 디텍팅 + 사운드 출력</div>
     </div>
     <div class="group">
       <button id="cameraBtn" class="btn">카메라 시작</button>
@@ -115,10 +203,10 @@
   <video id="video" playsinline autoplay muted></video>
 
   <div class="panel">
-    <div class="title">인기척: 움직임을 진동 주파수로</div>
+    <div class="title">인기척</div>
     <div class="desc">
-      사람의 움직임이 커질수록 출력 주파수가 올라갑니다.
-      현재 버전은 전체 사람의 움직임을 하나의 대표값으로 모아, 하나의 소리로 출력합니다.
+      사람 움직임을 감지해서 하나의 대표 주파수로 소리를 냅니다.
+      파란 박스는 사람 디텍팅, 하단 바는 현재 움직임과 출력 주파수 상태입니다.
     </div>
 
     <div class="sliderWrap">
@@ -165,7 +253,7 @@
   </div>
 
   <div class="status">
-    <strong>시스템 정보</strong><br>
+    <strong>시스템 정보</strong><br />
     <span id="statusText">로딩중...</span>
   </div>
 </div>
@@ -227,7 +315,6 @@
     mockBtn: document.getElementById("mockBtn"),
     resetBtn: document.getElementById("resetBtn"),
     fsBtn: document.getElementById("fsBtn"),
-    modeChip: document.getElementById("modeChip"),
     statusText: document.getElementById("statusText"),
 
     thresholdRange: document.getElementById("thresholdRange"),
@@ -292,7 +379,7 @@
       `오디오 ${state.audioStarted ? "켜짐" : "꺼짐"} / ` +
       `사람 ${confirmed.length}명 / ` +
       `움직임 사람 ${moving}명 / ` +
-      `대표 움직임 ${state.currentMotionEnergy.toFixed(3)} / ` +
+      `움직임값 ${state.currentMotionEnergy.toFixed(3)} / ` +
       `출력 ${state.currentFreq.toFixed(1)} Hz / ` +
       `FPS ${Math.round(state.fps)}`;
   }
@@ -425,8 +512,14 @@
       const c = centroids[di];
       state.tracks.push({
         id: state.nextTrackId++,
-        x: c.x, y: c.y, w: c.w, h: c.h,
-        displayX: c.x, displayY: c.y, displayW: c.w, displayH: c.h,
+        x: c.x,
+        y: c.y,
+        w: c.w,
+        h: c.h,
+        displayX: c.x,
+        displayY: c.y,
+        displayW: c.w,
+        displayH: c.h,
         missed: 0,
         seenCount: 1,
         confirmed: false,
@@ -599,25 +692,6 @@
     }
   }
 
-  function drawBackgroundGrid(W, H) {
-    ctx.strokeStyle = "rgba(255,255,255,0.05)";
-    ctx.lineWidth = 1;
-    const gap = 44;
-
-    for (let x = 0; x <= W; x += gap) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, H);
-      ctx.stroke();
-    }
-    for (let y = 0; y <= H; y += gap) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(W, y);
-      ctx.stroke();
-    }
-  }
-
   function drawContainVideoRect(targetW, targetH) {
     const vw = state.cameraOn ? (video.videoWidth || 1280) : 1280;
     const vh = state.cameraOn ? (video.videoHeight || 720) : 720;
@@ -644,21 +718,18 @@
     const H = canvas.clientHeight;
 
     ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = "rgba(0,0,0,0.96)";
+    ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, W, H);
-    drawBackgroundGrid(W, H);
 
     if (state.cameraOn && video.readyState >= 2) {
       const r = drawContainVideoRect(W, H);
       ctx.drawImage(video, r.dx, r.dy, r.dw, r.dh);
-      ctx.strokeStyle = "rgba(255,255,255,0.08)";
-      ctx.strokeRect(r.dx, r.dy, r.dw, r.dh);
     } else {
       ctx.fillStyle = "rgba(255,255,255,0.05)";
       ctx.fillRect(20, 20, W - 40, H - 40);
       ctx.fillStyle = "rgba(255,255,255,0.45)";
       ctx.font = "14px sans-serif";
-      ctx.fillText("카메라가 꺼져 있어 Mock 사람 데이터로 시뮬레이션 중입니다.", 32, 44);
+      ctx.fillText("Mock 사람 데이터 실행 중", 30, 42);
     }
 
     for (const track of state.tracks) {
@@ -675,7 +746,7 @@
       }
 
       ctx.strokeStyle = BLUE_LINE;
-      ctx.lineWidth = 2.6;
+      ctx.lineWidth = 2.5;
       ctx.strokeRect(x, y, w, h);
 
       ctx.fillStyle = BLUE_FILL;
@@ -685,52 +756,40 @@
       ctx.font = "bold 14px sans-serif";
       const tw = ctx.measureText(label).width;
 
-      ctx.fillStyle = "rgba(8,12,30,0.90)";
+      ctx.fillStyle = "rgba(8,12,30,0.92)";
       ctx.fillRect(x, y - 24, tw + 16, 20);
       ctx.strokeStyle = BLUE_LINE;
-      ctx.lineWidth = 1.6;
+      ctx.lineWidth = 1.4;
       ctx.strokeRect(x, y - 24, tw + 16, 20);
 
       ctx.fillStyle = BLUE;
       ctx.fillText(label, x + 8, y - 9);
 
-      const cx = x + w / 2;
-      const cy = y + h / 2;
-
-      ctx.beginPath();
-      ctx.arc(cx, cy, 4.2, 0, Math.PI * 2);
-      ctx.fillStyle = BLUE;
-      ctx.fill();
-
       const motionNorm = clamp((track.motion || 0) / 0.05, 0, 1);
-      const barW = Math.max(24, w);
-      const bx = x;
-      const by = y + h + 8;
-
       ctx.fillStyle = "rgba(255,255,255,0.10)";
-      ctx.fillRect(bx, by, barW, 4);
+      ctx.fillRect(x, y + h + 8, Math.max(24, w), 4);
       ctx.fillStyle = BLUE;
-      ctx.fillRect(bx, by, barW * motionNorm, 4);
+      ctx.fillRect(x, y + h + 8, Math.max(24, w) * motionNorm, 4);
     }
 
     const meterW = Math.min(420, W - 40);
     const meterX = 20;
-    const meterY = H - 90;
+    const meterY = H - 80;
     const energyNorm = clamp(state.currentMotionEnergy / 0.05, 0, 1);
 
     ctx.fillStyle = "rgba(0,0,0,0.72)";
-    ctx.fillRect(meterX, meterY, meterW, 52);
+    ctx.fillRect(meterX, meterY, meterW, 44);
     ctx.strokeStyle = "rgba(255,255,255,0.08)";
-    ctx.strokeRect(meterX, meterY, meterW, 52);
+    ctx.strokeRect(meterX, meterY, meterW, 44);
 
     ctx.fillStyle = "#fff";
     ctx.font = "bold 13px sans-serif";
-    ctx.fillText(`MOTION ${state.currentMotionEnergy.toFixed(3)}  →  FREQ ${state.currentFreq.toFixed(1)} Hz`, meterX + 12, meterY + 18);
+    ctx.fillText(`MOTION ${state.currentMotionEnergy.toFixed(3)}   /   FREQ ${state.currentFreq.toFixed(1)} Hz`, meterX + 12, meterY + 17);
 
     ctx.fillStyle = "rgba(255,255,255,0.10)";
-    ctx.fillRect(meterX + 12, meterY + 28, meterW - 24, 10);
+    ctx.fillRect(meterX + 12, meterY + 26, meterW - 24, 8);
     ctx.fillStyle = BLUE;
-    ctx.fillRect(meterX + 12, meterY + 28, (meterW - 24) * energyNorm, 10);
+    ctx.fillRect(meterX + 12, meterY + 26, (meterW - 24) * energyNorm, 8);
   }
 
   async function tryFullscreen() {
