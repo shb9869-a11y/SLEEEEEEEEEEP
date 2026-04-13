@@ -2,46 +2,28 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
-  />
-  <title>인기척: 사람 디텍팅 / 3D 파동</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <title>인기척 - 움직임을 진동 주파수로</title>
 
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#000000" />
-
   <style>
     :root{
-      --panel:rgba(10,10,10,0.94);
+      --bg:#000;
+      --panel:rgba(10,10,10,0.92);
       --panelBorder:rgba(255,255,255,0.12);
       --text:#f3f3f3;
-      --muted:#a6a6a6;
-
+      --muted:#aaaaaa;
       --blue:#173BFF;
-      --blueFill:rgba(23,59,255,0.15);
       --blueLine:rgba(23,59,255,0.98);
-      --blueSoft:rgba(23,59,255,0.25);
-      --blueSoft2:rgba(23,59,255,0.55);
+      --blueFill:rgba(23,59,255,0.14);
     }
 
-    *{
-      box-sizing:border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-
+    *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
     html,body{
-      margin:0;
-      width:100%;
-      height:100%;
-      background:#000;
-      color:var(--text);
-      overflow:hidden;
+      margin:0; width:100%; height:100%; overflow:hidden;
+      background:#000; color:var(--text);
       font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR","Segoe UI",sans-serif;
     }
-
     body{
       background:
         linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px),
@@ -50,367 +32,142 @@
       background-size:44px 44px, 44px 44px, auto;
     }
 
-    #app{
-      position:relative;
-      width:100vw;
-      height:100vh;
-      overflow:hidden;
-      background:transparent;
-    }
-
-    canvas{
-      position:absolute;
-      inset:0;
-      width:100%;
-      height:100%;
-      display:block;
-    }
-
-    video{
-      display:none;
-    }
+    #app{ position:relative; width:100vw; height:100vh; overflow:hidden; }
+    video{ display:none; }
+    canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; }
 
     .topbar{
-      position:absolute;
-      top:calc(env(safe-area-inset-top, 0px) + 10px);
-      left:10px;
-      right:10px;
-      z-index:50;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      pointer-events:none;
+      position:absolute; top:calc(env(safe-area-inset-top, 0px) + 10px); left:10px; right:10px;
+      z-index:50; display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;
     }
+    .group{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
 
-    .topbarLeft,
-    .topbarRight{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      pointer-events:auto;
+    .btn,.chip{
+      min-height:44px; border-radius:12px; border:1px solid var(--panelBorder);
+      background:rgba(8,8,8,0.92); color:#fff; backdrop-filter:blur(10px);
     }
-
-    .iconBtn{
-      width:44px;
-      height:44px;
-      border-radius:12px;
-      border:1px solid var(--panelBorder);
-      background:rgba(8,8,8,0.92);
-      color:#fff;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:18px;
-      cursor:pointer;
-      backdrop-filter:blur(10px);
-    }
-
-    .chip{
-      min-height:44px;
-      padding:0 14px;
-      border-radius:12px;
-      border:1px solid var(--panelBorder);
-      background:rgba(8,8,8,0.92);
-      display:flex;
-      align-items:center;
-      font-size:13px;
-      color:#fff;
-      backdrop-filter:blur(10px);
-    }
-
-    .overlay{
-      position:absolute;
-      inset:0;
-      background:rgba(0,0,0,0.56);
-      opacity:0;
-      pointer-events:none;
-      transition:opacity 0.25s ease;
-      z-index:45;
-    }
-
-    .overlay.show{
-      opacity:1;
-      pointer-events:auto;
-    }
-
-    .sidebar{
-      position:absolute;
-      top:0;
-      left:0;
-      width:min(360px, 88vw);
-      height:100%;
-      z-index:60;
-      transform:translateX(-100%);
-      transition:transform 0.28s ease;
-      background:rgba(8,8,8,0.97);
-      border-right:1px solid var(--panelBorder);
-      padding:
-        calc(env(safe-area-inset-top, 0px) + 16px)
-        16px
-        calc(env(safe-area-inset-bottom, 0px) + 16px)
-        16px;
-      overflow:auto;
-      backdrop-filter:blur(14px);
-    }
-
-    .sidebar.open{
-      transform:translateX(0);
-    }
-
-    .title{
-      font-size:24px;
-      font-weight:700;
-      margin-bottom:8px;
-      letter-spacing:-0.02em;
-    }
-
-    .subtitle{
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.5;
-      margin-bottom:18px;
-    }
-
-    .section{
-      margin-bottom:18px;
-      padding-bottom:18px;
-      border-bottom:1px solid rgba(255,255,255,0.08);
-    }
-
-    .section:last-child{
-      margin-bottom:0;
-      padding-bottom:0;
-      border-bottom:none;
-    }
-
-    .label{
-      font-size:12px;
-      color:var(--muted);
-      margin-bottom:10px;
-      text-transform:uppercase;
-      letter-spacing:0.08em;
-    }
-
-    .row{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      margin-bottom:10px;
-    }
-
     .btn{
-      min-height:44px;
-      padding:12px 14px;
-      border-radius:12px;
-      border:1px solid var(--panelBorder);
-      background:#151515;
-      color:#f3f3f3;
-      font-size:14px;
-      font-weight:600;
-      cursor:pointer;
+      padding:0 14px; cursor:pointer; font-size:14px; font-weight:600;
     }
-
     .btn.active{
-      background:#fff;
-      color:#000;
-      border-color:#fff;
+      background:#fff; color:#000; border-color:#fff;
+    }
+    .chip{
+      display:flex; align-items:center; padding:0 12px; font-size:13px;
     }
 
-    .btn.block{
-      width:100%;
+    .panel{
+      position:absolute; left:10px; bottom:calc(env(safe-area-inset-bottom, 0px) + 10px);
+      z-index:40; width:min(420px, calc(100vw - 20px));
+      border:1px solid var(--panelBorder); border-radius:16px;
+      background:var(--panel); backdrop-filter:blur(12px); padding:14px;
     }
+
+    .title{ font-size:18px; font-weight:700; margin-bottom:6px; }
+    .desc{ font-size:12px; color:var(--muted); line-height:1.5; margin-bottom:12px; }
+
+    .row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+    .row:last-child{ margin-bottom:0; }
 
     .sliderWrap{
-      display:grid;
-      grid-template-columns: 90px 1fr 52px;
-      gap:10px;
-      align-items:center;
-      margin-bottom:10px;
-      font-size:13px;
-      color:var(--muted);
+      display:grid; grid-template-columns:86px 1fr 56px; gap:10px;
+      align-items:center; margin-bottom:10px; font-size:12px; color:var(--muted);
     }
+    .sliderWrap:last-child{ margin-bottom:0; }
 
     input[type="range"]{
-      width:100%;
-      appearance:none;
-      height:6px;
-      border-radius:999px;
-      background:#2a2a2a;
-      outline:none;
+      width:100%; appearance:none; height:6px; border-radius:999px; background:#2a2a2a; outline:none;
     }
-
     input[type="range"]::-webkit-slider-thumb{
-      appearance:none;
-      width:18px;
-      height:18px;
-      border-radius:50%;
-      background:#fff;
-      border:none;
+      appearance:none; width:18px; height:18px; border-radius:50%; background:#fff; border:none;
     }
 
-    .checkRow{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      min-height:42px;
-      padding:10px 0;
-      font-size:14px;
-      color:#eaeaea;
+    .status{
+      position:absolute; right:10px; bottom:calc(env(safe-area-inset-bottom, 0px) + 10px);
+      z-index:40; width:min(420px, calc(100vw - 20px));
+      border:1px solid var(--panelBorder); border-radius:16px;
+      background:rgba(8,8,8,0.86); backdrop-filter:blur(10px);
+      padding:12px 14px; font-size:12px; line-height:1.55; color:var(--muted);
     }
+    .status strong{ color:#fff; }
 
-    .checkRow input{
-      width:18px;
-      height:18px;
-    }
-
-    .floatingInfo{
-      position:absolute;
-      right:10px;
-      bottom:calc(env(safe-area-inset-bottom, 0px) + 10px);
-      z-index:30;
-      max-width:min(380px, calc(100vw - 20px));
-      border:1px solid var(--panelBorder);
-      background:rgba(8,8,8,0.88);
-      border-radius:16px;
-      padding:12px 14px;
-      color:var(--muted);
-      font-size:12px;
-      line-height:1.5;
-      backdrop-filter:blur(10px);
-    }
-
-    .floatingInfo strong{
-      color:#fff;
-    }
-
-    @media (max-width: 799px){
-      .floatingInfo{
-        left:10px;
-        right:10px;
-        max-width:none;
-      }
+    @media (max-width: 900px){
+      .status{ display:none; }
     }
   </style>
 </head>
 <body>
 <div id="app">
   <div class="topbar">
-    <div class="topbarLeft">
-      <button id="menuBtn" class="iconBtn" aria-label="메뉴">☰</button>
-      <div id="modeChip" class="chip">사람 디텍팅</div>
+    <div class="group">
+      <div id="modeChip" class="chip">움직임 → 진동 주파수</div>
     </div>
-    <div class="topbarRight">
-      <button id="fullscreenBtn" class="iconBtn" aria-label="전체화면">⤢</button>
+    <div class="group">
+      <button id="cameraBtn" class="btn">카메라 시작</button>
+      <button id="audioBtn" class="btn">오디오 시작</button>
+      <button id="mockBtn" class="btn">Mock</button>
+      <button id="resetBtn" class="btn">리셋</button>
+      <button id="fsBtn" class="btn">전체화면</button>
     </div>
   </div>
 
-  <div id="overlay" class="overlay"></div>
-
-  <aside id="sidebar" class="sidebar open">
-    <div class="title">인기척: 사람 디텍팅</div>
-    <div class="subtitle">
-      사람만 파란 박스로 감지하고 같은 사람은 ID를 유지합니다.
-      파동은 사람마다 따로 쏘지 않고, 전체 움직임의 대표 중심점 하나에서만 천천히 발화합니다.
-      가로 모드에서는 디텍팅과 3D 파동을 동시에 볼 수 있습니다.
-    </div>
-
-    <div class="section">
-      <div class="label">화면</div>
-      <div class="row">
-        <button id="modeDetectBtn" class="btn active">1. 디텍팅</button>
-        <button id="modeRippleBtn" class="btn">2. 파동</button>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="label">카메라 / 실행</div>
-      <div class="row">
-        <button id="cameraBtn" class="btn block">카메라 시작</button>
-        <button id="mockBtn" class="btn block">Mock 사람 테스트</button>
-        <button id="resetBtn" class="btn block">리셋</button>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="label">감지 / 트래킹</div>
-      <div class="sliderWrap">
-        <span>신뢰도</span>
-        <input id="thresholdRange" type="range" min="0.30" max="0.85" step="0.01" value="0.46">
-        <span id="thresholdVal">0.46</span>
-      </div>
-      <div class="sliderWrap">
-        <span>움직임</span>
-        <input id="motionRange" type="range" min="0.002" max="0.08" step="0.001" value="0.018">
-        <span id="motionVal">0.018</span>
-      </div>
-      <div class="sliderWrap">
-        <span>트래킹</span>
-        <input id="smoothRange" type="range" min="0.08" max="0.45" step="0.01" value="0.18">
-        <span id="smoothVal">0.18</span>
-      </div>
-      <div class="sliderWrap">
-        <span>확정프레임</span>
-        <input id="confirmRange" type="range" min="1" max="4" step="1" value="2">
-        <span id="confirmVal">2</span>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="label">파동</div>
-      <div class="sliderWrap">
-        <span>강도</span>
-        <input id="energyRange" type="range" min="0.6" max="3.2" step="0.1" value="1.9">
-        <span id="energyVal">1.9</span>
-      </div>
-      <div class="sliderWrap">
-        <span>감쇠</span>
-        <input id="dampingRange" type="range" min="0.960" max="0.992" step="0.001" value="0.982">
-        <span id="dampingVal">0.982</span>
-      </div>
-      <div class="sliderWrap">
-        <span>발화문턱</span>
-        <input id="globalMotionRange" type="range" min="0.010" max="0.080" step="0.001" value="0.025">
-        <span id="globalMotionVal">0.025</span>
-      </div>
-      <div class="sliderWrap">
-        <span>쿨다운</span>
-        <input id="cooldownRange" type="range" min="200" max="1200" step="20" value="520">
-        <span id="cooldownVal">520</span>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="label">옵션</div>
-      <label class="checkRow">
-        <span>상태 정보 표시</span>
-        <input id="showStatusCheck" type="checkbox" checked>
-      </label>
-      <label class="checkRow">
-        <span>가로 모드 동시 보기 허용</span>
-        <input id="landscapeDualCheck" type="checkbox" checked>
-      </label>
-    </div>
-
-    <div class="section">
-      <div class="label">설명</div>
-      <div style="font-size:13px; line-height:1.55; color:var(--muted);">
-        • 사람만 표시<br/>
-        • 박스 / 라벨 / 포인트는 진한 파랑<br/>
-        • 박스는 smoothing으로 부드럽게 따라감<br/>
-        • 파동은 여러 개가 아니라 대표 포인트 하나에서 발화<br/>
-        • 2D는 제거, 3D 파동만 유지
-      </div>
-    </div>
-  </aside>
-
-  <div id="floatingInfo" class="floatingInfo">
-    <strong>시스템 정보</strong><br/>
-    <span id="statusText">-</span>
-  </div>
-
-  <canvas id="mainCanvas"></canvas>
+  <canvas id="canvas"></canvas>
   <video id="video" playsinline autoplay muted></video>
+
+  <div class="panel">
+    <div class="title">인기척: 움직임을 진동 주파수로</div>
+    <div class="desc">
+      사람의 움직임이 커질수록 출력 주파수가 올라갑니다.
+      현재 버전은 전체 사람의 움직임을 하나의 대표값으로 모아, 하나의 소리로 출력합니다.
+    </div>
+
+    <div class="sliderWrap">
+      <span>신뢰도</span>
+      <input id="thresholdRange" type="range" min="0.30" max="0.85" step="0.01" value="0.46">
+      <span id="thresholdVal">0.46</span>
+    </div>
+
+    <div class="sliderWrap">
+      <span>움직임문턱</span>
+      <input id="motionRange" type="range" min="0.002" max="0.08" step="0.001" value="0.018">
+      <span id="motionVal">0.018</span>
+    </div>
+
+    <div class="sliderWrap">
+      <span>트래킹</span>
+      <input id="smoothRange" type="range" min="0.08" max="0.45" step="0.01" value="0.18">
+      <span id="smoothVal">0.18</span>
+    </div>
+
+    <div class="sliderWrap">
+      <span>최저 Hz</span>
+      <input id="minFreqRange" type="range" min="20" max="120" step="1" value="40">
+      <span id="minFreqVal">40</span>
+    </div>
+
+    <div class="sliderWrap">
+      <span>최고 Hz</span>
+      <input id="maxFreqRange" type="range" min="80" max="400" step="1" value="180">
+      <span id="maxFreqVal">180</span>
+    </div>
+
+    <div class="sliderWrap">
+      <span>볼륨</span>
+      <input id="gainRange" type="range" min="0" max="0.4" step="0.005" value="0.08">
+      <span id="gainVal">0.08</span>
+    </div>
+
+    <div class="sliderWrap">
+      <span>오디오반응</span>
+      <input id="audioSmoothRange" type="range" min="0.02" max="0.35" step="0.01" value="0.12">
+      <span id="audioSmoothVal">0.12</span>
+    </div>
+  </div>
+
+  <div class="status">
+    <strong>시스템 정보</strong><br>
+    <span id="statusText">로딩중...</span>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
@@ -420,18 +177,9 @@
 (() => {
   const BLUE = "#173BFF";
   const BLUE_LINE = "rgba(23,59,255,0.98)";
-  const BLUE_FILL = "rgba(23,59,255,0.15)";
-  const BLUE_SOFT = "rgba(23,59,255,0.25)";
-  const BLUE_SOFT_2 = "rgba(23,59,255,0.55)";
-
-  const GRID_W = 10;
-  const GRID_H = 10;
-  const GRID_SIZE = GRID_W * GRID_H;
+  const BLUE_FILL = "rgba(23,59,255,0.14)";
 
   const state = {
-    mode: "detect",
-    sidebarOpen: true,
-
     model: null,
     modelReady: false,
     detecting: false,
@@ -439,216 +187,161 @@
     cameraOn: false,
     usingMock: true,
 
-    tracks: [],
-    nextTrackId: 1,
-    lastDetections: [],
-    mockPeople: [],
-
-    gridW: GRID_W,
-    gridH: GRID_H,
-    gridValues: new Float32Array(GRID_SIZE),
-    nextGridValues: new Float32Array(GRID_SIZE),
-    velocityGrid: new Float32Array(GRID_SIZE),
-
     detectThreshold: 0.46,
     motionThreshold: 0.018,
     trackingSmoothness: 0.18,
-    confirmFrames: 2,
 
-    energy: 1.9,
-    damping: 0.982,
-    globalMotionThreshold: 0.025,
-    lastImpulseTime: 0,
-    impulseCooldownMs: 520,
-    globalFocusX: 0.5,
-    globalFocusY: 0.5,
+    minFreq: 40,
+    maxFreq: 180,
+    gain: 0.08,
+    audioSmooth: 0.12,
+
+    currentFreq: 40,
+    targetFreq: 40,
+    currentMotionEnergy: 0,
+
+    tracks: [],
+    nextTrackId: 1,
+    detections: [],
+    mockPeople: [],
 
     lastDetectRun: 0,
-    detectIntervalMs: 150,
+    detectIntervalMs: 140,
 
     lastFrameTime: performance.now(),
     fps: 0,
-    lastUiUpdate: 0,
 
-    showStatus: true,
-    landscapeDual: true
+    audioCtx: null,
+    oscillator: null,
+    gainNode: null,
+    audioStarted: false
   };
 
-  const canvas = document.getElementById("mainCanvas");
+  const canvas = document.getElementById("canvas");
   const ctx = canvas.getContext("2d", { alpha: false });
   const video = document.getElementById("video");
 
   const ui = {
-    sidebar: document.getElementById("sidebar"),
-    overlay: document.getElementById("overlay"),
-    menuBtn: document.getElementById("menuBtn"),
-    fullscreenBtn: document.getElementById("fullscreenBtn"),
-    modeChip: document.getElementById("modeChip"),
-
-    modeDetectBtn: document.getElementById("modeDetectBtn"),
-    modeRippleBtn: document.getElementById("modeRippleBtn"),
-
     cameraBtn: document.getElementById("cameraBtn"),
+    audioBtn: document.getElementById("audioBtn"),
     mockBtn: document.getElementById("mockBtn"),
     resetBtn: document.getElementById("resetBtn"),
+    fsBtn: document.getElementById("fsBtn"),
+    modeChip: document.getElementById("modeChip"),
+    statusText: document.getElementById("statusText"),
 
     thresholdRange: document.getElementById("thresholdRange"),
     motionRange: document.getElementById("motionRange"),
     smoothRange: document.getElementById("smoothRange"),
-    confirmRange: document.getElementById("confirmRange"),
+    minFreqRange: document.getElementById("minFreqRange"),
+    maxFreqRange: document.getElementById("maxFreqRange"),
+    gainRange: document.getElementById("gainRange"),
+    audioSmoothRange: document.getElementById("audioSmoothRange"),
 
     thresholdVal: document.getElementById("thresholdVal"),
     motionVal: document.getElementById("motionVal"),
     smoothVal: document.getElementById("smoothVal"),
-    confirmVal: document.getElementById("confirmVal"),
-
-    energyRange: document.getElementById("energyRange"),
-    dampingRange: document.getElementById("dampingRange"),
-    globalMotionRange: document.getElementById("globalMotionRange"),
-    cooldownRange: document.getElementById("cooldownRange"),
-
-    energyVal: document.getElementById("energyVal"),
-    dampingVal: document.getElementById("dampingVal"),
-    globalMotionVal: document.getElementById("globalMotionVal"),
-    cooldownVal: document.getElementById("cooldownVal"),
-
-    showStatusCheck: document.getElementById("showStatusCheck"),
-    landscapeDualCheck: document.getElementById("landscapeDualCheck"),
-
-    floatingInfo: document.getElementById("floatingInfo"),
-    statusText: document.getElementById("statusText")
+    minFreqVal: document.getElementById("minFreqVal"),
+    maxFreqVal: document.getElementById("maxFreqVal"),
+    gainVal: document.getElementById("gainVal"),
+    audioSmoothVal: document.getElementById("audioSmoothVal")
   };
-
-  function idx(x, y) {
-    return y * state.gridW + x;
-  }
 
   function clamp(v, min, max) {
     return Math.max(min, Math.min(max, v));
-  }
-
-  function rand(min, max) {
-    return Math.random() * (max - min) + min;
   }
 
   function lerp(a, b, t) {
     return a + (b - a) * t;
   }
 
-  function setActive(el, on) {
-    el.classList.toggle("active", !!on);
+  function rand(min, max) {
+    return Math.random() * (max - min) + min;
   }
 
   function resizeCanvas() {
-    const dpr = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
     const w = Math.floor(window.innerWidth);
     const h = Math.floor(window.innerHeight);
-
     canvas.width = Math.floor(w * dpr);
     canvas.height = Math.floor(h * dpr);
     canvas.style.width = w + "px";
     canvas.style.height = h + "px";
-
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.imageSmoothingEnabled = true;
+  }
+
+  function updateUI() {
+    ui.cameraBtn.textContent = state.cameraOn ? "카메라 끄기" : "카메라 시작";
+    ui.audioBtn.textContent = state.audioStarted ? "오디오 켜짐" : "오디오 시작";
+    ui.audioBtn.classList.toggle("active", state.audioStarted);
+
+    ui.thresholdVal.textContent = state.detectThreshold.toFixed(2);
+    ui.motionVal.textContent = state.motionThreshold.toFixed(3);
+    ui.smoothVal.textContent = state.trackingSmoothness.toFixed(2);
+    ui.minFreqVal.textContent = Math.round(state.minFreq);
+    ui.maxFreqVal.textContent = Math.round(state.maxFreq);
+    ui.gainVal.textContent = state.gain.toFixed(3);
+    ui.audioSmoothVal.textContent = state.audioSmooth.toFixed(2);
+
+    const confirmed = state.tracks.filter(t => t.confirmed);
+    const moving = confirmed.filter(t => (t.motion || 0) >= state.motionThreshold).length;
+
+    ui.statusText.textContent =
+      `모델 ${state.modelReady ? "준비" : "로딩중"} / ` +
+      `카메라 ${state.cameraOn ? "켜짐" : "꺼짐"} / ` +
+      `오디오 ${state.audioStarted ? "켜짐" : "꺼짐"} / ` +
+      `사람 ${confirmed.length}명 / ` +
+      `움직임 사람 ${moving}명 / ` +
+      `대표 움직임 ${state.currentMotionEnergy.toFixed(3)} / ` +
+      `출력 ${state.currentFreq.toFixed(1)} Hz / ` +
+      `FPS ${Math.round(state.fps)}`;
   }
 
   function resetAll() {
     state.tracks.length = 0;
     state.nextTrackId = 1;
-    state.lastDetections.length = 0;
+    state.detections.length = 0;
     state.mockPeople.length = 0;
-    state.gridValues.fill(0);
-    state.nextGridValues.fill(0);
-    state.velocityGrid.fill(0);
-    state.lastImpulseTime = 0;
-    state.globalFocusX = 0.5;
-    state.globalFocusY = 0.5;
-  }
-
-  function isLandscape() {
-    return window.innerWidth > window.innerHeight;
-  }
-
-  function updateUI(force = false) {
-    const now = performance.now();
-    if (!force && now - state.lastUiUpdate < 180) return;
-    state.lastUiUpdate = now;
-
-    ui.sidebar.classList.toggle("open", state.sidebarOpen);
-    ui.overlay.classList.toggle("show", state.sidebarOpen);
-
-    setActive(ui.modeDetectBtn, state.mode === "detect");
-    setActive(ui.modeRippleBtn, state.mode === "ripple");
-
-    ui.modeChip.textContent = state.mode === "detect" ? "사람 디텍팅" : "파동 시각화";
-
-    ui.thresholdVal.textContent = state.detectThreshold.toFixed(2);
-    ui.motionVal.textContent = state.motionThreshold.toFixed(3);
-    ui.smoothVal.textContent = state.trackingSmoothness.toFixed(2);
-    ui.confirmVal.textContent = String(state.confirmFrames);
-
-    ui.energyVal.textContent = state.energy.toFixed(1);
-    ui.dampingVal.textContent = state.damping.toFixed(3);
-    ui.globalMotionVal.textContent = state.globalMotionThreshold.toFixed(3);
-    ui.cooldownVal.textContent = String(Math.round(state.impulseCooldownMs));
-
-    ui.showStatusCheck.checked = state.showStatus;
-    ui.landscapeDualCheck.checked = state.landscapeDual;
-    ui.floatingInfo.style.display = state.showStatus ? "block" : "none";
-
-    const confirmedTracks = state.tracks.filter(t => t.confirmed);
-    const movingCount = confirmedTracks.filter(t => (t.motion || 0) >= state.motionThreshold).length;
-
-    ui.statusText.textContent =
-      `모델 ${state.modelReady ? "준비" : "로딩중"} / ` +
-      `카메라 ${state.cameraOn ? "켜짐" : "꺼짐"} / ` +
-      `사람 ${confirmedTracks.length}명 / ` +
-      `활성 움직임 ${movingCount}명 / ` +
-      `FPS ${Math.round(state.fps)} / ` +
-      `대표발화 ${Math.round(state.impulseCooldownMs)}ms`;
-  }
-
-  function toggleSidebar(forceValue = null) {
-    state.sidebarOpen = forceValue === null ? !state.sidebarOpen : forceValue;
-    updateUI(true);
+    state.currentMotionEnergy = 0;
+    state.targetFreq = state.minFreq;
+    state.currentFreq = state.minFreq;
+    if (state.usingMock) addMockPeople();
   }
 
   function addMockPeople() {
     state.mockPeople.length = 0;
-    const count = Math.floor(rand(2, 6));
+    const count = Math.floor(rand(2, 5));
     for (let i = 0; i < count; i++) {
       state.mockPeople.push({
         x: rand(0.18, 0.82),
         y: rand(0.22, 0.78),
         w: rand(0.08, 0.12),
-        h: rand(0.20, 0.29),
+        h: rand(0.20, 0.28),
         vx: rand(-0.0035, 0.0035),
-        vy: rand(-0.0028, 0.0028),
-        twitch: rand(0.6, 1.4)
+        vy: rand(-0.003, 0.003),
+        twitch: rand(0.8, 1.5)
       });
     }
-    state.usingMock = true;
   }
 
   function updateMockPeople() {
     const W = canvas.clientWidth || window.innerWidth;
     const H = canvas.clientHeight || window.innerHeight;
-    state.lastDetections.length = 0;
+    state.detections.length = 0;
 
     for (const p of state.mockPeople) {
       p.x += p.vx;
       p.y += p.vy;
 
-      if (Math.random() < 0.04 * p.twitch) {
-        p.x += rand(-0.008, 0.008);
-        p.y += rand(-0.008, 0.008);
+      if (Math.random() < 0.05 * p.twitch) {
+        p.x += rand(-0.01, 0.01);
+        p.y += rand(-0.01, 0.01);
       }
 
       if (p.x < 0.10 || p.x > 0.90) p.vx *= -1;
       if (p.y < 0.14 || p.y > 0.86) p.vy *= -1;
 
-      state.lastDetections.push({
+      state.detections.push({
         bbox: [
           (p.x - p.w / 2) * W,
           (p.y - p.h / 2) * H,
@@ -690,20 +383,14 @@
 
   function updateTracks(detections) {
     const centroids = detections.map(centroidOfDet);
-
     const unmatchedDet = new Set(centroids.map((_, i) => i));
     const unmatchedTracks = new Set(state.tracks.map((_, i) => i));
-
     const pairs = [];
     const maxDist = Math.min(canvas.clientWidth, canvas.clientHeight) * 0.14;
 
     for (let ti = 0; ti < state.tracks.length; ti++) {
       for (let di = 0; di < centroids.length; di++) {
-        pairs.push({
-          ti,
-          di,
-          dist: distance(state.tracks[ti], centroids[di])
-        });
+        pairs.push({ ti, di, dist: distance(state.tracks[ti], centroids[di]) });
       }
     }
     pairs.sort((a, b) => a.dist - b.dist);
@@ -723,14 +410,12 @@
       t.w = c.w;
       t.h = c.h;
       t.missed = 0;
-
       t.seenCount = (t.seenCount || 0) + 1;
-      if (t.seenCount >= state.confirmFrames) t.confirmed = true;
+      if (t.seenCount >= 2) t.confirmed = true;
 
       const motionPx = Math.sqrt((t.x - prevX) ** 2 + (t.y - prevY) ** 2);
       const norm = motionPx / Math.max(1, Math.min(canvas.clientWidth, canvas.clientHeight));
       t.motion = t.motion ? (t.motion * 0.65 + norm * 0.35) : norm;
-      t.pulse = Math.max(0, (t.motion - state.motionThreshold) / Math.max(0.0001, 0.08 - state.motionThreshold));
 
       unmatchedTracks.delete(p.ti);
       unmatchedDet.delete(p.di);
@@ -740,31 +425,19 @@
       const c = centroids[di];
       state.tracks.push({
         id: state.nextTrackId++,
-        x: c.x,
-        y: c.y,
-        w: c.w,
-        h: c.h,
-
-        displayX: c.x,
-        displayY: c.y,
-        displayW: c.w,
-        displayH: c.h,
-
+        x: c.x, y: c.y, w: c.w, h: c.h,
+        displayX: c.x, displayY: c.y, displayW: c.w, displayH: c.h,
         missed: 0,
         seenCount: 1,
-        confirmed: state.confirmFrames <= 1,
-
-        motion: 0,
-        pulse: 0
+        confirmed: false,
+        motion: 0
       });
     }
 
-    const trackIndexes = [...unmatchedTracks].reverse();
-    for (const ti of trackIndexes) {
+    for (const ti of [...unmatchedTracks].reverse()) {
       const t = state.tracks[ti];
       t.missed += 1;
-      t.motion = (t.motion || 0) * 0.85;
-      t.pulse = (t.pulse || 0) * 0.8;
+      t.motion *= 0.85;
     }
 
     state.tracks = state.tracks.filter(t => t.missed < 15);
@@ -773,17 +446,10 @@
   function smoothTracks() {
     const s = state.trackingSmoothness;
     for (const t of state.tracks) {
-      if (typeof t.displayX !== "number") {
-        t.displayX = t.x;
-        t.displayY = t.y;
-        t.displayW = t.w;
-        t.displayH = t.h;
-      } else {
-        t.displayX = lerp(t.displayX, t.x, s);
-        t.displayY = lerp(t.displayY, t.y, s);
-        t.displayW = lerp(t.displayW, t.w, s);
-        t.displayH = lerp(t.displayH, t.h, s);
-      }
+      t.displayX = lerp(t.displayX ?? t.x, t.x, s);
+      t.displayY = lerp(t.displayY ?? t.y, t.y, s);
+      t.displayW = lerp(t.displayW ?? t.w, t.w, s);
+      t.displayH = lerp(t.displayH ?? t.h, t.h, s);
     }
   }
 
@@ -791,7 +457,7 @@
     try {
       state.model = await cocoSsd.load({ base: "lite_mobilenet_v2" });
       state.modelReady = true;
-      updateUI(true);
+      updateUI();
     } catch (err) {
       console.error(err);
       alert("모델 로딩 실패");
@@ -810,27 +476,24 @@
       });
 
       video.srcObject = stream;
-      video.setAttribute("playsinline", "true");
       await video.play();
 
       state.cameraOn = true;
       state.usingMock = false;
-      updateUI(true);
+      updateUI();
     } catch (err) {
       console.error(err);
       alert("카메라 접근 실패. Mock 모드로 전환합니다.");
       stopCamera();
-      addMockPeople();
       state.usingMock = true;
-      updateUI(true);
+      addMockPeople();
+      updateUI();
     }
   }
 
   function stopCamera() {
     const stream = video.srcObject;
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-    }
+    if (stream) stream.getTracks().forEach(track => track.stop());
     video.srcObject = null;
     state.cameraOn = false;
   }
@@ -838,7 +501,6 @@
   async function runDetection(now) {
     if (state.detecting) return;
     if (now - state.lastDetectRun < state.detectIntervalMs) return;
-
     state.lastDetectRun = now;
 
     if (state.cameraOn && state.modelReady && video.readyState >= 2) {
@@ -848,7 +510,7 @@
         const vw = video.videoWidth || 1280;
         const vh = video.videoHeight || 720;
 
-        state.lastDetections = preds.filter(p => {
+        state.detections = preds.filter(p => {
           if (p.class !== "person") return false;
           if (p.score < state.detectThreshold) return false;
           if (!isLikelyHumanBox(p, vw, vh)) return false;
@@ -856,117 +518,91 @@
         });
       } catch (err) {
         console.error(err);
-        state.lastDetections = [];
+        state.detections = [];
       } finally {
         state.detecting = false;
       }
     } else if (state.usingMock) {
       updateMockPeople();
     } else {
-      state.lastDetections = [];
+      state.detections = [];
     }
 
-    updateTracks(state.lastDetections);
+    updateTracks(state.detections);
   }
 
-  function normalizeTrackToGrid(track, rectW = canvas.clientWidth, rectH = canvas.clientHeight) {
-    return {
-      gx: (track.displayX / Math.max(1, rectW)) * (state.gridW - 1),
-      gy: (track.displayY / Math.max(1, rectH)) * (state.gridH - 1)
-    };
-  }
-
-  function getGlobalMotionFocus() {
-    let sumWeight = 0;
-    let sumX = 0;
-    let sumY = 0;
-    let peakMotion = 0;
-
-    for (const track of state.tracks) {
-      if (!track.confirmed) continue;
-
-      const m = track.motion || 0;
-      if (m < state.motionThreshold) continue;
-
-      const weight = Math.max(0, m - state.motionThreshold);
-      sumWeight += weight;
-      sumX += track.displayX * weight;
-      sumY += track.displayY * weight;
-      peakMotion = Math.max(peakMotion, m);
+  function computeMotionEnergy() {
+    const confirmed = state.tracks.filter(t => t.confirmed);
+    if (!confirmed.length) {
+      state.currentMotionEnergy = lerp(state.currentMotionEnergy, 0, 0.08);
+      return;
     }
 
-    if (sumWeight <= 0) return null;
+    let sum = 0;
+    let count = 0;
 
-    return {
-      x: sumX / sumWeight,
-      y: sumY / sumWeight,
-      strength: sumWeight,
-      peakMotion
-    };
+    for (const t of confirmed) {
+      const m = t.motion || 0;
+      const active = Math.max(0, m - state.motionThreshold);
+      sum += active;
+      count++;
+    }
+
+    const avg = count ? (sum / count) : 0;
+    state.currentMotionEnergy = lerp(state.currentMotionEnergy, avg, 0.18);
   }
 
-  function injectMotionRipples(now) {
-    const focus = getGlobalMotionFocus();
-    if (!focus) return;
+  function updateAudioTarget() {
+    const normalized = clamp(state.currentMotionEnergy / 0.05, 0, 1);
+    state.targetFreq = state.minFreq + (state.maxFreq - state.minFreq) * normalized;
+    state.currentFreq = lerp(state.currentFreq, state.targetFreq, state.audioSmooth);
 
-    const rectW = Math.max(1, canvas.clientWidth);
-    const rectH = Math.max(1, canvas.clientHeight);
+    if (state.audioStarted && state.oscillator && state.gainNode && state.audioCtx) {
+      const now = state.audioCtx.currentTime;
+      state.oscillator.frequency.cancelScheduledValues(now);
+      state.oscillator.frequency.linearRampToValueAtTime(state.currentFreq, now + 0.06);
 
-    state.globalFocusX = focus.x / rectW;
-    state.globalFocusY = focus.y / rectH;
-
-    if (focus.peakMotion < state.globalMotionThreshold) return;
-    if (now - state.lastImpulseTime < state.impulseCooldownMs) return;
-
-    state.lastImpulseTime = now;
-
-    const gx = Math.round(state.globalFocusX * (state.gridW - 1));
-    const gy = Math.round(state.globalFocusY * (state.gridH - 1));
-
-    const clampedStrength = clamp(focus.strength * 18, 0.7, 2.4);
-    const impulse = state.energy * clampedStrength;
-
-    if (gx >= 0 && gx < state.gridW && gy >= 0 && gy < state.gridH) {
-      state.velocityGrid[idx(gx, gy)] += impulse;
+      const targetGain = normalized > 0.01 ? state.gain : 0.0;
+      state.gainNode.gain.cancelScheduledValues(now);
+      state.gainNode.gain.linearRampToValueAtTime(targetGain, now + 0.08);
     }
   }
 
-  function updateWaveField(now) {
-    injectMotionRipples(now);
-
-    for (let y = 0; y < state.gridH; y++) {
-      for (let x = 0; x < state.gridW; x++) {
-        const i = idx(x, y);
-
-        const center = state.gridValues[i];
-        const left  = x > 0 ? state.gridValues[idx(x - 1, y)] : 0;
-        const right = x < state.gridW - 1 ? state.gridValues[idx(x + 1, y)] : 0;
-        const up    = y > 0 ? state.gridValues[idx(x, y - 1)] : 0;
-        const down  = y < state.gridH - 1 ? state.gridValues[idx(x, y + 1)] : 0;
-
-        const laplacian = left + right + up + down - 4 * center;
-        state.velocityGrid[i] += laplacian * 0.11;
-        state.velocityGrid[i] *= state.damping;
-        state.nextGridValues[i] = center + state.velocityGrid[i];
+  async function startAudio() {
+    try {
+      if (!state.audioCtx) {
+        state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       }
-    }
 
-    const temp = state.gridValues;
-    state.gridValues = state.nextGridValues;
-    state.nextGridValues = temp;
+      if (state.audioCtx.state === "suspended") {
+        await state.audioCtx.resume();
+      }
+
+      if (!state.oscillator) {
+        state.oscillator = state.audioCtx.createOscillator();
+        state.gainNode = state.audioCtx.createGain();
+
+        state.oscillator.type = "sine";
+        state.oscillator.frequency.value = state.currentFreq;
+        state.gainNode.gain.value = 0.0;
+
+        state.oscillator.connect(state.gainNode);
+        state.gainNode.connect(state.audioCtx.destination);
+        state.oscillator.start();
+      }
+
+      state.audioStarted = true;
+      updateUI();
+    } catch (err) {
+      console.error(err);
+      alert("오디오 시작 실패");
+    }
   }
 
-  function drawBackgroundGrid(rect = null) {
-    const W = rect ? rect.w : canvas.clientWidth;
-    const H = rect ? rect.h : canvas.clientHeight;
-    const ox = rect ? rect.x : 0;
-    const oy = rect ? rect.y : 0;
-    const gap = 44;
-
-    ctx.save();
-    ctx.translate(ox, oy);
+  function drawBackgroundGrid(W, H) {
     ctx.strokeStyle = "rgba(255,255,255,0.05)";
     ctx.lineWidth = 1;
+    const gap = 44;
 
     for (let x = 0; x <= W; x += gap) {
       ctx.beginPath();
@@ -974,14 +610,12 @@
       ctx.lineTo(x, H);
       ctx.stroke();
     }
-
     for (let y = 0; y <= H; y += gap) {
       ctx.beginPath();
       ctx.moveTo(0, y);
       ctx.lineTo(W, y);
       ctx.stroke();
     }
-    ctx.restore();
   }
 
   function drawContainVideoRect(targetW, targetH) {
@@ -1005,17 +639,14 @@
     };
   }
 
-  function drawDetectionScene(rect = null) {
-    const W = rect ? rect.w : canvas.clientWidth;
-    const H = rect ? rect.h : canvas.clientHeight;
-    const ox = rect ? rect.x : 0;
-    const oy = rect ? rect.y : 0;
+  function drawScene() {
+    const W = canvas.clientWidth;
+    const H = canvas.clientHeight;
 
-    ctx.save();
-    ctx.translate(ox, oy);
-    ctx.fillStyle = "rgba(0,0,0,0.94)";
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = "rgba(0,0,0,0.96)";
     ctx.fillRect(0, 0, W, H);
-    drawBackgroundGrid({ x:0, y:0, w:W, h:H });
+    drawBackgroundGrid(W, H);
 
     if (state.cameraOn && video.readyState >= 2) {
       const r = drawContainVideoRect(W, H);
@@ -1023,11 +654,11 @@
       ctx.strokeStyle = "rgba(255,255,255,0.08)";
       ctx.strokeRect(r.dx, r.dy, r.dw, r.dh);
     } else {
-      ctx.fillStyle = "rgba(255,255,255,0.04)";
-      ctx.fillRect(18, 18, W - 36, H - 36);
+      ctx.fillStyle = "rgba(255,255,255,0.05)";
+      ctx.fillRect(20, 20, W - 40, H - 40);
       ctx.fillStyle = "rgba(255,255,255,0.45)";
       ctx.font = "14px sans-serif";
-      ctx.fillText("카메라가 꺼져 있어 Mock 사람 데이터로 시뮬레이션 중입니다.", 28, 42);
+      ctx.fillText("카메라가 꺼져 있어 Mock 사람 데이터로 시뮬레이션 중입니다.", 32, 44);
     }
 
     for (const track of state.tracks) {
@@ -1054,10 +685,10 @@
       ctx.font = "bold 14px sans-serif";
       const tw = ctx.measureText(label).width;
 
-      ctx.fillStyle = "rgba(8,12,30,0.88)";
+      ctx.fillStyle = "rgba(8,12,30,0.90)";
       ctx.fillRect(x, y - 24, tw + 16, 20);
       ctx.strokeStyle = BLUE_LINE;
-      ctx.lineWidth = 1.8;
+      ctx.lineWidth = 1.6;
       ctx.strokeRect(x, y - 24, tw + 16, 20);
 
       ctx.fillStyle = BLUE;
@@ -1071,322 +702,138 @@
       ctx.fillStyle = BLUE;
       ctx.fill();
 
-      ctx.strokeStyle = BLUE_SOFT_2;
-      ctx.beginPath();
-      ctx.moveTo(cx - 10, cy);
-      ctx.lineTo(cx + 10, cy);
-      ctx.moveTo(cx, cy - 10);
-      ctx.lineTo(cx, cy + 10);
-      ctx.stroke();
-
-      const motion = clamp((track.motion || 0) / 0.08, 0, 1);
-      const barW = Math.max(20, w);
+      const motionNorm = clamp((track.motion || 0) / 0.05, 0, 1);
+      const barW = Math.max(24, w);
       const bx = x;
       const by = y + h + 8;
 
       ctx.fillStyle = "rgba(255,255,255,0.10)";
       ctx.fillRect(bx, by, barW, 4);
-      ctx.fillStyle = motion >= (state.motionThreshold / 0.08) ? BLUE : "rgba(255,255,255,0.35)";
-      ctx.fillRect(bx, by, barW * motion, 4);
+      ctx.fillStyle = BLUE;
+      ctx.fillRect(bx, by, barW * motionNorm, 4);
     }
 
-    ctx.fillStyle = BLUE;
-    ctx.font = "bold 16px sans-serif";
-    ctx.fillText("사람 디텍팅 / ID 트래킹", 18, H - 18);
+    const meterW = Math.min(420, W - 40);
+    const meterX = 20;
+    const meterY = H - 90;
+    const energyNorm = clamp(state.currentMotionEnergy / 0.05, 0, 1);
 
-    ctx.restore();
-  }
-
-  function drawRipple3D(rect = null) {
-    const W = rect ? rect.w : canvas.clientWidth;
-    const H = rect ? rect.h : canvas.clientHeight;
-    const ox = rect ? rect.x : 0;
-    const oy = rect ? rect.y : 0;
-
-    const centerX = W * 0.5;
-    const startY = H * 0.22;
-    const tileW = Math.min(42, W / 18);
-    const tileH = tileW * 0.55;
-    const baseHeight = Math.min(18, H / 30);
-
-    ctx.save();
-    ctx.translate(ox, oy);
-    ctx.fillStyle = "rgba(0,0,0,0.96)";
-    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "rgba(0,0,0,0.72)";
+    ctx.fillRect(meterX, meterY, meterW, 52);
+    ctx.strokeStyle = "rgba(255,255,255,0.08)";
+    ctx.strokeRect(meterX, meterY, meterW, 52);
 
     ctx.fillStyle = "#fff";
-    ctx.font = "bold 16px sans-serif";
-    ctx.fillText("파동 시각화 / 3D Module", 18, 28);
+    ctx.font = "bold 13px sans-serif";
+    ctx.fillText(`MOTION ${state.currentMotionEnergy.toFixed(3)}  →  FREQ ${state.currentFreq.toFixed(1)} Hz`, meterX + 12, meterY + 18);
 
-    for (let gy = 0; gy < state.gridH; gy++) {
-      for (let gx = 0; gx < state.gridW; gx++) {
-        const v = clamp(Math.abs(state.gridValues[idx(gx, gy)]), 0, 2.2);
-        const h = baseHeight + v * 34;
-
-        const sx = centerX + (gx - gy) * tileW * 0.5;
-        const sy = startY + (gx + gy) * tileH * 0.5;
-
-        const top = [
-          [sx, sy - h],
-          [sx + tileW * 0.5, sy - tileH * 0.5 - h],
-          [sx, sy - tileH - h],
-          [sx - tileW * 0.5, sy - tileH * 0.5 - h]
-        ];
-
-        const right = [
-          [sx, sy - h],
-          [sx + tileW * 0.5, sy - tileH * 0.5 - h],
-          [sx + tileW * 0.5, sy - tileH * 0.5],
-          [sx, sy]
-        ];
-
-        const left = [
-          [sx, sy - h],
-          [sx - tileW * 0.5, sy - tileH * 0.5 - h],
-          [sx - tileW * 0.5, sy - tileH * 0.5],
-          [sx, sy]
-        ];
-
-        const topGray = Math.floor(40 + v * 90);
-        const rightGray = Math.floor(24 + v * 54);
-        const leftGray = Math.floor(14 + v * 36);
-
-        ctx.beginPath();
-        ctx.moveTo(top[0][0], top[0][1]);
-        for (let i = 1; i < top.length; i++) ctx.lineTo(top[i][0], top[i][1]);
-        ctx.closePath();
-        ctx.fillStyle = `rgba(${topGray},${topGray},${topGray},0.96)`;
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.moveTo(right[0][0], right[0][1]);
-        for (let i = 1; i < right.length; i++) ctx.lineTo(right[i][0], right[i][1]);
-        ctx.closePath();
-        ctx.fillStyle = `rgba(${rightGray},${rightGray},${rightGray},0.92)`;
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.moveTo(left[0][0], left[0][1]);
-        for (let i = 1; i < left.length; i++) ctx.lineTo(left[i][0], left[i][1]);
-        ctx.closePath();
-        ctx.fillStyle = `rgba(${leftGray},${leftGray},${leftGray},0.94)`;
-        ctx.fill();
-
-        ctx.strokeStyle = "rgba(255,255,255,0.06)";
-        ctx.stroke();
-      }
-    }
-
-    for (const track of state.tracks) {
-      if (!track.confirmed) continue;
-
-      const p = normalizeTrackToGrid(track);
-      const sx = centerX + (p.gx - p.gy) * tileW * 0.5;
-      const sy = startY + (p.gx + p.gy) * tileH * 0.5 - 98;
-      const active = (track.motion || 0) >= state.motionThreshold;
-
-      ctx.beginPath();
-      ctx.arc(sx, sy, active ? 7 : 5, 0, Math.PI * 2);
-      ctx.fillStyle = active ? BLUE : "rgba(255,255,255,0.45)";
-      ctx.fill();
-
-      const label = `PERSON ${track.id}`;
-      ctx.font = "bold 12px sans-serif";
-      const tw = ctx.measureText(label).width;
-      ctx.fillStyle = "rgba(0,0,0,0.92)";
-      ctx.fillRect(sx - tw/2 - 7, sy - 28, tw + 14, 18);
-      ctx.strokeStyle = active ? BLUE_LINE : "rgba(255,255,255,0.35)";
-      ctx.strokeRect(sx - tw/2 - 7, sy - 28, tw + 14, 18);
-      ctx.fillStyle = BLUE;
-      ctx.fillText(label, sx - tw/2, sy - 15);
-    }
-
-    const focusGX = state.globalFocusX * (state.gridW - 1);
-    const focusGY = state.globalFocusY * (state.gridH - 1);
-    const fx = centerX + (focusGX - focusGY) * tileW * 0.5;
-    const fy = startY + (focusGX + focusGY) * tileH * 0.5 - 108;
-
-    ctx.beginPath();
-    ctx.arc(fx, fy, 11, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(23,59,255,0.95)";
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.arc(fx, fy, 24, 0, Math.PI * 2);
-    ctx.strokeStyle = "rgba(23,59,255,0.28)";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    ctx.restore();
-  }
-
-  function drawRippleScene() {
-    const W = canvas.clientWidth;
-    const H = canvas.clientHeight;
-
-    if (isLandscape() && state.landscapeDual) {
-      const leftW = Math.max(280, W * 0.34);
-      const rightW = W - leftW;
-
-      drawDetectionScene({ x: 0, y: 0, w: leftW, h: H });
-      drawRipple3D({ x: leftW, y: 0, w: rightW, h: H });
-
-      ctx.strokeStyle = "rgba(255,255,255,0.08)";
-      ctx.beginPath();
-      ctx.moveTo(leftW, 0);
-      ctx.lineTo(leftW, H);
-      ctx.stroke();
-      return;
-    }
-
-    drawRipple3D();
-  }
-
-  function animate(now) {
-    const dt = now - state.lastFrameTime;
-    state.lastFrameTime = now;
-    state.fps = 1000 / Math.max(1, dt);
-
-    runDetection(now);
-    smoothTracks();
-    updateWaveField(now);
-
-    ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
-
-    if (state.mode === "detect") drawDetectionScene();
-    else drawRippleScene();
-
-    updateUI(false);
-    requestAnimationFrame(animate);
+    ctx.fillStyle = "rgba(255,255,255,0.10)";
+    ctx.fillRect(meterX + 12, meterY + 28, meterW - 24, 10);
+    ctx.fillStyle = BLUE;
+    ctx.fillRect(meterX + 12, meterY + 28, (meterW - 24) * energyNorm, 10);
   }
 
   async function tryFullscreen() {
-    const el = document.documentElement;
     try {
-      if (el.requestFullscreen) await el.requestFullscreen();
+      if (document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen();
+      }
     } catch (err) {
       console.log(err);
     }
   }
 
   function bindEvents() {
-    ui.menuBtn.addEventListener("click", () => toggleSidebar());
-    ui.overlay.addEventListener("click", () => toggleSidebar(false));
-
-    ui.modeDetectBtn.addEventListener("click", () => {
-      state.mode = "detect";
-      if (window.innerWidth < 800) toggleSidebar(false);
-      updateUI(true);
-    });
-
-    ui.modeRippleBtn.addEventListener("click", () => {
-      state.mode = "ripple";
-      if (window.innerWidth < 800) toggleSidebar(false);
-      updateUI(true);
-    });
-
     ui.cameraBtn.addEventListener("click", async () => {
       if (state.cameraOn) {
         stopCamera();
-        addMockPeople();
         state.usingMock = true;
+        addMockPeople();
       } else {
         await startCamera();
       }
-      if (window.innerWidth < 800) toggleSidebar(false);
-      updateUI(true);
+      updateUI();
     });
+
+    ui.audioBtn.addEventListener("click", startAudio);
 
     ui.mockBtn.addEventListener("click", () => {
       stopCamera();
+      state.usingMock = true;
       resetAll();
       addMockPeople();
-      state.usingMock = true;
-      if (window.innerWidth < 800) toggleSidebar(false);
-      updateUI(true);
+      updateUI();
     });
 
     ui.resetBtn.addEventListener("click", () => {
       resetAll();
-      if (state.usingMock) addMockPeople();
-      updateUI(true);
+      updateUI();
     });
 
-    ui.thresholdRange.addEventListener("input", (e) => {
+    ui.fsBtn.addEventListener("click", tryFullscreen);
+
+    ui.thresholdRange.addEventListener("input", e => {
       state.detectThreshold = parseFloat(e.target.value);
-      updateUI(true);
+      updateUI();
     });
 
-    ui.motionRange.addEventListener("input", (e) => {
+    ui.motionRange.addEventListener("input", e => {
       state.motionThreshold = parseFloat(e.target.value);
-      updateUI(true);
+      updateUI();
     });
 
-    ui.smoothRange.addEventListener("input", (e) => {
+    ui.smoothRange.addEventListener("input", e => {
       state.trackingSmoothness = parseFloat(e.target.value);
-      updateUI(true);
+      updateUI();
     });
 
-    ui.confirmRange.addEventListener("input", (e) => {
-      state.confirmFrames = parseInt(e.target.value, 10);
-      updateUI(true);
+    ui.minFreqRange.addEventListener("input", e => {
+      state.minFreq = parseFloat(e.target.value);
+      if (state.maxFreq < state.minFreq) state.maxFreq = state.minFreq;
+      ui.maxFreqRange.value = state.maxFreq;
+      updateUI();
     });
 
-    ui.energyRange.addEventListener("input", (e) => {
-      state.energy = parseFloat(e.target.value);
-      updateUI(true);
+    ui.maxFreqRange.addEventListener("input", e => {
+      state.maxFreq = parseFloat(e.target.value);
+      if (state.minFreq > state.maxFreq) state.minFreq = state.maxFreq;
+      ui.minFreqRange.value = state.minFreq;
+      updateUI();
     });
 
-    ui.dampingRange.addEventListener("input", (e) => {
-      state.damping = parseFloat(e.target.value);
-      updateUI(true);
+    ui.gainRange.addEventListener("input", e => {
+      state.gain = parseFloat(e.target.value);
+      updateUI();
     });
 
-    ui.globalMotionRange.addEventListener("input", (e) => {
-      state.globalMotionThreshold = parseFloat(e.target.value);
-      updateUI(true);
+    ui.audioSmoothRange.addEventListener("input", e => {
+      state.audioSmooth = parseFloat(e.target.value);
+      updateUI();
     });
-
-    ui.cooldownRange.addEventListener("input", (e) => {
-      state.impulseCooldownMs = parseInt(e.target.value, 10);
-      updateUI(true);
-    });
-
-    ui.showStatusCheck.addEventListener("change", (e) => {
-      state.showStatus = e.target.checked;
-      updateUI(true);
-    });
-
-    ui.landscapeDualCheck.addEventListener("change", (e) => {
-      state.landscapeDual = e.target.checked;
-      updateUI(true);
-    });
-
-    ui.fullscreenBtn.addEventListener("click", tryFullscreen);
 
     window.addEventListener("resize", resizeCanvas);
-    window.addEventListener("orientationchange", () => {
-      setTimeout(() => {
-        resizeCanvas();
-        updateUI(true);
-      }, 150);
-    });
+  }
 
-    document.addEventListener("visibilitychange", () => {
-      if (!document.hidden) {
-        setTimeout(() => {
-          resizeCanvas();
-          updateUI(true);
-        }, 100);
-      }
-    });
+  async function animate(now) {
+    const dt = now - state.lastFrameTime;
+    state.lastFrameTime = now;
+    state.fps = 1000 / Math.max(1, dt);
+
+    await runDetection(now);
+    smoothTracks();
+    computeMotionEnergy();
+    updateAudioTarget();
+    drawScene();
+    updateUI();
+
+    requestAnimationFrame(animate);
   }
 
   function boot() {
     resizeCanvas();
     addMockPeople();
     bindEvents();
-    updateUI(true);
+    updateUI();
     loadModel();
     requestAnimationFrame(animate);
   }
