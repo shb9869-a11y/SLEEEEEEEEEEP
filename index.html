@@ -2,435 +2,136 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-  <title>인기척 - Detection + Richter-style Sound</title>
-  <meta name="theme-color" content="#000000" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Binary Presence Detector</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.16.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+
   <style>
-    :root{
-      --panel:rgba(10,10,10,0.9);
-      --panelBorder:rgba(255,255,255,0.12);
-      --text:#f3f3f3;
-      --muted:#aaaaaa;
-      --blue:#173BFF;
-      --blueLine:rgba(23,59,255,0.98);
-      --blueFill:rgba(23,59,255,0.14);
-    }
-    *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-    html,body{
-      margin:0; width:100%; height:100%; overflow:hidden;
-      background:#000; color:var(--text);
-      font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR","Segoe UI",sans-serif;
-    }
-    #app{ position:relative; width:100vw; height:100vh; overflow:hidden; background:#000; }
-    canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; background:#000; }
-    video{ display:none; }
-
-    .topbar{
-      position:absolute; top:calc(env(safe-area-inset-top, 0px) + 10px); left:10px; right:10px;
-      z-index:20; display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;
-    }
-    .group{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-
-    .btn,.chip{
-      min-height:44px; border-radius:12px; border:1px solid var(--panelBorder);
-      background:var(--panel); color:#fff; backdrop-filter:blur(10px);
-    }
-    .btn{ padding:0 14px; cursor:pointer; font-size:14px; font-weight:600; }
-    .btn.active{ background:#fff; color:#000; border-color:#fff; }
-    .chip{ display:flex; align-items:center; padding:0 12px; font-size:13px; }
-
-    .panel{
-      position:absolute; left:10px; bottom:calc(env(safe-area-inset-bottom, 0px) + 10px);
-      z-index:20; width:min(430px, calc(100vw - 20px));
-      border:1px solid var(--panelBorder); border-radius:16px;
-      background:var(--panel); backdrop-filter:blur(10px); padding:14px;
-    }
-    .title{ font-size:18px; font-weight:700; margin-bottom:6px; }
-    .desc{ font-size:12px; color:var(--muted); line-height:1.5; margin-bottom:12px; }
-
-    .sliderWrap{
-      display:grid; grid-template-columns:90px 1fr 58px; gap:10px; align-items:center;
-      margin-bottom:10px; font-size:12px; color:var(--muted);
-    }
-    .sliderWrap:last-child{ margin-bottom:0; }
-
-    input[type="range"]{
-      width:100%; appearance:none; height:6px; border-radius:999px; background:#2a2a2a; outline:none;
-    }
-    input[type="range"]::-webkit-slider-thumb{
-      appearance:none; width:18px; height:18px; border-radius:50%; background:#fff; border:none;
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background: black;
+      overflow: hidden;
+      font-family: monospace;
     }
 
-    .status{
-      position:absolute; right:10px; bottom:calc(env(safe-area-inset-bottom, 0px) + 10px);
-      z-index:20; width:min(390px, calc(100vw - 20px));
-      border:1px solid var(--panelBorder); border-radius:16px;
-      background:rgba(8,8,8,0.84); backdrop-filter:blur(10px);
-      padding:12px 14px; font-size:12px; line-height:1.55; color:var(--muted);
+    #container {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      background: black;
     }
-    .status strong{ color:#fff; }
 
-    @media (max-width: 900px){
-      .status{ display:none; }
+    video, canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+
+    video {
+      display: none;
+    }
+
+    #binaryCanvas {
+      z-index: 1;
+      image-rendering: pixelated;
+    }
+
+    #detectCanvas {
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    #status {
+      position: fixed;
+      left: 16px;
+      top: 16px;
+      z-index: 10;
+      color: #00aaff;
+      font-size: 14px;
+      letter-spacing: 0.08em;
+      text-shadow: 0 0 8px #00aaff;
+      background: rgba(0, 0, 0, 0.55);
+      padding: 8px 10px;
+      border: 1px solid rgba(0, 170, 255, 0.5);
+    }
+
+    #startButton {
+      position: fixed;
+      z-index: 20;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: black;
+      color: #00aaff;
+      border: 1px solid #00aaff;
+      padding: 16px 24px;
+      font-size: 16px;
+      font-family: monospace;
+      cursor: pointer;
+      box-shadow: 0 0 20px rgba(0,170,255,0.4);
+    }
+
+    #startButton:hover {
+      background: #001622;
     }
   </style>
 </head>
+
 <body>
-<div id="app">
-  <div class="topbar">
-    <div class="group">
-      <div class="chip">사람 디텍팅 + 리히터풍 드론 사운드</div>
-    </div>
-    <div class="group">
-      <button id="cameraBtn" class="btn">카메라 시작</button>
-      <button id="audioBtn" class="btn">오디오 시작</button>
-      <button id="mockBtn" class="btn">Mock</button>
-      <button id="resetBtn" class="btn">리셋</button>
-    </div>
+  <div id="container">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="binaryCanvas"></canvas>
+    <canvas id="detectCanvas"></canvas>
   </div>
 
-  <canvas id="canvas"></canvas>
-  <video id="video" playsinline autoplay muted></video>
+  <div id="status">SYSTEM READY</div>
+  <button id="startButton">START CAMERA</button>
 
-  <div class="panel">
-    <div class="title">인기척</div>
-    <div class="desc">
-      사람 움직임을 감지해 느린 드론, 반복되는 피드백, 울림이 있는 사운드를 생성합니다.
-      먼저 <strong>오디오 시작</strong>을 누르고, 그 다음 <strong>카메라 시작</strong>을 누르세요.
-    </div>
+  <script>
+    const video = document.getElementById("video");
+    const binaryCanvas = document.getElementById("binaryCanvas");
+    const binaryCtx = binaryCanvas.getContext("2d", { willReadFrequently: true });
 
-    <div class="sliderWrap">
-      <span>신뢰도</span>
-      <input id="thresholdRange" type="range" min="0.20" max="0.80" step="0.01" value="0.30">
-      <span id="thresholdVal">0.30</span>
-    </div>
+    const detectCanvas = document.getElementById("detectCanvas");
+    const detectCtx = detectCanvas.getContext("2d");
 
-    <div class="sliderWrap">
-      <span>움직임문턱</span>
-      <input id="motionRange" type="range" min="0.001" max="0.05" step="0.001" value="0.008">
-      <span id="motionVal">0.008</span>
-    </div>
+    const statusEl = document.getElementById("status");
+    const startButton = document.getElementById("startButton");
 
-    <div class="sliderWrap">
-      <span>트래킹</span>
-      <input id="smoothRange" type="range" min="0.08" max="0.45" step="0.01" value="0.18">
-      <span id="smoothVal">0.18</span>
-    </div>
+    let model;
+    let running = false;
 
-    <div class="sliderWrap">
-      <span>최저 Hz</span>
-      <input id="minFreqRange" type="range" min="20" max="120" step="1" value="40">
-      <span id="minFreqVal">40</span>
-    </div>
+    const binaryResolution = 120;
+    const threshold = 115;
 
-    <div class="sliderWrap">
-      <span>최고 Hz</span>
-      <input id="maxFreqRange" type="range" min="80" max="400" step="1" value="180">
-      <span id="maxFreqVal">180</span>
-    </div>
-
-    <div class="sliderWrap">
-      <span>볼륨</span>
-      <input id="gainRange" type="range" min="0" max="0.4" step="0.005" value="0.08">
-      <span id="gainVal">0.08</span>
-    </div>
-  </div>
-
-  <div class="status">
-    <strong>시스템 정보</strong><br />
-    <span id="statusText">로딩중...</span>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
-
-<script>
-(() => {
-  const BLUE = "#173BFF";
-  const BLUE_LINE = "rgba(23,59,255,0.98)";
-  const BLUE_FILL = "rgba(23,59,255,0.14)";
-
-  const state = {
-    model: null,
-    modelReady: false,
-    detecting: false,
-
-    cameraOn: false,
-    usingMock: true,
-
-    detectThreshold: 0.30,
-    motionThreshold: 0.008,
-    trackingSmoothness: 0.18,
-
-    minFreq: 40,
-    maxFreq: 180,
-    gain: 0.08,
-
-    currentFreq: 40,
-    targetFreq: 40,
-    currentMotionEnergy: 0,
-
-    tracks: [],
-    nextTrackId: 1,
-    detections: [],
-    mockPeople: [],
-
-    lastDetectRun: 0,
-    detectIntervalMs: 120,
-
-    lastFrameTime: performance.now(),
-    fps: 0,
-
-    audioCtx: null,
-    audioStarted: false,
-
-    masterGain: null,
-    dryGain: null,
-    delaySend: null,
-    reverbSend: null,
-    delayNode: null,
-    feedbackGain: null,
-    convolver: null,
-    lowpass: null,
-    compressor: null,
-
-    osc1: null,
-    osc2: null,
-    osc3: null
-  };
-
-  const canvas = document.getElementById("canvas");
-  const ctx = canvas.getContext("2d", { alpha: false });
-  const video = document.getElementById("video");
-
-  const ui = {
-    cameraBtn: document.getElementById("cameraBtn"),
-    audioBtn: document.getElementById("audioBtn"),
-    mockBtn: document.getElementById("mockBtn"),
-    resetBtn: document.getElementById("resetBtn"),
-    statusText: document.getElementById("statusText"),
-
-    thresholdRange: document.getElementById("thresholdRange"),
-    motionRange: document.getElementById("motionRange"),
-    smoothRange: document.getElementById("smoothRange"),
-    minFreqRange: document.getElementById("minFreqRange"),
-    maxFreqRange: document.getElementById("maxFreqRange"),
-    gainRange: document.getElementById("gainRange"),
-
-    thresholdVal: document.getElementById("thresholdVal"),
-    motionVal: document.getElementById("motionVal"),
-    smoothVal: document.getElementById("smoothVal"),
-    minFreqVal: document.getElementById("minFreqVal"),
-    maxFreqVal: document.getElementById("maxFreqVal"),
-    gainVal: document.getElementById("gainVal")
-  };
-
-  function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
-  function lerp(a, b, t) { return a + (b - a) * t; }
-  function rand(min, max) { return Math.random() * (max - min) + min; }
-
-  function resizeCanvas() {
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    const w = Math.floor(window.innerWidth);
-    const h = Math.floor(window.innerHeight);
-    canvas.width = Math.floor(w * dpr);
-    canvas.height = Math.floor(h * dpr);
-    canvas.style.width = w + "px";
-    canvas.style.height = h + "px";
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  }
-
-  function updateUI() {
-    ui.cameraBtn.textContent = state.cameraOn ? "카메라 끄기" : "카메라 시작";
-    ui.audioBtn.textContent = state.audioStarted ? "오디오 켜짐" : "오디오 시작";
-    ui.audioBtn.classList.toggle("active", state.audioStarted);
-
-    ui.thresholdVal.textContent = state.detectThreshold.toFixed(2);
-    ui.motionVal.textContent = state.motionThreshold.toFixed(3);
-    ui.smoothVal.textContent = state.trackingSmoothness.toFixed(2);
-    ui.minFreqVal.textContent = Math.round(state.minFreq);
-    ui.maxFreqVal.textContent = Math.round(state.maxFreq);
-    ui.gainVal.textContent = state.gain.toFixed(3);
-
-    const confirmed = state.tracks.filter(t => t.confirmed);
-    ui.statusText.textContent =
-      `모델 ${state.modelReady ? "준비" : "로딩중"} / ` +
-      `카메라 ${state.cameraOn ? "켜짐" : "꺼짐"} / ` +
-      `오디오 ${state.audioStarted ? "켜짐" : "꺼짐"} / ` +
-      `사람 ${confirmed.length}명 / ` +
-      `움직임값 ${state.currentMotionEnergy.toFixed(3)} / ` +
-      `출력 ${state.currentFreq.toFixed(1)} Hz / ` +
-      `FPS ${Math.round(state.fps)}`;
-  }
-
-  function resetAll() {
-    state.tracks = [];
-    state.nextTrackId = 1;
-    state.detections = [];
-    state.currentMotionEnergy = 0;
-    state.currentFreq = state.minFreq;
-    state.targetFreq = state.minFreq;
-    if (state.usingMock) addMockPeople();
-  }
-
-  function addMockPeople() {
-    state.mockPeople = [];
-    const count = Math.floor(rand(2, 5));
-    for (let i = 0; i < count; i++) {
-      state.mockPeople.push({
-        x: rand(0.18, 0.82),
-        y: rand(0.22, 0.78),
-        w: rand(0.10, 0.14),
-        h: rand(0.22, 0.32),
-        vx: rand(-0.004, 0.004),
-        vy: rand(-0.003, 0.003),
-        twitch: rand(0.8, 1.5)
-      });
-    }
-  }
-
-  function updateMockPeople() {
-    const W = canvas.clientWidth || window.innerWidth;
-    const H = canvas.clientHeight || window.innerHeight;
-    state.detections = [];
-
-    for (const p of state.mockPeople) {
-      p.x += p.vx;
-      p.y += p.vy;
-
-      if (Math.random() < 0.05 * p.twitch) {
-        p.x += rand(-0.01, 0.01);
-        p.y += rand(-0.01, 0.01);
-      }
-
-      if (p.x < 0.10 || p.x > 0.90) p.vx *= -1;
-      if (p.y < 0.14 || p.y > 0.86) p.vy *= -1;
-
-      state.detections.push({
-        bbox: [
-          (p.x - p.w / 2) * W,
-          (p.y - p.h / 2) * H,
-          p.w * W,
-          p.h * H
-        ],
-        class: "person",
-        score: 0.99
-      });
-    }
-  }
-
-  function centroidOfDet(det) {
-    const [x, y, w, h] = det.bbox;
-    return { x: x + w / 2, y: y + h / 2, w, h };
-  }
-
-  function distance(a, b) {
-    const dx = a.x - b.x;
-    const dy = a.y - b.y;
-    return Math.sqrt(dx * dx + dy * dy);
-  }
-
-  function updateTracks(detections) {
-    const centroids = detections.map(centroidOfDet);
-    const unmatchedDet = new Set(centroids.map((_, i) => i));
-    const unmatchedTracks = new Set(state.tracks.map((_, i) => i));
-    const pairs = [];
-    const maxDist = Math.min(canvas.clientWidth, canvas.clientHeight) * 0.16;
-
-    for (let ti = 0; ti < state.tracks.length; ti++) {
-      for (let di = 0; di < centroids.length; di++) {
-        pairs.push({ ti, di, dist: distance(state.tracks[ti], centroids[di]) });
-      }
-    }
-    pairs.sort((a, b) => a.dist - b.dist);
-
-    for (const p of pairs) {
-      if (!unmatchedTracks.has(p.ti) || !unmatchedDet.has(p.di)) continue;
-      if (p.dist > maxDist) continue;
-
-      const t = state.tracks[p.ti];
-      const c = centroids[p.di];
-
-      const prevX = t.x;
-      const prevY = t.y;
-
-      t.x = c.x; t.y = c.y; t.w = c.w; t.h = c.h;
-      t.missed = 0;
-      t.seenCount = (t.seenCount || 0) + 1;
-      if (t.seenCount >= 2) t.confirmed = true;
-
-      const motionPx = Math.sqrt((t.x - prevX) ** 2 + (t.y - prevY) ** 2);
-      const norm = motionPx / Math.max(1, Math.min(canvas.clientWidth, canvas.clientHeight));
-      t.motion = t.motion ? (t.motion * 0.65 + norm * 0.35) : norm;
-
-      unmatchedTracks.delete(p.ti);
-      unmatchedDet.delete(p.di);
+    function resizeCanvas() {
+      binaryCanvas.width = window.innerWidth;
+      binaryCanvas.height = window.innerHeight;
+      detectCanvas.width = window.innerWidth;
+      detectCanvas.height = window.innerHeight;
     }
 
-    for (const di of unmatchedDet) {
-      const c = centroids[di];
-      state.tracks.push({
-        id: state.nextTrackId++,
-        x: c.x, y: c.y, w: c.w, h: c.h,
-        displayX: c.x, displayY: c.y, displayW: c.w, displayH: c.h,
-        missed: 0,
-        seenCount: 1,
-        confirmed: false,
-        motion: 0
-      });
-    }
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
 
-    for (const ti of [...unmatchedTracks].reverse()) {
-      const t = state.tracks[ti];
-      t.missed += 1;
-      t.motion *= 0.85;
-    }
+    async function start() {
+      startButton.style.display = "none";
+      statusEl.innerText = "LOADING MODEL...";
 
-    state.tracks = state.tracks.filter(t => t.missed < 18);
-  }
+      model = await cocoSsd.load();
 
-  function smoothTracks() {
-    const s = state.trackingSmoothness;
-    for (const t of state.tracks) {
-      t.displayX = lerp(t.displayX ?? t.x, t.x, s);
-      t.displayY = lerp(t.displayY ?? t.y, t.y, s);
-      t.displayW = lerp(t.displayW ?? t.w, t.w, s);
-      t.displayH = lerp(t.displayH ?? t.h, t.h, s);
-    }
-  }
+      statusEl.innerText = "ACCESSING CAMERA...";
 
-  function createReverbBuffer(ctx, seconds = 3.2) {
-    const rate = ctx.sampleRate;
-    const length = Math.floor(rate * seconds);
-    const impulse = ctx.createBuffer(2, length, rate);
-
-    for (let c = 0; c < 2; c++) {
-      const channel = impulse.getChannelData(c);
-      for (let i = 0; i < length; i++) {
-        const decay = Math.pow(1 - i / length, 2.8);
-        channel[i] = (Math.random() * 2 - 1) * decay;
-      }
-    }
-    return impulse;
-  }
-
-  async function loadModel() {
-    try {
-      state.model = await cocoSsd.load({ base: "mobilenet_v2" });
-      state.modelReady = true;
-      updateUI();
-    } catch (err) {
-      console.error(err);
-      alert("모델 로딩 실패");
-    }
-  }
-
-  async function startCamera() {
-    try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: "user",
+          facingMode: "environment",
           width: { ideal: 1280 },
           height: { ideal: 720 }
         },
@@ -438,398 +139,126 @@
       });
 
       video.srcObject = stream;
-      await video.play();
 
-      state.cameraOn = true;
-      state.usingMock = false;
-      updateUI();
-    } catch (err) {
-      console.error(err);
-      alert("카메라 접근 실패. Mock 모드로 전환합니다.");
-      stopCamera();
-      state.usingMock = true;
-      addMockPeople();
-      updateUI();
-    }
-  }
-
-  function stopCamera() {
-    const stream = video.srcObject;
-    if (stream) stream.getTracks().forEach(track => track.stop());
-    video.srcObject = null;
-    state.cameraOn = false;
-  }
-
-  async function runDetection(now) {
-    if (state.detecting) return;
-    if (now - state.lastDetectRun < state.detectIntervalMs) return;
-    state.lastDetectRun = now;
-
-    if (state.cameraOn && state.modelReady && video.readyState >= 2) {
-      state.detecting = true;
-      try {
-        const preds = await state.model.detect(video, 10, state.detectThreshold);
-        state.detections = preds.filter(p => p.class === "person");
-      } catch (err) {
-        console.error(err);
-        state.detections = [];
-      } finally {
-        state.detecting = false;
-      }
-    } else if (state.usingMock) {
-      updateMockPeople();
-    } else {
-      state.detections = [];
+      video.onloadedmetadata = () => {
+        video.play();
+        running = true;
+        statusEl.innerText = "DETECTING PRESENCE";
+        renderBinary();
+        detectPeople();
+      };
     }
 
-    updateTracks(state.detections);
-  }
+    startButton.addEventListener("click", start);
 
-  function computeMotionEnergy() {
-    const confirmed = state.tracks.filter(t => t.confirmed);
-    if (!confirmed.length) {
-      state.currentMotionEnergy = lerp(state.currentMotionEnergy, 0, 0.06);
-      return;
-    }
+    function renderBinary() {
+      if (!running) return;
 
-    let sum = 0;
-    for (const t of confirmed) {
-      const active = Math.max(0, (t.motion || 0) - state.motionThreshold);
-      sum += active;
-    }
+      const vw = video.videoWidth;
+      const vh = video.videoHeight;
 
-    const avg = sum / confirmed.length;
-    state.currentMotionEnergy = lerp(state.currentMotionEnergy, avg, 0.14);
-  }
+      if (vw && vh) {
+        const smallW = binaryResolution;
+        const smallH = Math.floor(binaryResolution * (vh / vw));
 
-  async function startAudio() {
-    try {
-      if (state.audioStarted) {
-        if (state.audioCtx && state.audioCtx.state === "suspended") {
-          await state.audioCtx.resume();
+        const tempCanvas = document.createElement("canvas");
+        const tempCtx = tempCanvas.getContext("2d", { willReadFrequently: true });
+
+        tempCanvas.width = smallW;
+        tempCanvas.height = smallH;
+
+        tempCtx.drawImage(video, 0, 0, smallW, smallH);
+
+        const imageData = tempCtx.getImageData(0, 0, smallW, smallH);
+        const data = imageData.data;
+
+        binaryCtx.clearRect(0, 0, binaryCanvas.width, binaryCanvas.height);
+        binaryCtx.fillStyle = "black";
+        binaryCtx.fillRect(0, 0, binaryCanvas.width, binaryCanvas.height);
+
+        const cellW = binaryCanvas.width / smallW;
+        const cellH = binaryCanvas.height / smallH;
+
+        binaryCtx.font = `${Math.ceil(cellH * 1.2)}px monospace`;
+        binaryCtx.textAlign = "center";
+        binaryCtx.textBaseline = "middle";
+
+        for (let y = 0; y < smallH; y++) {
+          for (let x = 0; x < smallW; x++) {
+            const i = (y * smallW + x) * 4;
+
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+
+            const brightness = (r + g + b) / 3;
+            const bit = brightness > threshold ? "1" : "0";
+
+            const alpha = brightness / 255;
+            binaryCtx.fillStyle = bit === "1"
+              ? `rgba(0, 255, 180, ${0.3 + alpha * 0.7})`
+              : `rgba(0, 70, 255, ${0.15 + alpha * 0.45})`;
+
+            const drawX = x * cellW + cellW / 2;
+            const drawY = y * cellH + cellH / 2;
+
+            binaryCtx.fillText(bit, drawX, drawY);
+          }
         }
-        return;
       }
 
-      if (!state.audioCtx) {
-        state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      }
-
-      const ac = state.audioCtx;
-      if (ac.state === "suspended") {
-        await ac.resume();
-      }
-
-      // 메인 출력 체인
-      state.masterGain = ac.createGain();
-      state.dryGain = ac.createGain();
-      state.delaySend = ac.createGain();
-      state.reverbSend = ac.createGain();
-
-      state.delayNode = ac.createDelay(2.0);
-      state.feedbackGain = ac.createGain();
-      state.convolver = ac.createConvolver();
-      state.lowpass = ac.createBiquadFilter();
-      state.compressor = ac.createDynamicsCompressor();
-
-      state.lowpass.type = "lowpass";
-      state.lowpass.frequency.value = 1400;
-      state.lowpass.Q.value = 0.7;
-
-      state.delayNode.delayTime.value = 0.42;
-      state.feedbackGain.gain.value = 0.52;
-
-      state.convolver.buffer = createReverbBuffer(ac, 3.2);
-
-      state.masterGain.gain.value = 0.0;
-      state.dryGain.gain.value = 0.22;
-      state.delaySend.gain.value = 0.75;
-      state.reverbSend.gain.value = 0.45;
-
-      state.compressor.threshold.value = -22;
-      state.compressor.knee.value = 18;
-      state.compressor.ratio.value = 3;
-      state.compressor.attack.value = 0.02;
-      state.compressor.release.value = 0.35;
-
-      // 오실레이터 3층
-      state.osc1 = ac.createOscillator();
-      state.osc2 = ac.createOscillator();
-      state.osc3 = ac.createOscillator();
-
-      state.osc1.type = "sine";
-      state.osc2.type = "triangle";
-      state.osc3.type = "sine";
-
-      state.osc1.frequency.value = state.currentFreq;
-      state.osc2.frequency.value = state.currentFreq * 0.5;
-      state.osc3.frequency.value = state.currentFreq * 1.5;
-
-      state.osc2.detune.value = 4;
-      state.osc3.detune.value = -6;
-
-      // 연결
-      state.osc1.connect(state.lowpass);
-      state.osc2.connect(state.lowpass);
-      state.osc3.connect(state.lowpass);
-
-      state.lowpass.connect(state.masterGain);
-
-      state.masterGain.connect(state.dryGain);
-      state.masterGain.connect(state.delaySend);
-      state.masterGain.connect(state.reverbSend);
-
-      state.dryGain.connect(state.compressor);
-
-      state.delaySend.connect(state.delayNode);
-      state.delayNode.connect(state.feedbackGain);
-      state.feedbackGain.connect(state.delayNode);
-      state.delayNode.connect(state.compressor);
-      state.delayNode.connect(state.convolver);
-
-      state.reverbSend.connect(state.convolver);
-      state.convolver.connect(state.compressor);
-
-      state.compressor.connect(ac.destination);
-
-      state.osc1.start();
-      state.osc2.start();
-      state.osc3.start();
-
-      state.audioStarted = true;
-      updateUI();
-    } catch (err) {
-      console.error(err);
-      alert("오디오 시작 실패");
-    }
-  }
-
-  function updateAudioTarget(nowMs) {
-    const normalized = clamp(state.currentMotionEnergy / 0.04, 0, 1);
-
-    state.targetFreq = state.minFreq + (state.maxFreq - state.minFreq) * normalized;
-
-    // 빠르게 쫓아가지 않고 드론처럼 천천히
-    state.currentFreq = lerp(state.currentFreq, state.targetFreq, 0.04);
-
-    if (state.audioStarted && state.audioCtx && state.osc1 && state.osc2 && state.osc3 && state.masterGain) {
-      const now = state.audioCtx.currentTime;
-
-      // 느린 흔들림
-      const lfo1 = Math.sin(nowMs * 0.00023) * 2.8;
-      const lfo2 = Math.sin(nowMs * 0.00011 + 1.1) * 1.6;
-      const base = state.currentFreq + lfo1 + lfo2;
-
-      const f1 = Math.max(20, base);
-      const f2 = Math.max(20, base * 0.5);
-      const f3 = Math.max(20, base * 1.498);
-
-      state.osc1.frequency.cancelScheduledValues(now);
-      state.osc2.frequency.cancelScheduledValues(now);
-      state.osc3.frequency.cancelScheduledValues(now);
-
-      state.osc1.frequency.setTargetAtTime(f1, now, 0.18);
-      state.osc2.frequency.setTargetAtTime(f2, now, 0.22);
-      state.osc3.frequency.setTargetAtTime(f3, now, 0.24);
-
-      // 움직임에 따라 울림/피드백도 같이 조금 열림
-      const targetMaster = normalized > 0.01 ? state.gain : 0.0;
-      const targetDelayFeedback = 0.35 + normalized * 0.32;
-      const targetDelayTime = 0.32 + normalized * 0.18;
-      const targetCutoff = 900 + normalized * 1700;
-
-      state.masterGain.gain.cancelScheduledValues(now);
-      state.masterGain.gain.setTargetAtTime(targetMaster, now, 0.22);
-
-      state.feedbackGain.gain.cancelScheduledValues(now);
-      state.feedbackGain.gain.setTargetAtTime(clamp(targetDelayFeedback, 0.2, 0.78), now, 0.25);
-
-      state.delayNode.delayTime.cancelScheduledValues(now);
-      state.delayNode.delayTime.setTargetAtTime(targetDelayTime, now, 0.2);
-
-      state.lowpass.frequency.cancelScheduledValues(now);
-      state.lowpass.frequency.setTargetAtTime(targetCutoff, now, 0.28);
-    }
-  }
-
-  function drawContainVideoRect(targetW, targetH) {
-    const vw = state.cameraOn ? (video.videoWidth || 1280) : 1280;
-    const vh = state.cameraOn ? (video.videoHeight || 720) : 720;
-    const scale = Math.min(targetW / vw, targetH / vh);
-    const dw = vw * scale;
-    const dh = vh * scale;
-    const dx = (targetW - dw) / 2;
-    const dy = (targetH - dh) / 2;
-    return { dx, dy, dw, dh, vw, vh };
-  }
-
-  function mapVideoBBoxToCanvas(x, y, w, h, targetW, targetH) {
-    const r = drawContainVideoRect(targetW, targetH);
-    return {
-      x: r.dx + (x / r.vw) * r.dw,
-      y: r.dy + (y / r.vh) * r.dh,
-      w: (w / r.vw) * r.dw,
-      h: (h / r.vh) * r.dh
-    };
-  }
-
-  function drawScene() {
-    const W = canvas.clientWidth;
-    const H = canvas.clientHeight;
-
-    ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = "#000";
-    ctx.fillRect(0, 0, W, H);
-
-    if (state.cameraOn && video.readyState >= 2) {
-      const r = drawContainVideoRect(W, H);
-      ctx.drawImage(video, r.dx, r.dy, r.dw, r.dh);
-    } else {
-      ctx.fillStyle = "rgba(255,255,255,0.05)";
-      ctx.fillRect(20, 20, W - 40, H - 40);
-      ctx.fillStyle = "rgba(255,255,255,0.45)";
-      ctx.font = "14px sans-serif";
-      ctx.fillText("Mock 사람 데이터 실행 중", 30, 42);
+      requestAnimationFrame(renderBinary);
     }
 
-    for (const track of state.tracks) {
-      if (!track.confirmed) continue;
+    async function detectPeople() {
+      if (!running || !model) return;
 
-      let x = track.displayX - track.displayW / 2;
-      let y = track.displayY - track.displayH / 2;
-      let w = track.displayW;
-      let h = track.displayH;
+      const predictions = await model.detect(video);
 
-      if (state.cameraOn) {
-        const m = mapVideoBBoxToCanvas(x, y, w, h, W, H);
-        x = m.x; y = m.y; w = m.w; h = m.h;
-      }
+      detectCtx.clearRect(0, 0, detectCanvas.width, detectCanvas.height);
 
-      ctx.strokeStyle = BLUE_LINE;
-      ctx.lineWidth = 2.5;
-      ctx.strokeRect(x, y, w, h);
+      const scaleX = detectCanvas.width / video.videoWidth;
+      const scaleY = detectCanvas.height / video.videoHeight;
 
-      ctx.fillStyle = BLUE_FILL;
-      ctx.fillRect(x, y, w, h);
+      let personCount = 0;
 
-      const label = `PERSON ${track.id}`;
-      ctx.font = "bold 14px sans-serif";
-      const tw = ctx.measureText(label).width;
+      predictions.forEach(pred => {
+        if (pred.class === "person" && pred.score > 0.45) {
+          personCount++;
 
-      ctx.fillStyle = "rgba(8,12,30,0.92)";
-      ctx.fillRect(x, y - 24, tw + 16, 20);
-      ctx.strokeStyle = BLUE_LINE;
-      ctx.lineWidth = 1.4;
-      ctx.strokeRect(x, y - 24, tw + 16, 20);
-      ctx.fillStyle = BLUE;
-      ctx.fillText(label, x + 8, y - 9);
+          let [x, y, w, h] = pred.bbox;
+
+          x *= scaleX;
+          y *= scaleY;
+          w *= scaleX;
+          h *= scaleY;
+
+          const mirroredX = detectCanvas.width - x - w;
+
+          detectCtx.strokeStyle = "#008CFF";
+          detectCtx.lineWidth = 4;
+          detectCtx.shadowColor = "#008CFF";
+          detectCtx.shadowBlur = 18;
+          detectCtx.strokeRect(mirroredX, y, w, h);
+
+          detectCtx.shadowBlur = 0;
+          detectCtx.fillStyle = "rgba(0, 140, 255, 0.18)";
+          detectCtx.fillRect(mirroredX, y, w, h);
+
+          detectCtx.fillStyle = "#008CFF";
+          detectCtx.font = "16px monospace";
+          detectCtx.fillText(
+            `PERSON ${(pred.score * 100).toFixed(1)}%`,
+            mirroredX,
+            Math.max(y - 8, 20)
+          );
+        }
+      });
+
+      statusEl.innerText = `BINARY VISION / PERSON: ${personCount}`;
+
+      setTimeout(detectPeople, 120);
     }
-
-    const meterW = Math.min(420, W - 40);
-    const meterX = 20;
-    const meterY = H - 80;
-    const energyNorm = clamp(state.currentMotionEnergy / 0.04, 0, 1);
-
-    ctx.fillStyle = "rgba(0,0,0,0.72)";
-    ctx.fillRect(meterX, meterY, meterW, 44);
-    ctx.strokeStyle = "rgba(255,255,255,0.08)";
-    ctx.strokeRect(meterX, meterY, meterW, 44);
-
-    ctx.fillStyle = "#fff";
-    ctx.font = "bold 13px sans-serif";
-    ctx.fillText(`MOTION ${state.currentMotionEnergy.toFixed(3)}   /   FREQ ${state.currentFreq.toFixed(1)} Hz`, meterX + 12, meterY + 17);
-
-    ctx.fillStyle = "rgba(255,255,255,0.10)";
-    ctx.fillRect(meterX + 12, meterY + 26, meterW - 24, 8);
-    ctx.fillStyle = BLUE;
-    ctx.fillRect(meterX + 12, meterY + 26, (meterW - 24) * energyNorm, 8);
-  }
-
-  function bindEvents() {
-    ui.cameraBtn.addEventListener("click", async () => {
-      if (state.cameraOn) {
-        stopCamera();
-        state.usingMock = true;
-        addMockPeople();
-      } else {
-        await startCamera();
-      }
-      updateUI();
-    });
-
-    ui.audioBtn.addEventListener("click", startAudio);
-
-    ui.mockBtn.addEventListener("click", () => {
-      stopCamera();
-      state.usingMock = true;
-      resetAll();
-      addMockPeople();
-      updateUI();
-    });
-
-    ui.resetBtn.addEventListener("click", () => {
-      resetAll();
-      updateUI();
-    });
-
-    ui.thresholdRange.addEventListener("input", e => {
-      state.detectThreshold = parseFloat(e.target.value);
-      updateUI();
-    });
-    ui.motionRange.addEventListener("input", e => {
-      state.motionThreshold = parseFloat(e.target.value);
-      updateUI();
-    });
-    ui.smoothRange.addEventListener("input", e => {
-      state.trackingSmoothness = parseFloat(e.target.value);
-      updateUI();
-    });
-    ui.minFreqRange.addEventListener("input", e => {
-      state.minFreq = parseFloat(e.target.value);
-      if (state.maxFreq < state.minFreq) state.maxFreq = state.minFreq;
-      ui.maxFreqRange.value = state.maxFreq;
-      updateUI();
-    });
-    ui.maxFreqRange.addEventListener("input", e => {
-      state.maxFreq = parseFloat(e.target.value);
-      if (state.minFreq > state.maxFreq) state.minFreq = state.maxFreq;
-      ui.minFreqRange.value = state.minFreq;
-      updateUI();
-    });
-    ui.gainRange.addEventListener("input", e => {
-      state.gain = parseFloat(e.target.value);
-      updateUI();
-    });
-
-    window.addEventListener("resize", resizeCanvas);
-  }
-
-  async function animate(now) {
-    const dt = now - state.lastFrameTime;
-    state.lastFrameTime = now;
-    state.fps = 1000 / Math.max(1, dt);
-
-    await runDetection(now);
-    smoothTracks();
-    computeMotionEnergy();
-    updateAudioTarget(now);
-    drawScene();
-    updateUI();
-
-    requestAnimationFrame(animate);
-  }
-
-  function boot() {
-    resizeCanvas();
-    addMockPeople();
-    bindEvents();
-    updateUI();
-    loadModel();
-    requestAnimationFrame(animate);
-  }
-
-  boot();
-})();
-</script>
+  </script>
 </body>
 </html>
