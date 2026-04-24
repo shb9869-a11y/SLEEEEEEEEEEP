@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Binary Presence Detector</title>
+  <title>Binary Human Detector</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.16.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
@@ -13,29 +13,27 @@
       margin: 0;
       width: 100%;
       height: 100%;
-      background: black;
+      background: #000;
       overflow: hidden;
       font-family: monospace;
     }
 
-    #container {
+    #wrap {
       position: fixed;
       inset: 0;
+      background: #000;
       overflow: hidden;
-      background: black;
-    }
-
-    video, canvas {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transform: scaleX(-1);
     }
 
     video {
       display: none;
+    }
+
+    canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
     }
 
     #binaryCanvas {
@@ -43,187 +41,232 @@
       image-rendering: pixelated;
     }
 
-    #detectCanvas {
+    #boxCanvas {
       z-index: 2;
       pointer-events: none;
     }
 
-    #status {
+    #ui {
       position: fixed;
+      z-index: 10;
       left: 16px;
       top: 16px;
-      z-index: 10;
-      color: #00aaff;
-      font-size: 14px;
-      letter-spacing: 0.08em;
-      text-shadow: 0 0 8px #00aaff;
-      background: rgba(0, 0, 0, 0.55);
-      padding: 8px 10px;
-      border: 1px solid rgba(0, 170, 255, 0.5);
+      color: #008cff;
+      background: rgba(0, 0, 0, 0.65);
+      border: 1px solid rgba(0, 140, 255, 0.7);
+      padding: 10px 12px;
+      font-size: 13px;
+      line-height: 1.45;
+      text-shadow: 0 0 8px #008cff;
+      max-width: calc(100vw - 32px);
     }
 
-    #startButton {
+    #startBtn {
       position: fixed;
       z-index: 20;
       left: 50%;
       top: 50%;
       transform: translate(-50%, -50%);
-      background: black;
-      color: #00aaff;
-      border: 1px solid #00aaff;
-      padding: 16px 24px;
+      background: #000;
+      color: #008cff;
+      border: 1px solid #008cff;
+      padding: 18px 26px;
       font-size: 16px;
       font-family: monospace;
       cursor: pointer;
-      box-shadow: 0 0 20px rgba(0,170,255,0.4);
+      box-shadow: 0 0 24px rgba(0, 140, 255, 0.55);
     }
 
-    #startButton:hover {
-      background: #001622;
+    #startBtn:hover {
+      background: #001522;
     }
   </style>
 </head>
 
 <body>
-  <div id="container">
+  <div id="wrap">
     <video id="video" autoplay playsinline muted></video>
     <canvas id="binaryCanvas"></canvas>
-    <canvas id="detectCanvas"></canvas>
+    <canvas id="boxCanvas"></canvas>
   </div>
 
-  <div id="status">SYSTEM READY</div>
-  <button id="startButton">START CAMERA</button>
+  <div id="ui">
+    STATUS: READY<br>
+    반드시 https:// 또는 localhost에서 실행
+  </div>
+
+  <button id="startBtn">START CAMERA</button>
 
   <script>
     const video = document.getElementById("video");
     const binaryCanvas = document.getElementById("binaryCanvas");
     const binaryCtx = binaryCanvas.getContext("2d", { willReadFrequently: true });
 
-    const detectCanvas = document.getElementById("detectCanvas");
-    const detectCtx = detectCanvas.getContext("2d");
+    const boxCanvas = document.getElementById("boxCanvas");
+    const boxCtx = boxCanvas.getContext("2d");
 
-    const statusEl = document.getElementById("status");
-    const startButton = document.getElementById("startButton");
+    const ui = document.getElementById("ui");
+    const startBtn = document.getElementById("startBtn");
 
-    let model;
-    let running = false;
+    let model = null;
+    let isRunning = false;
 
-    const binaryResolution = 120;
-    const threshold = 115;
+    const binaryCols = 115;
+    const brightnessThreshold = 115;
+    const detectionInterval = 140;
 
-    function resizeCanvas() {
+    function setStatus(text) {
+      ui.innerHTML = text;
+    }
+
+    function resize() {
       binaryCanvas.width = window.innerWidth;
       binaryCanvas.height = window.innerHeight;
-      detectCanvas.width = window.innerWidth;
-      detectCanvas.height = window.innerHeight;
+      boxCanvas.width = window.innerWidth;
+      boxCanvas.height = window.innerHeight;
     }
 
-    window.addEventListener("resize", resizeCanvas);
-    resizeCanvas();
+    window.addEventListener("resize", resize);
+    resize();
 
     async function start() {
-      startButton.style.display = "none";
-      statusEl.innerText = "LOADING MODEL...";
+      try {
+        startBtn.style.display = "none";
 
-      model = await cocoSsd.load();
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw new Error("이 주소에서는 카메라 API를 사용할 수 없음. https:// 또는 localhost로 열어야 함.");
+        }
 
-      statusEl.innerText = "ACCESSING CAMERA...";
+        setStatus("STATUS: LOADING AI MODEL...");
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "environment",
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        },
-        audio: false
-      });
+        model = await cocoSsd.load();
 
-      video.srcObject = stream;
+        setStatus("STATUS: REQUESTING CAMERA PERMISSION...");
 
-      video.onloadedmetadata = () => {
-        video.play();
-        running = true;
-        statusEl.innerText = "DETECTING PRESENCE";
-        renderBinary();
-        detectPeople();
-      };
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: "environment",
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
+          audio: false
+        });
+
+        video.srcObject = stream;
+
+        await new Promise(resolve => {
+          video.onloadedmetadata = resolve;
+        });
+
+        await video.play();
+
+        isRunning = true;
+
+        setStatus("STATUS: RUNNING<br>PERSON: 0");
+
+        drawBinary();
+        detectLoop();
+
+      } catch (err) {
+        console.error(err);
+
+        startBtn.style.display = "block";
+        startBtn.innerText = "RETRY CAMERA";
+
+        setStatus(
+          "STATUS: CAMERA ERROR<br><br>" +
+          String(err.name || "Error") + "<br>" +
+          String(err.message || err) + "<br><br>" +
+          "해결: https:// 주소 또는 http://localhost 에서 열기"
+        );
+      }
     }
 
-    startButton.addEventListener("click", start);
+    startBtn.addEventListener("click", start);
 
-    function renderBinary() {
-      if (!running) return;
+    function drawBinary() {
+      if (!isRunning) return;
 
       const vw = video.videoWidth;
       const vh = video.videoHeight;
 
-      if (vw && vh) {
-        const smallW = binaryResolution;
-        const smallH = Math.floor(binaryResolution * (vh / vw));
+      if (!vw || !vh) {
+        requestAnimationFrame(drawBinary);
+        return;
+      }
 
-        const tempCanvas = document.createElement("canvas");
-        const tempCtx = tempCanvas.getContext("2d", { willReadFrequently: true });
+      const smallW = binaryCols;
+      const smallH = Math.floor(binaryCols * (vh / vw));
 
-        tempCanvas.width = smallW;
-        tempCanvas.height = smallH;
+      const tempCanvas = document.createElement("canvas");
+      const tempCtx = tempCanvas.getContext("2d", { willReadFrequently: true });
 
-        tempCtx.drawImage(video, 0, 0, smallW, smallH);
+      tempCanvas.width = smallW;
+      tempCanvas.height = smallH;
 
-        const imageData = tempCtx.getImageData(0, 0, smallW, smallH);
-        const data = imageData.data;
+      tempCtx.drawImage(video, 0, 0, smallW, smallH);
 
-        binaryCtx.clearRect(0, 0, binaryCanvas.width, binaryCanvas.height);
-        binaryCtx.fillStyle = "black";
-        binaryCtx.fillRect(0, 0, binaryCanvas.width, binaryCanvas.height);
+      const img = tempCtx.getImageData(0, 0, smallW, smallH);
+      const data = img.data;
 
-        const cellW = binaryCanvas.width / smallW;
-        const cellH = binaryCanvas.height / smallH;
+      binaryCtx.clearRect(0, 0, binaryCanvas.width, binaryCanvas.height);
+      binaryCtx.fillStyle = "#000";
+      binaryCtx.fillRect(0, 0, binaryCanvas.width, binaryCanvas.height);
 
-        binaryCtx.font = `${Math.ceil(cellH * 1.2)}px monospace`;
-        binaryCtx.textAlign = "center";
-        binaryCtx.textBaseline = "middle";
+      const cellW = binaryCanvas.width / smallW;
+      const cellH = binaryCanvas.height / smallH;
 
-        for (let y = 0; y < smallH; y++) {
-          for (let x = 0; x < smallW; x++) {
-            const i = (y * smallW + x) * 4;
+      binaryCtx.font = `${Math.ceil(cellH * 1.25)}px monospace`;
+      binaryCtx.textAlign = "center";
+      binaryCtx.textBaseline = "middle";
 
-            const r = data[i];
-            const g = data[i + 1];
-            const b = data[i + 2];
+      for (let y = 0; y < smallH; y++) {
+        for (let x = 0; x < smallW; x++) {
+          const i = (y * smallW + x) * 4;
 
-            const brightness = (r + g + b) / 3;
-            const bit = brightness > threshold ? "1" : "0";
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
 
-            const alpha = brightness / 255;
-            binaryCtx.fillStyle = bit === "1"
-              ? `rgba(0, 255, 180, ${0.3 + alpha * 0.7})`
-              : `rgba(0, 70, 255, ${0.15 + alpha * 0.45})`;
+          const brightness = (r + g + b) / 3;
+          const bit = brightness > brightnessThreshold ? "1" : "0";
 
-            const drawX = x * cellW + cellW / 2;
-            const drawY = y * cellH + cellH / 2;
+          const alpha = brightness / 255;
 
-            binaryCtx.fillText(bit, drawX, drawY);
+          if (bit === "1") {
+            binaryCtx.fillStyle = `rgba(0, 255, 190, ${0.25 + alpha * 0.75})`;
+          } else {
+            binaryCtx.fillStyle = `rgba(0, 70, 255, ${0.18 + alpha * 0.5})`;
           }
+
+          binaryCtx.fillText(
+            bit,
+            x * cellW + cellW / 2,
+            y * cellH + cellH / 2
+          );
         }
       }
 
-      requestAnimationFrame(renderBinary);
+      requestAnimationFrame(drawBinary);
     }
 
-    async function detectPeople() {
-      if (!running || !model) return;
+    async function detectLoop() {
+      if (!isRunning || !model) return;
 
-      const predictions = await model.detect(video);
+      try {
+        const predictions = await model.detect(video);
 
-      detectCtx.clearRect(0, 0, detectCanvas.width, detectCanvas.height);
+        boxCtx.clearRect(0, 0, boxCanvas.width, boxCanvas.height);
 
-      const scaleX = detectCanvas.width / video.videoWidth;
-      const scaleY = detectCanvas.height / video.videoHeight;
+        const scaleX = boxCanvas.width / video.videoWidth;
+        const scaleY = boxCanvas.height / video.videoHeight;
 
-      let personCount = 0;
+        let personCount = 0;
 
-      predictions.forEach(pred => {
-        if (pred.class === "person" && pred.score > 0.45) {
+        predictions.forEach(pred => {
+          if (pred.class !== "person") return;
+          if (pred.score < 0.45) return;
+
           personCount++;
 
           let [x, y, w, h] = pred.bbox;
@@ -233,31 +276,41 @@
           w *= scaleX;
           h *= scaleY;
 
-          const mirroredX = detectCanvas.width - x - w;
+          boxCtx.save();
 
-          detectCtx.strokeStyle = "#008CFF";
-          detectCtx.lineWidth = 4;
-          detectCtx.shadowColor = "#008CFF";
-          detectCtx.shadowBlur = 18;
-          detectCtx.strokeRect(mirroredX, y, w, h);
+          boxCtx.strokeStyle = "#008cff";
+          boxCtx.lineWidth = 4;
+          boxCtx.shadowColor = "#008cff";
+          boxCtx.shadowBlur = 18;
+          boxCtx.strokeRect(x, y, w, h);
 
-          detectCtx.shadowBlur = 0;
-          detectCtx.fillStyle = "rgba(0, 140, 255, 0.18)";
-          detectCtx.fillRect(mirroredX, y, w, h);
+          boxCtx.shadowBlur = 0;
+          boxCtx.fillStyle = "rgba(0, 140, 255, 0.16)";
+          boxCtx.fillRect(x, y, w, h);
 
-          detectCtx.fillStyle = "#008CFF";
-          detectCtx.font = "16px monospace";
-          detectCtx.fillText(
-            `PERSON ${(pred.score * 100).toFixed(1)}%`,
-            mirroredX,
-            Math.max(y - 8, 20)
+          boxCtx.fillStyle = "#008cff";
+          boxCtx.font = "16px monospace";
+          boxCtx.fillText(
+            "PERSON " + Math.round(pred.score * 100) + "%",
+            x,
+            Math.max(y - 8, 18)
           );
-        }
-      });
 
-      statusEl.innerText = `BINARY VISION / PERSON: ${personCount}`;
+          boxCtx.restore();
+        });
 
-      setTimeout(detectPeople, 120);
+        setStatus(
+          "STATUS: RUNNING<br>" +
+          "BINARY CAMERA DATA<br>" +
+          "PERSON: " + personCount
+        );
+
+      } catch (err) {
+        console.error(err);
+        setStatus("STATUS: DETECTION ERROR<br>" + String(err.message || err));
+      }
+
+      setTimeout(detectLoop, detectionInterval);
     }
   </script>
 </body>
