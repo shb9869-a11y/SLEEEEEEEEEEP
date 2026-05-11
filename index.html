@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Ink Breath — Live Drawing Animation</title>
+  <title>Ink Breath AR — Spatial Live Drawing</title>
   <style>
     :root {
       --paper: #f3ead8;
@@ -19,37 +19,54 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #191511;
+      background: #080705;
       font-family: ui-serif, "Apple SD Gothic Neo", "Noto Serif KR", Georgia, serif;
       touch-action: none;
       color: #1b1712;
     }
 
+    #fallbackVideo {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      transform: scaleX(-1);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      background: #000;
+    }
+
+    body.fallback-on #fallbackVideo { opacity: 1; }
+
     canvas {
+      position: fixed;
+      inset: 0;
       display: block;
       width: 100vw;
       height: 100vh;
-      cursor: crosshair;
+      touch-action: none;
     }
 
     .ui {
       position: fixed;
-      left: 16px;
-      top: 16px;
-      width: min(340px, calc(100vw - 32px));
+      left: 14px;
+      top: 14px;
+      width: min(360px, calc(100vw - 28px));
       padding: 14px 14px 12px;
       border: 1px solid var(--line);
       border-radius: 18px;
       background: var(--panel);
       backdrop-filter: blur(14px);
-      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.18);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.2);
       user-select: none;
+      z-index: 10;
       transition: transform 0.25s ease, opacity 0.25s ease;
     }
 
     .ui.hidden {
       transform: translateY(calc(-100% - 28px));
-      opacity: 0.15;
+      opacity: 0.12;
     }
 
     h1 {
@@ -63,12 +80,12 @@
       margin: 0 0 12px;
       font-size: 12px;
       line-height: 1.45;
-      opacity: 0.72;
+      opacity: 0.74;
     }
 
     .row {
       display: grid;
-      grid-template-columns: 88px 1fr 42px;
+      grid-template-columns: 88px 1fr 44px;
       gap: 8px;
       align-items: center;
       margin: 8px 0;
@@ -88,7 +105,7 @@
 
     .buttons {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 7px;
       margin-top: 12px;
     }
@@ -97,7 +114,7 @@
       appearance: none;
       border: 1px solid rgba(30, 24, 18, 0.2);
       border-radius: 12px;
-      background: rgba(255, 252, 243, 0.7);
+      background: rgba(255, 252, 243, 0.72);
       color: #1b1712;
       padding: 9px 8px;
       font-family: inherit;
@@ -105,13 +122,28 @@
       cursor: pointer;
     }
 
+    button.primary {
+      background: rgba(29, 23, 17, 0.9);
+      color: #f9eedb;
+    }
+
     button:active { transform: translateY(1px); }
+
+    .status {
+      margin-top: 9px;
+      padding: 8px 9px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.42);
+      font-size: 11px;
+      line-height: 1.45;
+      opacity: 0.84;
+    }
 
     .hint {
       position: fixed;
-      right: 16px;
-      bottom: 14px;
-      max-width: min(520px, calc(100vw - 32px));
+      right: 14px;
+      bottom: 12px;
+      max-width: min(560px, calc(100vw - 28px));
       padding: 10px 12px;
       border-radius: 14px;
       background: rgba(247, 239, 223, 0.72);
@@ -119,8 +151,9 @@
       backdrop-filter: blur(10px);
       font-size: 12px;
       line-height: 1.5;
-      opacity: 0.78;
+      opacity: 0.82;
       user-select: none;
+      z-index: 10;
     }
 
     @media (max-width: 680px) {
@@ -131,387 +164,496 @@
   </style>
 </head>
 <body>
-  <canvas id="stage"></canvas>
+  <video id="fallbackVideo" playsinline muted autoplay></video>
 
   <section class="ui" id="ui">
-    <h1>Ink Breath</h1>
-    <p class="sub">라이브 드로잉을 먹선·번짐·입자 흐름으로 변환해 동양화풍 애니메이션으로 생성합니다.</p>
+    <h1>Ink Breath AR</h1>
+    <p class="sub">핸드폰 카메라/AR 공간 위에 먹선 입자를 3D로 남기는 라이브 드로잉 테스트.</p>
 
     <div class="row">
       <label for="brushSize">붓 크기</label>
-      <input id="brushSize" type="range" min="4" max="70" value="24" />
-      <span class="value" id="brushSizeVal">24</span>
+      <input id="brushSize" type="range" min="0.01" max="0.18" step="0.005" value="0.055" />
+      <span class="value" id="brushSizeVal">.055</span>
     </div>
 
     <div class="row">
       <label for="inkPower">먹 농도</label>
-      <input id="inkPower" type="range" min="0.1" max="1" step="0.01" value="0.72" />
-      <span class="value" id="inkPowerVal">.72</span>
+      <input id="inkPower" type="range" min="0.15" max="1" step="0.01" value="0.76" />
+      <span class="value" id="inkPowerVal">.76</span>
     </div>
 
     <div class="row">
       <label for="bleedPower">번짐</label>
-      <input id="bleedPower" type="range" min="0" max="1" step="0.01" value="0.38" />
-      <span class="value" id="bleedPowerVal">.38</span>
+      <input id="bleedPower" type="range" min="0" max="1" step="0.01" value="0.42" />
+      <span class="value" id="bleedPowerVal">.42</span>
+    </div>
+
+    <div class="row">
+      <label for="depthPower">공간 깊이</label>
+      <input id="depthPower" type="range" min="0.3" max="4" step="0.01" value="1.55" />
+      <span class="value" id="depthPowerVal">1.55</span>
     </div>
 
     <div class="row">
       <label for="windPower">기류</label>
-      <input id="windPower" type="range" min="0" max="2" step="0.01" value="0.64" />
-      <span class="value" id="windPowerVal">.64</span>
-    </div>
-
-    <div class="row">
-      <label for="lifePower">생명감</label>
-      <input id="lifePower" type="range" min="0.2" max="3" step="0.01" value="1.3" />
-      <span class="value" id="lifePowerVal">1.3</span>
+      <input id="windPower" type="range" min="0" max="2" step="0.01" value="0.7" />
+      <span class="value" id="windPowerVal">.70</span>
     </div>
 
     <div class="buttons">
+      <button id="startBtn" class="primary">AR 시작</button>
+      <button id="fallbackBtn">카메라 모드</button>
       <button id="clearBtn">비우기</button>
-      <button id="autoBtn">자동 획</button>
-      <button id="saveBtn">저장</button>
+      <button id="cloudBtn">먹구름</button>
+      <button id="saveBtn">캡처</button>
       <button id="hideBtn">UI 숨김</button>
     </div>
+
+    <div class="status" id="status">HTTPS 환경에서 실행하세요. GitHub Pages는 가능. Android Chrome은 WebXR AR, iPhone은 카메라 모드로 테스트하세요.</div>
   </section>
 
-  <div class="hint">마우스/손가락으로 그리면 먹선이 피어나고, 잠시 뒤 입자들이 숨 쉬듯 움직입니다. <b>H</b>: UI / <b>C</b>: 비우기 / <b>A</b>: 자동 획</div>
+  <div class="hint">AR 시작 후 화면을 터치/드래그하면 카메라 앞 공간에 먹선이 생깁니다. 핸드폰을 움직이면 선들이 공간에 떠 있는 것처럼 보입니다.</div>
 
-  <script>
-    const canvas = document.getElementById('stage');
-    const ctx = canvas.getContext('2d', { alpha: false });
+  <script type="module">
+    import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+    import { ARButton } from 'https://unpkg.com/three@0.160.0/examples/jsm/webxr/ARButton.js';
 
     const ui = document.getElementById('ui');
+    const statusEl = document.getElementById('status');
+    const fallbackVideo = document.getElementById('fallbackVideo');
+
     const controls = {
       brushSize: document.getElementById('brushSize'),
       inkPower: document.getElementById('inkPower'),
       bleedPower: document.getElementById('bleedPower'),
-      windPower: document.getElementById('windPower'),
-      lifePower: document.getElementById('lifePower'),
+      depthPower: document.getElementById('depthPower'),
+      windPower: document.getElementById('windPower')
     };
 
     const values = {
       brushSize: document.getElementById('brushSizeVal'),
       inkPower: document.getElementById('inkPowerVal'),
       bleedPower: document.getElementById('bleedPowerVal'),
-      windPower: document.getElementById('windPowerVal'),
-      lifePower: document.getElementById('lifePowerVal'),
+      depthPower: document.getElementById('depthPowerVal'),
+      windPower: document.getElementById('windPowerVal')
     };
 
-    let W = 0;
-    let H = 0;
-    let DPR = Math.min(window.devicePixelRatio || 1, 2);
-    let particles = [];
-    let strokes = [];
-    let pointer = { down: false, x: 0, y: 0, px: 0, py: 0, speed: 0 };
-    let frame = 0;
-    let autoMode = false;
-    let autoT = 0;
-
-    function val(name) {
-      return parseFloat(controls[name].value);
-    }
+    const val = (name) => parseFloat(controls[name].value);
+    const rand = (min, max) => min + Math.random() * (max - min);
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
     function syncLabels() {
-      values.brushSize.textContent = Math.round(val('brushSize'));
+      values.brushSize.textContent = val('brushSize').toFixed(3).replace('0.', '.');
       values.inkPower.textContent = val('inkPower').toFixed(2).replace('0.', '.');
       values.bleedPower.textContent = val('bleedPower').toFixed(2).replace('0.', '.');
+      values.depthPower.textContent = val('depthPower').toFixed(2);
       values.windPower.textContent = val('windPower').toFixed(2).replace('0.', '.');
-      values.lifePower.textContent = val('lifePower').toFixed(2);
     }
-
     Object.values(controls).forEach(input => input.addEventListener('input', syncLabels));
     syncLabels();
 
-    function resize() {
-      DPR = Math.min(window.devicePixelRatio || 1, 2);
-      W = Math.floor(window.innerWidth);
-      H = Math.floor(window.innerHeight);
-      canvas.width = Math.floor(W * DPR);
-      canvas.height = Math.floor(H * DPR);
-      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-      paintPaper();
+    let scene, camera, renderer, raycaster;
+    let reticle;
+    let inkGroup;
+    let particles = [];
+    let strokes = [];
+    let pointerDown = false;
+    let lastPoint = null;
+    let fallbackMode = false;
+    let fallbackStream = null;
+    let clock = new THREE.Clock();
+    let lastSpawnTime = 0;
+
+    initThree();
+    animate();
+
+    function setStatus(msg) {
+      statusEl.textContent = msg;
     }
 
-    function paintPaper() {
-      const g = ctx.createLinearGradient(0, 0, W, H);
-      g.addColorStop(0, '#f6ecd7');
-      g.addColorStop(0.5, '#efe2c9');
-      g.addColorStop(1, '#f8f0df');
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, W, H);
+    function initThree() {
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 40);
 
-      ctx.save();
-      ctx.globalAlpha = 0.13;
-      for (let i = 0; i < 900; i++) {
-        const x = Math.random() * W;
-        const y = Math.random() * H;
-        const l = 8 + Math.random() * 42;
-        ctx.strokeStyle = Math.random() > 0.5 ? '#9f8c6c' : '#fff8e6';
-        ctx.lineWidth = Math.random() * 0.55;
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(x + l, y + Math.random() * 4 - 2);
-        ctx.stroke();
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.xr.enabled = true;
+      renderer.domElement.style.zIndex = 2;
+      document.body.appendChild(renderer.domElement);
+
+      const hemi = new THREE.HemisphereLight(0xfff3dd, 0x1a1714, 2.0);
+      scene.add(hemi);
+
+      const dir = new THREE.DirectionalLight(0xfff3dd, 1.6);
+      dir.position.set(1.4, 2.2, 1.1);
+      scene.add(dir);
+
+      inkGroup = new THREE.Group();
+      scene.add(inkGroup);
+
+      raycaster = new THREE.Raycaster();
+
+      reticle = new THREE.Mesh(
+        new THREE.RingGeometry(0.045, 0.052, 48).rotateX(-Math.PI / 2),
+        new THREE.MeshBasicMaterial({ color: 0x111111, transparent: true, opacity: 0.48 })
+      );
+      reticle.matrixAutoUpdate = false;
+      reticle.visible = false;
+      scene.add(reticle);
+
+      makePaperGhosts();
+      bindEvents();
+      window.addEventListener('resize', onResize);
+    }
+
+    function makePaperGhosts() {
+      const geo = new THREE.BufferGeometry();
+      const count = 800;
+      const positions = new Float32Array(count * 3);
+      const colors = new Float32Array(count * 3);
+      for (let i = 0; i < count; i++) {
+        positions[i * 3 + 0] = rand(-4, 4);
+        positions[i * 3 + 1] = rand(-2, 2.2);
+        positions[i * 3 + 2] = rand(-4, -0.2);
+        const c = rand(0.72, 0.96);
+        colors[i * 3 + 0] = c;
+        colors[i * 3 + 1] = c * 0.9;
+        colors[i * 3 + 2] = c * 0.72;
       }
-      ctx.restore();
+      geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      const mat = new THREE.PointsMaterial({ size: 0.006, vertexColors: true, transparent: true, opacity: 0.18, depthWrite: false });
+      const dust = new THREE.Points(geo, mat);
+      scene.add(dust);
     }
 
-    function rand(min, max) {
-      return min + Math.random() * (max - min);
+    function bindEvents() {
+      const el = renderer.domElement;
+      el.addEventListener('pointerdown', onPointerDown);
+      el.addEventListener('pointermove', onPointerMove);
+      window.addEventListener('pointerup', onPointerUp);
+
+      document.getElementById('startBtn').addEventListener('click', startAR);
+      document.getElementById('fallbackBtn').addEventListener('click', startFallbackCamera);
+      document.getElementById('clearBtn').addEventListener('click', clearInk);
+      document.getElementById('cloudBtn').addEventListener('click', makeInkCloud);
+      document.getElementById('saveBtn').addEventListener('click', saveCapture);
+      document.getElementById('hideBtn').addEventListener('click', () => ui.classList.toggle('hidden'));
+
+      window.addEventListener('keydown', e => {
+        const k = e.key.toLowerCase();
+        if (k === 'h') ui.classList.toggle('hidden');
+        if (k === 'c') clearInk();
+        if (k === 'g') makeInkCloud();
+      });
     }
 
-    function dist(a, b, c, d) {
-      return Math.hypot(c - a, d - b);
-    }
+    async function startAR() {
+      if (!navigator.xr) {
+        setStatus('이 브라우저는 WebXR AR을 지원하지 않습니다. 카메라 모드로 전환하세요. Android Chrome 권장.');
+        return;
+      }
 
-    function noiseLike(x, y, t) {
-      return Math.sin(x * 0.007 + t * 0.013) + Math.cos(y * 0.009 - t * 0.011) + Math.sin((x + y) * 0.004 + t * 0.007);
-    }
+      const supported = await navigator.xr.isSessionSupported('immersive-ar').catch(() => false);
+      if (!supported) {
+        setStatus('immersive-ar가 지원되지 않습니다. Android Chrome 또는 카메라 모드를 사용하세요.');
+        return;
+      }
 
-    function addInkParticle(x, y, power = 1, radius = val('brushSize')) {
-      const angle = rand(0, Math.PI * 2);
-      const spread = radius * rand(0.08, 0.86);
-      const px = x + Math.cos(angle) * spread;
-      const py = y + Math.sin(angle) * spread;
-      const dark = rand(8, 34);
-      const life = rand(180, 760) * val('lifePower');
-
-      particles.push({
-        x: px,
-        y: py,
-        ox: px,
-        oy: py,
-        vx: Math.cos(angle) * rand(0.02, 0.55) * val('bleedPower'),
-        vy: Math.sin(angle) * rand(0.02, 0.55) * val('bleedPower') - rand(0, 0.12),
-        r: rand(0.55, radius * 0.16) * power,
-        a: rand(0.03, 0.22) * val('inkPower') * power,
-        life,
-        maxLife: life,
-        dark,
-        drift: rand(0.2, 1.8),
-        kind: Math.random() > 0.82 ? 'fiber' : 'dot'
+      const button = ARButton.createButton(renderer, {
+        requiredFeatures: ['hit-test'],
+        optionalFeatures: ['dom-overlay', 'local-floor'],
+        domOverlay: { root: document.body }
       });
 
-      if (particles.length > 13000) particles.splice(0, particles.length - 13000);
+      button.style.display = 'none';
+      document.body.appendChild(button);
+      button.click();
+
+      fallbackMode = false;
+      document.body.classList.remove('fallback-on');
+      setStatus('AR 세션 진입 중. 바닥/벽을 비추고 화면을 드래그해 공간에 먹선을 남기세요.');
     }
 
-    function drawBrushSegment(x1, y1, x2, y2, pressure = 1) {
-      const d = dist(x1, y1, x2, y2);
-      const steps = Math.max(1, Math.ceil(d / 3));
-      const brush = val('brushSize');
-      const ink = val('inkPower');
-      const bleed = val('bleedPower');
+    async function startFallbackCamera() {
+      try {
+        fallbackStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' } },
+          audio: false
+        });
+        fallbackVideo.srcObject = fallbackStream;
+        document.body.classList.add('fallback-on');
+        fallbackMode = true;
+        camera.position.set(0, 0, 0);
+        setStatus('카메라 모드입니다. 실제 AR 고정은 아니지만, 카메라 화면 위에 3D 먹선이 생성됩니다. iPhone 테스트용.');
+      } catch (err) {
+        setStatus('카메라 접근 실패. HTTPS 또는 브라우저 권한을 확인하세요.');
+      }
+    }
 
-      ctx.save();
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
+    function screenToWorld(x, y) {
+      const ndc = new THREE.Vector2(
+        (x / window.innerWidth) * 2 - 1,
+        -(y / window.innerHeight) * 2 + 1
+      );
+
+      raycaster.setFromCamera(ndc, camera);
+
+      if (renderer.xr.isPresenting && reticle.visible) {
+        const base = new THREE.Vector3().setFromMatrixPosition(reticle.matrix);
+        const dir = raycaster.ray.direction.clone();
+        return base.clone().add(dir.multiplyScalar(rand(0.02, 0.34) * val('depthPower')));
+      }
+
+      const distance = 1.1 + val('depthPower') * 0.45;
+      return raycaster.ray.origin.clone().add(raycaster.ray.direction.clone().multiplyScalar(distance));
+    }
+
+    function onPointerDown(e) {
+      pointerDown = true;
+      lastPoint = screenToWorld(e.clientX, e.clientY);
+      spawnInkAt(lastPoint, 1.0);
+      e.preventDefault();
+    }
+
+    function onPointerMove(e) {
+      if (!pointerDown) return;
+      const now = performance.now();
+      if (now - lastSpawnTime < 14) return;
+      lastSpawnTime = now;
+
+      const p = screenToWorld(e.clientX, e.clientY);
+      if (lastPoint) drawSpatialSegment(lastPoint, p);
+      lastPoint = p;
+      e.preventDefault();
+    }
+
+    function onPointerUp() {
+      pointerDown = false;
+      lastPoint = null;
+    }
+
+    function drawSpatialSegment(a, b) {
+      const d = a.distanceTo(b);
+      const steps = Math.max(2, Math.ceil(d / 0.018));
+      const curvePoints = [];
+      const mid = a.clone().lerp(b, 0.5);
+      mid.x += rand(-0.025, 0.025) * val('depthPower');
+      mid.y += rand(-0.025, 0.025) * val('depthPower');
+      mid.z += rand(-0.025, 0.025) * val('depthPower');
 
       for (let i = 0; i <= steps; i++) {
         const t = i / steps;
-        const x = x1 + (x2 - x1) * t;
-        const y = y1 + (y2 - y1) * t;
-        const n = noiseLike(x, y, frame) * 0.5;
-        const size = brush * pressure * rand(0.58, 1.18) * (1 + n * 0.08);
-
-        ctx.globalAlpha = ink * rand(0.12, 0.38);
-        ctx.fillStyle = '#080706';
-        ctx.beginPath();
-        ctx.ellipse(
-          x + rand(-size * 0.12, size * 0.12),
-          y + rand(-size * 0.12, size * 0.12),
-          size * rand(0.18, 0.46),
-          size * rand(0.08, 0.28),
-          rand(0, Math.PI),
-          0,
-          Math.PI * 2
-        );
-        ctx.fill();
-
-        const count = Math.floor(4 + brush * 0.26 + bleed * 16);
-        for (let k = 0; k < count; k++) addInkParticle(x, y, pressure * rand(0.55, 1.2), brush);
+        const p = new THREE.Vector3()
+          .copy(a).multiplyScalar((1 - t) * (1 - t))
+          .add(mid.clone().multiplyScalar(2 * (1 - t) * t))
+          .add(b.clone().multiplyScalar(t * t));
+        curvePoints.push(p);
+        spawnInkAt(p, clamp(1.2 - d * 2.5, 0.42, 1.25));
       }
 
-      ctx.globalAlpha = ink * 0.48;
-      ctx.strokeStyle = '#050403';
-      ctx.lineWidth = Math.max(1, brush * 0.26 * pressure);
-      ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      const mx = (x1 + x2) / 2 + rand(-brush * 0.15, brush * 0.15);
-      const my = (y1 + y2) / 2 + rand(-brush * 0.15, brush * 0.15);
-      ctx.quadraticCurveTo(mx, my, x2, y2);
-      ctx.stroke();
-
-      ctx.restore();
-
-      strokes.push({ x1, y1, x2, y2, age: 0, width: brush * pressure, alpha: ink });
-      if (strokes.length > 1200) strokes.shift();
+      const geo = new THREE.BufferGeometry().setFromPoints(curvePoints);
+      const mat = new THREE.LineBasicMaterial({
+        color: 0x050403,
+        transparent: true,
+        opacity: val('inkPower') * 0.62,
+        depthWrite: false
+      });
+      const line = new THREE.Line(geo, mat);
+      line.userData = { age: 0, maxAge: 1000 + Math.random() * 1400 };
+      inkGroup.add(line);
+      strokes.push(line);
+      if (strokes.length > 900) {
+        const old = strokes.shift();
+        inkGroup.remove(old);
+        old.geometry.dispose();
+        old.material.dispose();
+      }
     }
 
-    function getPoint(e) {
-      const p = e.touches ? e.touches[0] : e;
-      return { x: p.clientX, y: p.clientY };
+    function createInkSpriteTexture() {
+      const c = document.createElement('canvas');
+      c.width = 128;
+      c.height = 128;
+      const g = c.getContext('2d');
+      const grd = g.createRadialGradient(64, 64, 2, 64, 64, 62);
+      grd.addColorStop(0, 'rgba(0,0,0,0.95)');
+      grd.addColorStop(0.28, 'rgba(5,4,3,0.42)');
+      grd.addColorStop(0.62, 'rgba(30,24,18,0.13)');
+      grd.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = grd;
+      g.fillRect(0, 0, 128, 128);
+
+      for (let i = 0; i < 130; i++) {
+        const x = rand(12, 116);
+        const y = rand(12, 116);
+        const r = rand(0.5, 4.5);
+        g.fillStyle = `rgba(0,0,0,${rand(0.02, 0.15)})`;
+        g.beginPath();
+        g.ellipse(x, y, r * rand(0.5, 1.8), r, rand(0, Math.PI), 0, Math.PI * 2);
+        g.fill();
+      }
+
+      const tex = new THREE.CanvasTexture(c);
+      tex.needsUpdate = true;
+      return tex;
     }
 
-    function pointerDown(e) {
-      const p = getPoint(e);
-      pointer.down = true;
-      pointer.x = pointer.px = p.x;
-      pointer.y = pointer.py = p.y;
-      pointer.speed = 0;
-      autoMode = false;
-      e.preventDefault();
+    const inkTexture = createInkSpriteTexture();
+
+    function spawnInkAt(pos, pressure = 1) {
+      const count = Math.floor(5 + val('bleedPower') * 18);
+      const brush = val('brushSize');
+      for (let i = 0; i < count; i++) {
+        const material = new THREE.SpriteMaterial({
+          map: inkTexture,
+          color: new THREE.Color(rand(0.02, 0.12), rand(0.018, 0.1), rand(0.012, 0.075)),
+          transparent: true,
+          opacity: rand(0.08, 0.48) * val('inkPower') * pressure,
+          depthWrite: false
+        });
+        const sprite = new THREE.Sprite(material);
+        const spread = brush * rand(0.08, 1.3) * (1 + val('bleedPower'));
+        sprite.position.copy(pos).add(new THREE.Vector3(rand(-spread, spread), rand(-spread, spread), rand(-spread, spread)));
+        const s = brush * rand(0.28, 1.8) * pressure;
+        sprite.scale.set(s, s * rand(0.62, 1.48), 1);
+        sprite.material.rotation = rand(0, Math.PI * 2);
+        sprite.userData = {
+          age: 0,
+          maxAge: rand(380, 1600),
+          vx: rand(-0.0008, 0.0008) * val('windPower'),
+          vy: rand(-0.00035, 0.0012) * val('windPower'),
+          vz: rand(-0.0008, 0.0008) * val('windPower'),
+          breathe: rand(0.3, 1.9),
+          baseScale: sprite.scale.clone(),
+          baseOpacity: sprite.material.opacity
+        };
+        inkGroup.add(sprite);
+        particles.push(sprite);
+      }
+
+      if (particles.length > 4800) {
+        const removeCount = particles.length - 4800;
+        for (let i = 0; i < removeCount; i++) removeParticle(particles.shift());
+      }
     }
 
-    function pointerMove(e) {
-      const p = getPoint(e);
-      if (!pointer.down) return;
-      pointer.px = pointer.x;
-      pointer.py = pointer.y;
-      pointer.x = p.x;
-      pointer.y = p.y;
-      pointer.speed = dist(pointer.px, pointer.py, pointer.x, pointer.y);
-      const pressure = Math.max(0.34, Math.min(1.3, 1.2 - pointer.speed / 80));
-      drawBrushSegment(pointer.px, pointer.py, pointer.x, pointer.y, pressure);
-      e.preventDefault();
+    function makeInkCloud() {
+      const center = screenToWorld(window.innerWidth * 0.5, window.innerHeight * 0.52);
+      for (let i = 0; i < 260; i++) {
+        const p = center.clone().add(new THREE.Vector3(rand(-0.8, 0.8), rand(-0.45, 0.45), rand(-0.8, 0.8)));
+        spawnInkAt(p, rand(0.25, 0.9));
+      }
+      setStatus('공간 중앙에 먹구름을 생성했습니다. 핸드폰을 움직여 입자 깊이를 확인하세요.');
     }
 
-    function pointerUp() {
-      pointer.down = false;
-    }
-
-    canvas.addEventListener('mousedown', pointerDown);
-    canvas.addEventListener('mousemove', pointerMove);
-    window.addEventListener('mouseup', pointerUp);
-    canvas.addEventListener('touchstart', pointerDown, { passive: false });
-    canvas.addEventListener('touchmove', pointerMove, { passive: false });
-    window.addEventListener('touchend', pointerUp);
-
-    function animateParticles() {
-      ctx.save();
-      ctx.globalCompositeOperation = 'multiply';
-
+    function updateInk(dt, elapsed) {
+      const wind = val('windPower');
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
-        const lifeRatio = p.life / p.maxLife;
-        const flow = noiseLike(p.x, p.y, frame * p.drift);
-        const wind = val('windPower');
+        const u = p.userData;
+        u.age++;
+        const life = 1 - u.age / u.maxAge;
+        const flow = Math.sin(p.position.x * 3.1 + elapsed * 0.7 * u.breathe) + Math.cos(p.position.z * 4.2 - elapsed * 0.5);
 
-        p.vx += Math.cos(flow * Math.PI) * 0.006 * wind;
-        p.vy += Math.sin(flow * Math.PI) * 0.004 * wind;
-        p.vx *= 0.992;
-        p.vy *= 0.992;
-        p.x += p.vx;
-        p.y += p.vy;
-        p.life -= 1;
+        p.position.x += u.vx + Math.cos(flow) * 0.00035 * wind;
+        p.position.y += u.vy + Math.sin(flow * 0.7) * 0.00022 * wind;
+        p.position.z += u.vz + Math.sin(flow) * 0.00035 * wind;
 
-        const alpha = p.a * Math.pow(lifeRatio, 0.56);
-        ctx.globalAlpha = Math.max(0, alpha);
-        ctx.fillStyle = `rgb(${p.dark}, ${p.dark - 2}, ${Math.max(0, p.dark - 8)})`;
+        const pulse = 1 + Math.sin(elapsed * u.breathe + p.position.x * 3) * 0.08;
+        const bleed = 1 + (1 - life) * val('bleedPower') * 1.7;
+        p.scale.copy(u.baseScale).multiplyScalar(pulse * bleed);
+        p.material.opacity = Math.max(0, u.baseOpacity * Math.pow(life, 0.55));
+        p.material.rotation += 0.0015 * u.breathe;
 
-        if (p.kind === 'fiber') {
-          ctx.save();
-          ctx.translate(p.x, p.y);
-          ctx.rotate(flow);
-          ctx.fillRect(-p.r * 0.15, -p.r * 0.5, p.r * 0.3, p.r * rand(1.5, 4.5));
-          ctx.restore();
-        } else {
-          ctx.beginPath();
-          ctx.ellipse(p.x, p.y, p.r * (1 + (1 - lifeRatio) * val('bleedPower') * 2.8), p.r * rand(0.55, 1.4), flow, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        if (p.life <= 0 || p.x < -100 || p.y < -100 || p.x > W + 100 || p.y > H + 100) {
+        if (u.age > u.maxAge) {
+          removeParticle(p);
           particles.splice(i, 1);
         }
       }
 
-      ctx.restore();
-    }
-
-    function breatheOldStrokes() {
-      ctx.save();
-      ctx.globalCompositeOperation = 'multiply';
-      for (const s of strokes) {
-        s.age++;
-        if (s.age % 24 !== 0) continue;
-        const x = s.x1 + (s.x2 - s.x1) * Math.random();
-        const y = s.y1 + (s.y2 - s.y1) * Math.random();
-        const count = Math.floor(val('bleedPower') * 8 + 1);
-        for (let i = 0; i < count; i++) addInkParticle(x, y, rand(0.18, 0.52), s.width * rand(0.4, 1.1));
+      for (let i = strokes.length - 1; i >= 0; i--) {
+        const s = strokes[i];
+        s.userData.age++;
+        const life = 1 - s.userData.age / s.userData.maxAge;
+        s.material.opacity = Math.max(0, val('inkPower') * 0.5 * life);
+        if (s.userData.age > s.userData.maxAge) {
+          inkGroup.remove(s);
+          s.geometry.dispose();
+          s.material.dispose();
+          strokes.splice(i, 1);
+        }
       }
-      ctx.restore();
     }
 
-    function paperFade() {
-      ctx.save();
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.globalAlpha = 0.018;
-      ctx.fillStyle = '#f3ead8';
-      ctx.fillRect(0, 0, W, H);
-      ctx.restore();
+    function removeParticle(p) {
+      inkGroup.remove(p);
+      p.material.dispose();
     }
 
-    function autoStroke() {
-      autoT += 0.012;
-      const cx = W * 0.5;
-      const cy = H * 0.52;
-      const scale = Math.min(W, H) * 0.32;
-      const x = cx + Math.sin(autoT * 2.1) * scale * 0.8 + Math.sin(autoT * 5.2) * 40;
-      const y = cy + Math.cos(autoT * 1.3) * scale * 0.55 + Math.sin(autoT * 3.4) * 80;
-      const px = cx + Math.sin((autoT - 0.018) * 2.1) * scale * 0.8 + Math.sin((autoT - 0.018) * 5.2) * 40;
-      const py = cy + Math.cos((autoT - 0.018) * 1.3) * scale * 0.55 + Math.sin((autoT - 0.018) * 3.4) * 80;
-      drawBrushSegment(px, py, x, y, 0.55 + Math.sin(autoT * 4) * 0.24);
-    }
-
-    function loop() {
-      frame++;
-      paperFade();
-      if (autoMode) autoStroke();
-      breatheOldStrokes();
-      animateParticles();
-      requestAnimationFrame(loop);
-    }
-
-    document.getElementById('clearBtn').addEventListener('click', () => {
+    function clearInk() {
+      for (const p of particles) removeParticle(p);
+      for (const s of strokes) {
+        inkGroup.remove(s);
+        s.geometry.dispose();
+        s.material.dispose();
+      }
       particles = [];
       strokes = [];
-      paintPaper();
-    });
+      setStatus('공간의 먹선을 비웠습니다.');
+    }
 
-    document.getElementById('autoBtn').addEventListener('click', () => {
-      autoMode = !autoMode;
-      document.getElementById('autoBtn').textContent = autoMode ? '자동 중지' : '자동 획';
-    });
-
-    document.getElementById('saveBtn').addEventListener('click', () => {
+    function saveCapture() {
       const a = document.createElement('a');
-      a.download = `ink-breath-${Date.now()}.png`;
-      a.href = canvas.toDataURL('image/png');
+      a.download = `ink-breath-ar-${Date.now()}.png`;
+      a.href = renderer.domElement.toDataURL('image/png');
       a.click();
-    });
+    }
 
-    document.getElementById('hideBtn').addEventListener('click', () => {
-      ui.classList.toggle('hidden');
-    });
+    function onResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
 
-    window.addEventListener('keydown', (e) => {
-      const key = e.key.toLowerCase();
-      if (key === 'h') ui.classList.toggle('hidden');
-      if (key === 'c') {
-        particles = [];
-        strokes = [];
-        paintPaper();
+    function updateReticle(frame) {
+      if (!renderer.xr.isPresenting) {
+        reticle.visible = false;
+        return;
       }
-      if (key === 'a') {
-        autoMode = !autoMode;
-        document.getElementById('autoBtn').textContent = autoMode ? '자동 중지' : '자동 획';
-      }
-    });
 
-    window.addEventListener('resize', resize);
-    resize();
-    loop();
+      const session = renderer.xr.getSession();
+      if (!session) return;
+
+      // 간단 테스트용: hit-test 초기화가 브라우저별로 달라서,
+      // 여기서는 카메라 앞 1m 지점에 가상 reticle을 둔다.
+      // 실제 바닥 고정 hit-test는 후속 버전에서 확장 가능.
+      const cam = renderer.xr.getCamera(camera);
+      const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(cam.quaternion);
+      const pos = cam.position.clone().add(dir.multiplyScalar(1.0));
+      reticle.position.copy(pos);
+      reticle.quaternion.copy(cam.quaternion);
+      reticle.updateMatrix();
+      reticle.visible = true;
+    }
+
+    function animate() {
+      renderer.setAnimationLoop((time, frame) => {
+        const dt = clock.getDelta();
+        const elapsed = clock.elapsedTime;
+        updateReticle(frame);
+        updateInk(dt, elapsed);
+
+        if (fallbackMode) {
+          camera.position.x = Math.sin(elapsed * 0.18) * 0.025;
+          camera.position.y = Math.sin(elapsed * 0.13) * 0.015;
+          camera.lookAt(0, 0, -1);
+        }
+
+        renderer.render(scene, camera);
+      });
+    }
   </script>
 </body>
 </html>
