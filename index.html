@@ -3,15 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Geo Ink — GPS Collaborative Drawing</title>
+  <title>Ink Body World — Body Tracking Drawing Avatar</title>
   <style>
     :root {
-      --paper: #f4ead8;
-      --ink: #11100e;
-      --panel: rgba(247, 238, 220, 0.9);
-      --line: rgba(30, 24, 18, 0.18);
-      --accent: #1c1712;
-      --danger: #8b2b1f;
+      --paper: rgba(245, 235, 215, 0.92);
+      --ink: #12100d;
+      --line: rgba(35, 29, 22, 0.18);
     }
 
     * { box-sizing: border-box; }
@@ -21,45 +18,37 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #10100f;
+      background: #080807;
       color: var(--ink);
       font-family: ui-serif, "Apple SD Gothic Neo", "Noto Serif KR", Georgia, serif;
       touch-action: none;
     }
 
-    #camera {
+    #webcam {
       position: fixed;
-      inset: 0;
-      width: 100vw;
-      height: 100vh;
+      right: 12px;
+      bottom: 12px;
+      width: 180px;
+      height: 135px;
       object-fit: cover;
+      transform: scaleX(-1);
+      border: 1px solid rgba(245,235,215,.28);
+      border-radius: 14px;
+      z-index: 12;
+      opacity: .62;
       background: #000;
-      filter: grayscale(1) contrast(1.35) brightness(0.72);
-      opacity: 0.82;
-      z-index: 0;
     }
 
-    #worldCanvas,
-    #drawCanvas {
+    #pose2d {
       position: fixed;
-      inset: 0;
-      width: 100vw;
-      height: 100vh;
-      z-index: 2;
-      touch-action: none;
-    }
-
-    #drawCanvas { z-index: 3; }
-
-    .shade {
-      position: fixed;
-      inset: 0;
+      right: 12px;
+      bottom: 12px;
+      width: 180px;
+      height: 135px;
+      z-index: 13;
       pointer-events: none;
-      z-index: 1;
-      background:
-        radial-gradient(circle at 50% 50%, rgba(244,234,216,0.08), rgba(10,9,8,0.58)),
-        repeating-linear-gradient(0deg, rgba(244,234,216,0.025) 0, rgba(244,234,216,0.025) 1px, transparent 1px, transparent 5px);
-      mix-blend-mode: screen;
+      transform: scaleX(-1);
+      opacity: .95;
     }
 
     .ui {
@@ -72,16 +61,16 @@
       padding: 14px;
       border: 1px solid var(--line);
       border-radius: 18px;
-      background: var(--panel);
+      background: var(--paper);
       backdrop-filter: blur(14px);
-      box-shadow: 0 16px 48px rgba(0,0,0,0.22);
+      box-shadow: 0 18px 56px rgba(0,0,0,.28);
       z-index: 10;
       transition: transform .25s ease, opacity .25s ease;
     }
 
     .ui.hidden {
       transform: translateY(calc(-100% - 24px));
-      opacity: .14;
+      opacity: .13;
     }
 
     h1 {
@@ -93,20 +82,20 @@
     .sub {
       margin: 0 0 12px;
       font-size: 12px;
-      line-height: 1.45;
-      opacity: .76;
+      line-height: 1.5;
+      opacity: .74;
     }
 
-    .grid {
+    .row {
       display: grid;
-      grid-template-columns: 90px 1fr;
+      grid-template-columns: 94px 1fr 44px;
       gap: 8px;
       align-items: center;
       margin: 8px 0;
       font-size: 12px;
     }
 
-    input, select, textarea {
+    input, select {
       width: 100%;
       border: 1px solid rgba(30,24,18,.18);
       border-radius: 11px;
@@ -118,7 +107,7 @@
       outline: none;
     }
 
-    input[type="range"] { padding: 0; accent-color: var(--accent); }
+    input[type="range"] { padding: 0; accent-color: #1c1712; }
 
     .buttons {
       display: grid;
@@ -140,7 +129,6 @@
     }
 
     button.primary { background: rgba(28,23,18,.92); color: #f9eedb; }
-    button.danger { color: var(--danger); }
     button:active { transform: translateY(1px); }
 
     .status {
@@ -153,645 +141,236 @@
       white-space: pre-wrap;
     }
 
-    .list {
-      margin-top: 10px;
-      display: grid;
-      gap: 7px;
-    }
-
-    .card {
-      padding: 9px 10px;
-      border-radius: 13px;
-      border: 1px solid rgba(30,24,18,.12);
-      background: rgba(255,252,244,.56);
-      font-size: 11px;
-      line-height: 1.45;
-    }
-
-    .card b { font-size: 12px; }
-
     .hint {
       position: fixed;
-      right: 12px;
-      bottom: 12px;
-      max-width: min(520px, calc(100vw - 24px));
+      left: 50%;
+      bottom: 14px;
+      transform: translateX(-50%);
+      width: min(720px, calc(100vw - 28px));
       padding: 10px 12px;
       border-radius: 15px;
-      background: rgba(247,238,220,.78);
+      background: rgba(245,235,215,.78);
       border: 1px solid rgba(30,24,18,.14);
       backdrop-filter: blur(10px);
       z-index: 10;
       font-size: 12px;
-      line-height: 1.45;
+      line-height: 1.5;
+      text-align: center;
     }
 
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 3px 7px;
-      border-radius: 999px;
-      background: rgba(30,24,18,.1);
-      font-size: 10px;
-      margin-right: 4px;
-    }
-
-    @media (max-width: 700px) {
-      .ui { left: 8px; top: 8px; width: calc(100vw - 16px); max-height: 54vh; }
-      .hint { left: 8px; right: 8px; bottom: 8px; }
+    @media (max-width: 760px) {
+      .ui { left: 8px; top: 8px; width: calc(100vw - 16px); max-height: 56vh; }
+      #webcam, #pose2d { width: 132px; height: 99px; right: 8px; bottom: 72px; }
+      .hint { left: 8px; right: 8px; bottom: 8px; transform: none; width: auto; text-align: left; }
       .buttons { grid-template-columns: repeat(2, 1fr); }
     }
   </style>
 </head>
 <body>
   <!--
-    Geo Ink — GitHub Pages + Supabase 통코드
-
-    1) Supabase에서 새 프로젝트 생성
-    2) SQL Editor에 아래 테이블 생성:
-
-    create table public.geo_ink_drawings (
-      id uuid primary key default gen_random_uuid(),
-      nickname text not null,
-      lat double precision not null,
-      lng double precision not null,
-      strokes jsonb not null default '[]'::jsonb,
-      note text,
-      created_at timestamptz not null default now(),
-      updated_at timestamptz not null default now()
-    );
-
-    alter table public.geo_ink_drawings enable row level security;
-
-    create policy "public read" on public.geo_ink_drawings
-      for select using (true);
-
-    create policy "public insert" on public.geo_ink_drawings
-      for insert with check (true);
-
-    create policy "public update" on public.geo_ink_drawings
-      for update using (true) with check (true);
-
-    create policy "public delete" on public.geo_ink_drawings
-      for delete using (true);
-
-    3) 아래 JS의 SUPABASE_URL, SUPABASE_ANON_KEY를 본인 값으로 교체
-    4) index.html로 저장 후 GitHub Pages에 업로드
-
-    주의: 이 코드는 실험/프로토타입용입니다. 공개 수정이 가능하므로 운영 시에는 로그인/권한 정책을 강화하세요.
+    Ink Body World
+    - GitHub Pages에 index.html로 업로드 가능
+    - HTTPS 필요: 카메라 권한 때문
+    - 카메라 앞 전신이 보일수록 트래킹이 잘 됩니다.
+    - 몸 좌우 기울임/팔 방향: 이동 방향
+    - 무릎/발목 움직임: 걷기 판정
+    - 오른손을 들고 흔들면 공간에 먹선 생성
   -->
 
-  <video id="camera" playsinline muted autoplay></video>
-  <div class="shade"></div>
-  <canvas id="worldCanvas"></canvas>
-  <canvas id="drawCanvas"></canvas>
+  <video id="webcam" playsinline muted autoplay></video>
+  <canvas id="pose2d"></canvas>
 
   <section class="ui" id="ui">
-    <h1>Geo Ink</h1>
-    <p class="sub">GPS 좌표에 먹선 드로잉을 남기고, 그 장소에 간 다른 사람이 다시 수정할 수 있는 위치 기반 공동 드로잉.</p>
+    <h1>Ink Body World</h1>
+    <p class="sub">카메라 바디트래킹으로 내 캐릭터가 3D 월드를 걸어다니고, 손을 흔들면 공간에 그림이 남는 테스트.</p>
 
-    <div class="grid">
-      <label for="nickname">닉네임</label>
-      <input id="nickname" placeholder="예: heebeom" maxlength="24" />
+    <div class="row">
+      <label for="avatarName">캐릭터명</label>
+      <input id="avatarName" placeholder="예: HeeBeom" />
+      <span></span>
     </div>
 
-    <div class="grid">
-      <label for="radius">수정 반경</label>
-      <input id="radius" type="range" min="5" max="100" value="35" />
+    <div class="row">
+      <label for="moveSpeed">이동 속도</label>
+      <input id="moveSpeed" type="range" min="0.01" max="0.22" step="0.005" value="0.075" />
+      <span id="moveSpeedVal">.075</span>
     </div>
 
-    <div class="grid">
-      <label for="brush">붓 크기</label>
-      <input id="brush" type="range" min="2" max="34" value="13" />
+    <div class="row">
+      <label for="brushSize">붓 크기</label>
+      <input id="brushSize" type="range" min="0.02" max="0.26" step="0.005" value="0.085" />
+      <span id="brushSizeVal">.085</span>
     </div>
 
-    <div class="grid">
-      <label for="ink">먹 농도</label>
-      <input id="ink" type="range" min="0.12" max="1" step="0.01" value="0.72" />
+    <div class="row">
+      <label for="inkLife">먹선 수명</label>
+      <input id="inkLife" type="range" min="4" max="90" step="1" value="36" />
+      <span id="inkLifeVal">36</span>
     </div>
 
-    <div class="grid">
-      <label for="note">메모</label>
-      <textarea id="note" rows="2" placeholder="이 장소에 남길 짧은 문장"></textarea>
+    <div class="row">
+      <label for="worldMode">월드</label>
+      <select id="worldMode">
+        <option value="ink_mountain">수묵 산수</option>
+        <option value="grid_dream">게임 격자</option>
+        <option value="void_table">빈 식탁</option>
+      </select>
+      <span>WORLD</span>
     </div>
 
     <div class="buttons">
-      <button id="locateBtn" class="primary">위치 시작</button>
-      <button id="newBtn">새 그림</button>
-      <button id="saveBtn" class="primary">저장/수정</button>
-      <button id="undoBtn">되돌리기</button>
-      <button id="reloadBtn">주변 불러오기</button>
+      <button id="startBtn" class="primary">카메라 시작</button>
+      <button id="resetBtn">위치 리셋</button>
+      <button id="clearInkBtn">먹선 삭제</button>
+      <button id="autoWalkBtn">자동 걷기</button>
       <button id="hideBtn">UI 숨김</button>
-      <button id="clearBtn" class="danger">화면 비우기</button>
-      <button id="deleteBtn" class="danger">선택 삭제</button>
-      <button id="demoBtn">로컬 데모</button>
+      <button id="shotBtn">캡처</button>
     </div>
 
-    <div class="status" id="status">닉네임을 정하고 [위치 시작]을 누르세요. Supabase 키를 넣으면 여러 사람이 같은 좌표의 그림을 공유/수정할 수 있습니다.</div>
-    <div class="list" id="nearbyList"></div>
+    <div class="status" id="status">카메라 시작을 누르세요. 전신이 보이면 좋고, 최소 상반신+양손이 보이면 손 흔들기 드로잉은 가능합니다.</div>
   </section>
 
-  <div class="hint">화면에 그리면 현재 GPS 위치에 임시 저장됩니다. 주변 그림 카드를 누르면 불러오고, 수정 반경 안에 있으면 덧그려 저장할 수 있습니다. H: UI 숨김</div>
+  <div class="hint">몸을 좌우/앞뒤로 기울이면 방향이 정해지고, 다리를 움직이면 걷습니다. 오른손을 어깨보다 높게 들고 흔들면 먹선이 생성됩니다.</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
   <script type="module">
-    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-    // === 여기에 Supabase 값을 넣으세요 ===
-    const SUPABASE_URL = '';
-    const SUPABASE_ANON_KEY = '';
-    // ==================================
-
-    const hasSupabase = SUPABASE_URL && SUPABASE_ANON_KEY;
-    const supabase = hasSupabase ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+    import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+    import { OrbitControls } from 'https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js';
 
     const $ = (id) => document.getElementById(id);
-    const cameraVideo = $('camera');
-    const worldCanvas = $('worldCanvas');
-    const drawCanvas = $('drawCanvas');
-    const wctx = worldCanvas.getContext('2d');
-    const dctx = drawCanvas.getContext('2d');
+    const video = $('webcam');
+    const poseCanvas = $('pose2d');
+    const poseCtx = poseCanvas.getContext('2d');
     const ui = $('ui');
     const statusEl = $('status');
-    const nearbyList = $('nearbyList');
 
-    const nicknameEl = $('nickname');
-    const radiusEl = $('radius');
-    const brushEl = $('brush');
-    const inkEl = $('ink');
-    const noteEl = $('note');
+    const controls = {
+      moveSpeed: $('moveSpeed'),
+      brushSize: $('brushSize'),
+      inkLife: $('inkLife'),
+      worldMode: $('worldMode')
+    };
 
-    let DPR = Math.min(window.devicePixelRatio || 1, 2);
-    let W = 0;
-    let H = 0;
-    let currentPos = null;
-    let watchId = null;
-    let currentDrawing = null;
-    let nearbyDrawings = [];
-    let strokes = [];
-    let activeStroke = null;
-    let drawing = false;
-    let usingLocalDemo = !hasSupabase;
-    let localKey = 'geo-ink-local-demo-v1';
-    let frame = 0;
+    const labels = {
+      moveSpeed: $('moveSpeedVal'),
+      brushSize: $('brushSizeVal'),
+      inkLife: $('inkLifeVal')
+    };
+
+    const val = (name) => parseFloat(controls[name].value);
+    const rand = (a, b) => a + Math.random() * (b - a);
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const lerp = (a, b, t) => a + (b - a) * t;
+
+    function syncLabels() {
+      labels.moveSpeed.textContent = val('moveSpeed').toFixed(3).replace('0.', '.');
+      labels.brushSize.textContent = val('brushSize').toFixed(3).replace('0.', '.');
+      labels.inkLife.textContent = String(Math.round(val('inkLife')));
+    }
+    Object.values(controls).forEach(el => el.addEventListener('input', syncLabels));
+    syncLabels();
+
+    let scene, camera, renderer, orbit;
+    let avatar, bodyParts = {}, nameSprite;
+    let inkGroup, worldGroup;
+    let pose;
+    let latestLandmarks = null;
+    let tracking = false;
+    let autoWalk = false;
+    let clock = new THREE.Clock();
+    let avatarVelocity = new THREE.Vector3();
+    let moveDir = new THREE.Vector3(0, 0, -1);
+    let isWalking = false;
+    let isDrawing = false;
+    let lastHandWorld = null;
+    let inkObjects = [];
+    let handHistory = [];
+    let walkPhase = 0;
+    let smoothed = {
+      leanX: 0,
+      leanY: 0,
+      legMotion: 0,
+      handWave: 0,
+      rightHandUp: 0
+    };
+
+    initThree();
+    buildWorld();
+    buildAvatar();
+    animate();
 
     function setStatus(msg) { statusEl.textContent = msg; }
-    function nowISO() { return new Date().toISOString(); }
-    function formatDate(iso) {
-      if (!iso) return '-';
-      return new Intl.DateTimeFormat('ko-KR', {
-        year: 'numeric', month: '2-digit', day: '2-digit',
-        hour: '2-digit', minute: '2-digit', second: '2-digit'
-      }).format(new Date(iso));
+
+    function initThree() {
+      scene = new THREE.Scene();
+      scene.fog = new THREE.FogExp2(0xf1e5d0, 0.035);
+
+      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.01, 120);
+      camera.position.set(0, 3.2, 7.5);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor(0xf1e5d0, 1);
+      document.body.appendChild(renderer.domElement);
+
+      orbit = new OrbitControls(camera, renderer.domElement);
+      orbit.enableDamping = true;
+      orbit.target.set(0, 1.1, 0);
+
+      const hemi = new THREE.HemisphereLight(0xfff4df, 0x1c1814, 2.1);
+      scene.add(hemi);
+      const sun = new THREE.DirectionalLight(0xffecd0, 2.3);
+      sun.position.set(4, 8, 3);
+      scene.add(sun);
+
+      inkGroup = new THREE.Group();
+      scene.add(inkGroup);
+
+      window.addEventListener('resize', onResize);
     }
 
-    function resize() {
-      DPR = Math.min(window.devicePixelRatio || 1, 2);
-      W = window.innerWidth;
-      H = window.innerHeight;
-      for (const c of [worldCanvas, drawCanvas]) {
-        c.width = Math.floor(W * DPR);
-        c.height = Math.floor(H * DPR);
-        const ctx = c.getContext('2d');
-        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-      }
-      renderAll();
+    function onResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      poseCanvas.width = 180;
+      poseCanvas.height = 135;
     }
+    onResize();
 
-    window.addEventListener('resize', resize);
-    resize();
+    function buildWorld() {
+      if (worldGroup) scene.remove(worldGroup);
+      worldGroup = new THREE.Group();
+      scene.add(worldGroup);
 
-    async function startCamera() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
-        cameraVideo.srcObject = stream;
-        await cameraVideo.play().catch(() => {});
-      } catch (err) {
-        setStatus('카메라 접근 실패. HTTPS/GitHub Pages에서 권한을 허용하세요. 카메라 없이도 드로잉은 가능합니다.');
-      }
-    }
-    startCamera();
+      const mode = controls.worldMode.value;
+      renderer.setClearColor(mode === 'grid_dream' ? 0x080b12 : 0xf1e5d0, 1);
+      scene.fog.color.set(mode === 'grid_dream' ? 0x080b12 : 0xf1e5d0);
 
-    function nickname() {
-      const name = nicknameEl.value.trim();
-      if (name) localStorage.setItem('geo-ink-nickname', name);
-      return name || 'anonymous';
-    }
-
-    nicknameEl.value = localStorage.getItem('geo-ink-nickname') || '';
-
-    function distanceMeters(aLat, aLng, bLat, bLng) {
-      const R = 6371000;
-      const toRad = (v) => v * Math.PI / 180;
-      const dLat = toRad(bLat - aLat);
-      const dLng = toRad(bLng - aLng);
-      const s1 = Math.sin(dLat / 2);
-      const s2 = Math.sin(dLng / 2);
-      const q = s1 * s1 + Math.cos(toRad(aLat)) * Math.cos(toRad(bLat)) * s2 * s2;
-      return 2 * R * Math.atan2(Math.sqrt(q), Math.sqrt(1 - q));
-    }
-
-    function startLocation() {
-      if (!navigator.geolocation) {
-        setStatus('이 브라우저는 GPS를 지원하지 않습니다.');
-        return;
-      }
-
-      if (watchId !== null) navigator.geolocation.clearWatch(watchId);
-
-      watchId = navigator.geolocation.watchPosition(async (pos) => {
-        currentPos = {
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          accuracy: pos.coords.accuracy,
-          at: new Date()
-        };
-        setStatus(`현재 위치 수신 중\nlat ${currentPos.lat.toFixed(6)}, lng ${currentPos.lng.toFixed(6)}\n오차 약 ${Math.round(currentPos.accuracy)}m\nDB: ${usingLocalDemo ? '로컬 데모' : 'Supabase 연결'}`);
-        await loadNearby();
-      }, (err) => {
-        setStatus('위치 접근 실패. 브라우저 위치 권한과 HTTPS 접속을 확인하세요.');
-      }, {
-        enableHighAccuracy: true,
-        maximumAge: 3000,
-        timeout: 12000
+      const floorMat = new THREE.MeshStandardMaterial({
+        color: mode === 'grid_dream' ? 0x101725 : 0xe7d8bd,
+        roughness: 0.85,
+        metalness: 0.02
       });
+      const floor = new THREE.Mesh(new THREE.PlaneGeometry(120, 120, 80, 80), floorMat);
+      floor.rotation.x = -Math.PI / 2;
+      floor.position.y = 0;
+      worldGroup.add(floor);
+
+      if (mode === 'ink_mountain') buildInkMountainWorld();
+      if (mode === 'grid_dream') buildGridDreamWorld();
+      if (mode === 'void_table') buildVoidTableWorld();
     }
 
-    function getLocalRows() {
-      try { return JSON.parse(localStorage.getItem(localKey) || '[]'); }
-      catch { return []; }
-    }
-
-    function setLocalRows(rows) {
-      localStorage.setItem(localKey, JSON.stringify(rows));
-    }
-
-    async function loadNearby() {
-      if (!currentPos) return;
-      const radius = parseFloat(radiusEl.value);
-      let rows = [];
-
-      if (usingLocalDemo || !supabase) {
-        rows = getLocalRows();
-      } else {
-        const latDelta = radius / 111111;
-        const lngDelta = radius / (111111 * Math.cos(currentPos.lat * Math.PI / 180));
-        const { data, error } = await supabase
-          .from('geo_ink_drawings')
-          .select('*')
-          .gte('lat', currentPos.lat - latDelta)
-          .lte('lat', currentPos.lat + latDelta)
-          .gte('lng', currentPos.lng - lngDelta)
-          .lte('lng', currentPos.lng + lngDelta)
-          .order('updated_at', { ascending: false })
-          .limit(50);
-        if (error) {
-          setStatus('Supabase 불러오기 실패: ' + error.message + '\n로컬 데모 모드로 전환합니다.');
-          usingLocalDemo = true;
-          rows = getLocalRows();
-        } else {
-          rows = data || [];
-        }
-      }
-
-      nearbyDrawings = rows
-        .map(row => ({ ...row, distance: distanceMeters(currentPos.lat, currentPos.lng, row.lat, row.lng) }))
-        .filter(row => row.distance <= radius)
-        .sort((a, b) => a.distance - b.distance);
-
-      renderNearbyList();
-      renderAll();
-    }
-
-    function renderNearbyList() {
-      nearbyList.innerHTML = '';
-      if (!nearbyDrawings.length) {
-        nearbyList.innerHTML = '<div class="card">주변에 아직 저장된 그림이 없습니다. 새 그림을 그려 저장하세요.</div>';
-        return;
-      }
-
-      nearbyDrawings.slice(0, 8).forEach(row => {
-        const card = document.createElement('div');
-        card.className = 'card';
-        const isCurrent = currentDrawing && currentDrawing.id === row.id;
-        card.innerHTML = `
-          <b>${escapeHtml(row.nickname || 'anonymous')}</b> ${isCurrent ? '<span class="badge">선택됨</span>' : ''}<br>
-          <span class="badge">${Math.round(row.distance)}m</span>
-          <span class="badge">생성 ${formatDate(row.created_at)}</span>
-          <span class="badge">수정 ${formatDate(row.updated_at)}</span><br>
-          ${escapeHtml(row.note || '')}
-        `;
-        card.addEventListener('click', () => selectDrawing(row));
-        nearbyList.appendChild(card);
-      });
-    }
-
-    function escapeHtml(str) {
-      return String(str)
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#039;');
-    }
-
-    function selectDrawing(row) {
-      currentDrawing = row;
-      strokes = Array.isArray(row.strokes) ? structuredClone(row.strokes) : [];
-      noteEl.value = row.note || '';
-      setStatus(`그림 선택됨\n작성자: ${row.nickname}\n생성: ${formatDate(row.created_at)}\n마지막 수정: ${formatDate(row.updated_at)}\n거리: ${Math.round(row.distance || 0)}m\n수정 반경 안이면 덧그려 저장할 수 있습니다.`);
-      renderNearbyList();
-      renderAll();
-    }
-
-    function newDrawing() {
-      currentDrawing = null;
-      strokes = [];
-      noteEl.value = '';
-      setStatus('새 그림 모드입니다. 화면에 그리고 [저장/수정]을 누르세요.');
-      renderNearbyList();
-      renderAll();
-    }
-
-    function canEditSelected() {
-      if (!currentDrawing || !currentPos) return true;
-      const radius = parseFloat(radiusEl.value);
-      const d = distanceMeters(currentPos.lat, currentPos.lng, currentDrawing.lat, currentDrawing.lng);
-      return d <= radius;
-    }
-
-    async function saveDrawing() {
-      if (!currentPos) {
-        setStatus('먼저 [위치 시작]을 눌러 GPS 좌표를 받아야 저장할 수 있습니다.');
-        return;
-      }
-      if (!strokes.length) {
-        setStatus('저장할 선이 없습니다. 먼저 화면에 그리세요.');
-        return;
-      }
-      if (!canEditSelected()) {
-        setStatus('선택한 그림의 수정 반경 밖입니다. 그 장소 근처로 가야 수정할 수 있습니다.');
-        return;
-      }
-
-      const payload = {
-        nickname: nickname(),
-        lat: currentDrawing ? currentDrawing.lat : currentPos.lat,
-        lng: currentDrawing ? currentDrawing.lng : currentPos.lng,
-        strokes,
-        note: noteEl.value.trim(),
-        updated_at: nowISO()
-      };
-
-      if (usingLocalDemo || !supabase) {
-        const rows = getLocalRows();
-        if (currentDrawing) {
-          const idx = rows.findIndex(r => r.id === currentDrawing.id);
-          if (idx >= 0) rows[idx] = { ...rows[idx], ...payload };
-        } else {
-          payload.id = crypto.randomUUID();
-          payload.created_at = nowISO();
-          rows.unshift(payload);
-          currentDrawing = payload;
-        }
-        setLocalRows(rows);
-        setStatus('로컬 데모에 저장했습니다. Supabase 키를 넣으면 다른 접속자와 공유됩니다.');
-        await loadNearby();
-        return;
-      }
-
-      if (currentDrawing) {
-        const { error } = await supabase
-          .from('geo_ink_drawings')
-          .update(payload)
-          .eq('id', currentDrawing.id);
-        if (error) setStatus('수정 실패: ' + error.message);
-        else setStatus('수정 완료. 이 장소의 그림에 새 시간 기록이 남았습니다.');
-      } else {
-        payload.created_at = nowISO();
-        const { data, error } = await supabase
-          .from('geo_ink_drawings')
-          .insert(payload)
-          .select()
-          .single();
-        if (error) setStatus('저장 실패: ' + error.message);
-        else {
-          currentDrawing = data;
-          setStatus('새 그림 저장 완료. GPS 좌표와 생성 시간이 기록되었습니다.');
-        }
-      }
-      await loadNearby();
-    }
-
-    async function deleteSelected() {
-      if (!currentDrawing) {
-        setStatus('삭제할 그림을 먼저 선택하세요.');
-        return;
-      }
-      if (!canEditSelected()) {
-        setStatus('수정/삭제 반경 밖입니다. 그 장소 근처에서만 삭제할 수 있습니다.');
-        return;
-      }
-
-      if (usingLocalDemo || !supabase) {
-        setLocalRows(getLocalRows().filter(r => r.id !== currentDrawing.id));
-        newDrawing();
-        await loadNearby();
-        setStatus('로컬 데모 그림을 삭제했습니다.');
-        return;
-      }
-
-      const { error } = await supabase.from('geo_ink_drawings').delete().eq('id', currentDrawing.id);
-      if (error) setStatus('삭제 실패: ' + error.message);
-      else {
-        currentDrawing = null;
-        strokes = [];
-        await loadNearby();
-        setStatus('선택한 그림을 삭제했습니다.');
-      }
-    }
-
-    function screenPoint(e) {
-      const p = e.touches ? e.touches[0] : e;
-      return { x: p.clientX, y: p.clientY };
-    }
-
-    function startStroke(e) {
-      drawing = true;
-      const p = screenPoint(e);
-      activeStroke = {
-        by: nickname(),
-        at: nowISO(),
-        brush: parseFloat(brushEl.value),
-        ink: parseFloat(inkEl.value),
-        points: [p]
-      };
-      strokes.push(activeStroke);
-      renderAll();
-      e.preventDefault();
-    }
-
-    function moveStroke(e) {
-      if (!drawing || !activeStroke) return;
-      const p = screenPoint(e);
-      const last = activeStroke.points[activeStroke.points.length - 1];
-      const dx = p.x - last.x;
-      const dy = p.y - last.y;
-      if (Math.hypot(dx, dy) > 2) {
-        activeStroke.points.push(p);
-        drawStrokeIncrement(activeStroke, activeStroke.points.length - 2);
-      }
-      e.preventDefault();
-    }
-
-    function endStroke() {
-      drawing = false;
-      activeStroke = null;
-    }
-
-    drawCanvas.addEventListener('pointerdown', startStroke);
-    drawCanvas.addEventListener('pointermove', moveStroke);
-    window.addEventListener('pointerup', endStroke);
-    drawCanvas.addEventListener('touchstart', startStroke, { passive: false });
-    drawCanvas.addEventListener('touchmove', moveStroke, { passive: false });
-    window.addEventListener('touchend', endStroke);
-
-    function drawStrokeIncrement(stroke, idx) {
-      if (!stroke.points[idx] || !stroke.points[idx + 1]) return;
-      dctx.save();
-      dctx.globalCompositeOperation = 'multiply';
-      drawSegment(dctx, stroke.points[idx], stroke.points[idx + 1], stroke.brush, stroke.ink);
-      dctx.restore();
-    }
-
-    function drawSegment(ctx, a, b, brush, ink) {
-      const d = Math.hypot(b.x - a.x, b.y - a.y);
-      const steps = Math.max(1, Math.ceil(d / 5));
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.strokeStyle = `rgba(5,4,3,${0.34 * ink})`;
-      ctx.lineWidth = brush * 0.46;
-      ctx.beginPath();
-      ctx.moveTo(a.x, a.y);
-      const mx = (a.x + b.x) / 2 + rand(-brush * 0.25, brush * 0.25);
-      const my = (a.y + b.y) / 2 + rand(-brush * 0.25, brush * 0.25);
-      ctx.quadraticCurveTo(mx, my, b.x, b.y);
-      ctx.stroke();
-
-      for (let i = 0; i < steps; i++) {
-        const t = i / steps;
-        const x = a.x + (b.x - a.x) * t;
-        const y = a.y + (b.y - a.y) * t;
-        const count = Math.floor(brush * 0.8);
-        for (let k = 0; k < count; k++) {
-          const ang = Math.random() * Math.PI * 2;
-          const r = Math.random() * brush * 1.2;
-          const px = x + Math.cos(ang) * r;
-          const py = y + Math.sin(ang) * r;
-          ctx.globalAlpha = ink * rand(0.02, 0.12);
-          ctx.fillStyle = '#050403';
-          ctx.beginPath();
-          ctx.ellipse(px, py, rand(0.6, brush * 0.22), rand(0.4, brush * 0.14), ang, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-    }
-
-    function rand(min, max) { return min + Math.random() * (max - min); }
-
-    function renderAll() {
-      dctx.clearRect(0, 0, W, H);
-      wctx.clearRect(0, 0, W, H);
-      renderWorldMarkers();
-      dctx.save();
-      dctx.globalCompositeOperation = 'multiply';
-      for (const s of strokes) renderStroke(dctx, s);
-      dctx.restore();
-    }
-
-    function renderStroke(ctx, stroke) {
-      const pts = stroke.points || [];
-      for (let i = 0; i < pts.length - 1; i++) drawSegment(ctx, pts[i], pts[i + 1], stroke.brush || 10, stroke.ink || 0.7);
-    }
-
-    function renderWorldMarkers() {
-      wctx.save();
-      wctx.font = '12px ui-serif, Georgia';
-      wctx.textAlign = 'center';
-      wctx.textBaseline = 'middle';
-
-      if (!currentPos) {
-        wctx.fillStyle = 'rgba(244,234,216,.72)';
-        wctx.fillRect(0, 0, W, H);
-        wctx.fillStyle = 'rgba(20,17,14,.74)';
-        wctx.fillText('GPS 위치를 시작하면 주변 그림이 이 카메라 공간 위에 표시됩니다.', W / 2, H / 2);
-        wctx.restore();
-        return;
-      }
-
-      for (const row of nearbyDrawings) {
-        const angle = bearing(currentPos.lat, currentPos.lng, row.lat, row.lng);
-        const dist = row.distance || 0;
-        const r = Math.min(Math.max(dist * 6, 38), Math.min(W, H) * 0.38);
-        const x = W / 2 + Math.sin(angle) * r;
-        const y = H / 2 - Math.cos(angle) * r;
-        const selected = currentDrawing && currentDrawing.id === row.id;
-
-        wctx.save();
-        wctx.globalAlpha = selected ? 0.95 : 0.58;
-        wctx.fillStyle = selected ? 'rgba(10,8,6,.82)' : 'rgba(10,8,6,.5)';
-        wctx.beginPath();
-        wctx.arc(x, y, selected ? 17 : 11, 0, Math.PI * 2);
-        wctx.fill();
-        wctx.strokeStyle = 'rgba(247,238,220,.8)';
-        wctx.lineWidth = 1.4;
-        wctx.stroke();
-        wctx.fillStyle = 'rgba(247,238,220,.92)';
-        wctx.fillText(`${Math.round(dist)}m`, x, y - 28);
-        wctx.fillText(row.nickname || 'anon', x, y + 28);
-        wctx.restore();
-      }
-      wctx.restore();
-    }
-
-    function bearing(lat1, lng1, lat2, lng2) {
-      const toRad = (v) => v * Math.PI / 180;
-      const y = Math.sin(toRad(lng2 - lng1)) * Math.cos(toRad(lat2));
-      const x = Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) - Math.sin(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(toRad(lng2 - lng1));
-      return Math.atan2(y, x);
-    }
-
-    function loop() {
-      frame++;
-      if (frame % 60 === 0) renderWorldMarkers();
-      requestAnimationFrame(loop);
-    }
-    loop();
-
-    $('locateBtn').addEventListener('click', startLocation);
-    $('newBtn').addEventListener('click', newDrawing);
-    $('saveBtn').addEventListener('click', saveDrawing);
-    $('reloadBtn').addEventListener('click', loadNearby);
-    $('undoBtn').addEventListener('click', () => { strokes.pop(); renderAll(); });
-    $('clearBtn').addEventListener('click', () => { strokes = []; renderAll(); setStatus('현재 화면의 선을 비웠습니다. 저장 전이면 DB에는 영향 없습니다.'); });
-    $('deleteBtn').addEventListener('click', deleteSelected);
-    $('hideBtn').addEventListener('click', () => ui.classList.toggle('hidden'));
-    $('demoBtn').addEventListener('click', async () => {
-      usingLocalDemo = true;
-      setStatus('로컬 데모 모드입니다. 이 기기 안에서만 저장됩니다. Supabase 키를 넣으면 공유 모드가 됩니다.');
-      if (currentPos) await loadNearby();
-    });
-
-    radiusEl.addEventListener('input', () => loadNearby());
-    nicknameEl.addEventListener('change', nickname);
-
-    window.addEventListener('keydown', (e) => {
-      const k = e.key.toLowerCase();
-      if (k === 'h') ui.classList.toggle('hidden');
-    });
-
-    if (!hasSupabase) {
-      setStatus('현재 Supabase 키가 비어 있어 로컬 데모 모드입니다. 같은 기기에서만 저장됩니다. 여러 사람이 공유하려면 코드 상단의 SUPABASE_URL / SUPABASE_ANON_KEY를 넣으세요.');
-    }
-  </script>
-</body>
-</html>
+    function buildInkMountainWorld() {
+      addGridLines(0x2a2118, 0.14, 3.0);
+      for (let i = 0; i < 38; i++) {
+        const geo = new THREE.ConeGeometry(rand(0.8, 2.8), rand(2.8, 9.2), 5 + Math.floor(Math.random() * 4));
+        const mat = new THREE.MeshStandardMaterial({
+          color: new THREE.Color(rand(0.13, 0.34), rand(0.12, 0.25), rand(0.09, 0.18)),
+          roughness: 1,
+          transparent: true,
+          opa
