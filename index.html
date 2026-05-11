@@ -33,11 +33,23 @@
       object-fit: cover;
       transform: scaleX(-1);
       opacity: 0;
-      transition: opacity 0.3s ease;
+      pointer-events: none;
       background: #000;
     }
 
-    body.fallback-on #fallbackVideo { opacity: 1; }
+    #cameraFx {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      opacity: 0;
+      z-index: 1;
+      pointer-events: none;
+      background: #000;
+      transition: opacity 0.3s ease;
+    }
+
+    body.fallback-on #cameraFx { opacity: 1; }
 
     canvas {
       position: fixed;
@@ -165,6 +177,7 @@
 </head>
 <body>
   <video id="fallbackVideo" playsinline muted autoplay></video>
+  <canvas id="cameraFx"></canvas>
 
   <section class="ui" id="ui">
     <h1>Ink Breath AR</h1>
@@ -200,6 +213,16 @@
       <span class="value" id="windPowerVal">.70</span>
     </div>
 
+    <div class="row">
+      <label for="fxMode">카메라 효과</label>
+      <select id="fxMode" style="width:100%;border-radius:10px;border:1px solid rgba(30,24,18,.2);background:rgba(255,252,243,.72);padding:7px;font-family:inherit;font-size:12px;">
+        <option value="ink">먹화/흑백</option>
+        <option value="game">애니메이션 게임공간</option>
+        <option value="edge">윤곽선 공간</option>
+      </select>
+      <span class="value">FX</span>
+    </div>
+
     <div class="buttons">
       <button id="startBtn" class="primary">AR 시작</button>
       <button id="fallbackBtn">카메라 모드</button>
@@ -221,6 +244,9 @@
     const ui = document.getElementById('ui');
     const statusEl = document.getElementById('status');
     const fallbackVideo = document.getElementById('fallbackVideo');
+    const cameraFx = document.getElementById('cameraFx');
+    const fxCtx = cameraFx.getContext('2d', { willReadFrequently: true });
+    const fxMode = document.getElementById('fxMode');
 
     const controls = {
       brushSize: document.getElementById('brushSize'),
@@ -261,6 +287,7 @@
     let lastPoint = null;
     let fallbackMode = false;
     let fallbackStream = null;
+    let fxFrame = 0;
     let clock = new THREE.Clock();
     let lastSpawnTime = 0;
 
@@ -383,6 +410,8 @@
           audio: false
         });
         fallbackVideo.srcObject = fallbackStream;
+        await fallbackVideo.play().catch(() => {});
+        resizeFxCanvas();
         document.body.classList.add('fallback-on');
         fallbackMode = true;
         camera.position.set(0, 0, 0);
@@ -615,6 +644,109 @@
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
+      resizeFxCanvas();
+    }
+
+    function resizeFxCanvas() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      cameraFx.width = Math.floor(window.innerWidth * dpr);
+      cameraFx.height = Math.floor(window.innerHeight * dpr);
+      fxCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function drawCameraFx() {
+      if (!fallbackMode || fallbackVideo.readyState < 2) return;
+
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const mode = fxMode.value;
+      fxFrame++;
+
+      fxCtx.save();
+      fxCtx.clearRect(0, 0, w, h);
+      fxCtx.translate(w, 0);
+      fxCtx.scale(-1, 1);
+      fxCtx.drawImage(fallbackVideo, 0, 0, w, h);
+      fxCtx.restore();
+
+      const img = fxCtx.getImageData(0, 0, w, h);
+      const d = img.data;
+
+      if (mode === 'ink') {
+        for (let i = 0; i < d.length; i += 4) {
+          const gray = d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114;
+          const paper = 236 + Math.sin((i / 4) * 0.013 + fxFrame * 0.03) * 7;
+          const ink = gray < 88 ? 20 : gray < 145 ? 76 : gray < 205 ? 174 : paper;
+          d[i] = ink;
+          d[i + 1] = ink * 0.94;
+          d[i + 2] = ink * 0.82;
+        }
+      }
+
+      if (mode === 'game') {
+        for (let i = 0; i < d.length; i += 4) {
+          const gray = d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114;
+          const level = Math.floor(gray / 42) * 42;
+          const pulse = Math.sin(fxFrame * 0.04 + i * 0.00003) * 10;
+          d[i] = Math.min(255, level * 0.65 + 20 + pulse);
+          d[i + 1] = Math.min(255, level * 0.78 + 28 + pulse);
+          d[i + 2] = Math.min(255, level * 1.05 + 55 + pulse);
+        }
+      }
+
+      if (mode === 'edge') {
+        const copy = new Uint8ClampedArray(d);
+        const stride = w * 4;
+        for (let y = 1; y < h - 1; y += 1) {
+          for (let x = 1; x < w - 1; x += 1) {
+            const i = (y * w + x) * 4;
+            const gx = Math.abs(copy[i - 4] - copy[i + 4]) + Math.abs(copy[i - 3] - copy[i + 5]) + Math.abs(copy[i - 2] - copy[i + 6]);
+            const gy = Math.abs(copy[i - stride] - copy[i + stride]) + Math.abs(copy[i - stride + 1] - copy[i + stride + 1]) + Math.abs(copy[i - stride + 2] - copy[i + stride + 2]);
+            const edge = Math.min(255, (gx + gy) * 1.4);
+            const bg = 18 + Math.sin((x + y + fxFrame) * 0.025) * 8;
+            d[i] = bg + edge * 0.15;
+            d[i + 1] = bg + edge * 0.38;
+            d[i + 2] = bg + edge * 0.7;
+          }
+        }
+      }
+
+      fxCtx.putImageData(img, 0, 0);
+
+      if (mode === 'game' || mode === 'edge') {
+        fxCtx.save();
+        fxCtx.globalAlpha = mode === 'game' ? 0.16 : 0.2;
+        fxCtx.strokeStyle = mode === 'game' ? '#ffffff' : '#8fd3ff';
+        fxCtx.lineWidth = 1;
+        const grid = mode === 'game' ? 54 : 38;
+        const offset = (fxFrame * 0.45) % grid;
+        for (let x = -grid + offset; x < w + grid; x += grid) {
+          fxCtx.beginPath();
+          fxCtx.moveTo(x, 0);
+          fxCtx.lineTo(x + Math.sin(fxFrame * 0.02 + x) * 18, h);
+          fxCtx.stroke();
+        }
+        for (let y = -grid + offset; y < h + grid; y += grid) {
+          fxCtx.beginPath();
+          fxCtx.moveTo(0, y);
+          fxCtx.lineTo(w, y + Math.cos(fxFrame * 0.02 + y) * 18);
+          fxCtx.stroke();
+        }
+        fxCtx.restore();
+      }
+
+      if (mode === 'ink') {
+        fxCtx.save();
+        fxCtx.globalCompositeOperation = 'multiply';
+        fxCtx.globalAlpha = 0.12;
+        for (let i = 0; i < 42; i++) {
+          fxCtx.beginPath();
+          fxCtx.ellipse(Math.random() * w, Math.random() * h, Math.random() * 70, Math.random() * 18, Math.random() * Math.PI, 0, Math.PI * 2);
+          fxCtx.fillStyle = '#1a1209';
+          fxCtx.fill();
+        }
+        fxCtx.restore();
+      }
     }
 
     function updateReticle(frame) {
@@ -643,6 +775,7 @@
         const dt = clock.getDelta();
         const elapsed = clock.elapsedTime;
         updateReticle(frame);
+        drawCameraFx();
         updateInk(dt, elapsed);
 
         if (fallbackMode) {
