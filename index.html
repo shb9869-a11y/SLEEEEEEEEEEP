@@ -3,27 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Ink Body World — Body Tracking Drawing Avatar</title>
+  <title>Virtual Ink Body World</title>
   <style>
-    :root {
-      --paper: rgba(245, 235, 215, 0.92);
-      --ink: #12100d;
-      --line: rgba(35, 29, 22, 0.18);
-    }
-
     * { box-sizing: border-box; }
-
     html, body {
       margin: 0;
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #080807;
-      color: var(--ink);
+      background: #070707;
+      color: #17120d;
       font-family: ui-serif, "Apple SD Gothic Neo", "Noto Serif KR", Georgia, serif;
       touch-action: none;
     }
-
     #webcam {
       position: fixed;
       right: 12px;
@@ -32,25 +24,22 @@
       height: 135px;
       object-fit: cover;
       transform: scaleX(-1);
-      border: 1px solid rgba(245,235,215,.28);
       border-radius: 14px;
-      z-index: 12;
-      opacity: .62;
+      border: 1px solid rgba(245,235,215,.35);
       background: #000;
+      z-index: 12;
+      opacity: .65;
     }
-
     #pose2d {
       position: fixed;
       right: 12px;
       bottom: 12px;
       width: 180px;
       height: 135px;
+      transform: scaleX(-1);
       z-index: 13;
       pointer-events: none;
-      transform: scaleX(-1);
-      opacity: .95;
     }
-
     .ui {
       position: fixed;
       left: 12px;
@@ -59,33 +48,17 @@
       max-height: calc(100vh - 24px);
       overflow: auto;
       padding: 14px;
-      border: 1px solid var(--line);
       border-radius: 18px;
-      background: var(--paper);
+      border: 1px solid rgba(30,24,18,.18);
+      background: rgba(246,237,219,.9);
       backdrop-filter: blur(14px);
       box-shadow: 0 18px 56px rgba(0,0,0,.28);
       z-index: 10;
       transition: transform .25s ease, opacity .25s ease;
     }
-
-    .ui.hidden {
-      transform: translateY(calc(-100% - 24px));
-      opacity: .13;
-    }
-
-    h1 {
-      margin: 0 0 4px;
-      font-size: 20px;
-      letter-spacing: -0.04em;
-    }
-
-    .sub {
-      margin: 0 0 12px;
-      font-size: 12px;
-      line-height: 1.5;
-      opacity: .74;
-    }
-
+    .ui.hidden { transform: translateY(calc(-100% - 24px)); opacity: .14; }
+    h1 { margin: 0 0 4px; font-size: 20px; letter-spacing: -.04em; }
+    .sub { margin: 0 0 12px; font-size: 12px; line-height: 1.5; opacity: .74; }
     .row {
       display: grid;
       grid-template-columns: 94px 1fr 44px;
@@ -94,62 +67,55 @@
       margin: 8px 0;
       font-size: 12px;
     }
-
     input, select {
       width: 100%;
       border: 1px solid rgba(30,24,18,.18);
       border-radius: 11px;
-      background: rgba(255,252,244,.72);
-      color: var(--ink);
+      background: rgba(255,252,244,.76);
+      color: #17120d;
       padding: 8px 9px;
       font: inherit;
       font-size: 12px;
       outline: none;
     }
-
     input[type="range"] { padding: 0; accent-color: #1c1712; }
-
     .buttons {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 7px;
       margin-top: 12px;
     }
-
     button {
       appearance: none;
       border: 1px solid rgba(30,24,18,.2);
       border-radius: 12px;
       background: rgba(255,252,244,.74);
-      color: var(--ink);
+      color: #17120d;
       padding: 9px 8px;
       font-family: inherit;
       font-size: 12px;
       cursor: pointer;
     }
-
     button.primary { background: rgba(28,23,18,.92); color: #f9eedb; }
     button:active { transform: translateY(1px); }
-
     .status {
       margin-top: 10px;
       padding: 9px 10px;
       border-radius: 13px;
-      background: rgba(255,255,255,.44);
+      background: rgba(255,255,255,.45);
       font-size: 11px;
       line-height: 1.5;
       white-space: pre-wrap;
     }
-
     .hint {
       position: fixed;
       left: 50%;
       bottom: 14px;
       transform: translateX(-50%);
-      width: min(720px, calc(100vw - 28px));
+      width: min(760px, calc(100vw - 28px));
       padding: 10px 12px;
       border-radius: 15px;
-      background: rgba(245,235,215,.78);
+      background: rgba(246,237,219,.78);
       border: 1px solid rgba(30,24,18,.14);
       backdrop-filter: blur(10px);
       z-index: 10;
@@ -157,7 +123,6 @@
       line-height: 1.5;
       text-align: center;
     }
-
     @media (max-width: 760px) {
       .ui { left: 8px; top: 8px; width: calc(100vw - 16px); max-height: 56vh; }
       #webcam, #pose2d { width: 132px; height: 99px; right: 8px; bottom: 72px; }
@@ -168,21 +133,25 @@
 </head>
 <body>
   <!--
-    Ink Body World
-    - GitHub Pages에 index.html로 업로드 가능
-    - HTTPS 필요: 카메라 권한 때문
-    - 카메라 앞 전신이 보일수록 트래킹이 잘 됩니다.
-    - 몸 좌우 기울임/팔 방향: 이동 방향
-    - 무릎/발목 움직임: 걷기 판정
-    - 오른손을 들고 흔들면 공간에 먹선 생성
+    Virtual Ink Body World
+    GitHub Pages에 index.html로 업로드해서 테스트 가능.
+    HTTPS 필요: 카메라 권한 때문.
+
+    기능:
+    - 가상 3D 월드 생성
+    - 접속자 캐릭터 생성
+    - 카메라 바디트래킹
+    - 몸 기울임 + 걷기 모션으로 캐릭터 이동
+    - 오른손 흔들기로 3D 공간에 먹선 드로잉
+    - GPS 없음. 그림은 가상 월드 좌표에 새겨짐.
   -->
 
   <video id="webcam" playsinline muted autoplay></video>
   <canvas id="pose2d"></canvas>
 
   <section class="ui" id="ui">
-    <h1>Ink Body World</h1>
-    <p class="sub">카메라 바디트래킹으로 내 캐릭터가 3D 월드를 걸어다니고, 손을 흔들면 공간에 그림이 남는 테스트.</p>
+    <h1>Virtual Ink Body World</h1>
+    <p class="sub">GPS 없이, 가상 3D 월드 안에 내 캐릭터가 들어가고 몸 움직임으로 걷고 손짓으로 그림을 새기는 시스템.</p>
 
     <div class="row">
       <label for="avatarName">캐릭터명</label>
@@ -204,8 +173,8 @@
 
     <div class="row">
       <label for="inkLife">먹선 수명</label>
-      <input id="inkLife" type="range" min="4" max="90" step="1" value="36" />
-      <span id="inkLifeVal">36</span>
+      <input id="inkLife" type="range" min="5" max="180" step="1" value="90" />
+      <span id="inkLifeVal">90</span>
     </div>
 
     <div class="row">
@@ -227,10 +196,10 @@
       <button id="shotBtn">캡처</button>
     </div>
 
-    <div class="status" id="status">카메라 시작을 누르세요. 전신이 보이면 좋고, 최소 상반신+양손이 보이면 손 흔들기 드로잉은 가능합니다.</div>
+    <div class="status" id="status">카메라 시작을 누르세요. 전신이 보이면 걷기 판정이 좋고, 상반신만 보여도 손 흔들기 드로잉은 가능합니다.</div>
   </section>
 
-  <div class="hint">몸을 좌우/앞뒤로 기울이면 방향이 정해지고, 다리를 움직이면 걷습니다. 오른손을 어깨보다 높게 들고 흔들면 먹선이 생성됩니다.</div>
+  <div class="hint">몸을 좌우/앞뒤로 기울이면 방향이 정해지고, 다리를 움직이면 걷습니다. 오른손을 어깨보다 높게 들고 흔들면 3D 월드에 먹선이 새겨집니다.</div>
 
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
@@ -252,7 +221,6 @@
       inkLife: $('inkLife'),
       worldMode: $('worldMode')
     };
-
     const labels = {
       moveSpeed: $('moveSpeedVal'),
       brushSize: $('brushSizeVal'),
@@ -274,27 +242,19 @@
 
     let scene, camera, renderer, orbit;
     let avatar, bodyParts = {}, nameSprite;
-    let inkGroup, worldGroup;
-    let pose;
+    let worldGroup, inkGroup;
+    let pose, mpCamera;
     let latestLandmarks = null;
     let tracking = false;
     let autoWalk = false;
     let clock = new THREE.Clock();
-    let avatarVelocity = new THREE.Vector3();
     let moveDir = new THREE.Vector3(0, 0, -1);
-    let isWalking = false;
-    let isDrawing = false;
-    let lastHandWorld = null;
-    let inkObjects = [];
-    let handHistory = [];
+    let avatarVelocity = new THREE.Vector3();
     let walkPhase = 0;
-    let smoothed = {
-      leanX: 0,
-      leanY: 0,
-      legMotion: 0,
-      handWave: 0,
-      rightHandUp: 0
-    };
+    let lastHandWorld = null;
+    let handHistory = [];
+    let inkObjects = [];
+    let smoothed = { leanX: 0, leanY: 0, legMotion: 0, handWave: 0, rightHandUp: 0 };
 
     initThree();
     buildWorld();
@@ -307,7 +267,7 @@
       scene = new THREE.Scene();
       scene.fog = new THREE.FogExp2(0xf1e5d0, 0.035);
 
-      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.01, 120);
+      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.01, 140);
       camera.position.set(0, 3.2, 7.5);
 
       renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
@@ -320,8 +280,7 @@
       orbit.enableDamping = true;
       orbit.target.set(0, 1.1, 0);
 
-      const hemi = new THREE.HemisphereLight(0xfff4df, 0x1c1814, 2.1);
-      scene.add(hemi);
+      scene.add(new THREE.HemisphereLight(0xfff4df, 0x1c1814, 2.1));
       const sun = new THREE.DirectionalLight(0xffecd0, 2.3);
       sun.position.set(4, 8, 3);
       scene.add(sun);
@@ -330,6 +289,7 @@
       scene.add(inkGroup);
 
       window.addEventListener('resize', onResize);
+      onResize();
     }
 
     function onResize() {
@@ -339,20 +299,23 @@
       poseCanvas.width = 180;
       poseCanvas.height = 135;
     }
-    onResize();
 
     function buildWorld() {
-      if (worldGroup) scene.remove(worldGroup);
+      if (worldGroup) {
+        scene.remove(worldGroup);
+        disposeGroup(worldGroup);
+      }
       worldGroup = new THREE.Group();
       scene.add(worldGroup);
 
       const mode = controls.worldMode.value;
-      renderer.setClearColor(mode === 'grid_dream' ? 0x080b12 : 0xf1e5d0, 1);
-      scene.fog.color.set(mode === 'grid_dream' ? 0x080b12 : 0xf1e5d0);
+      const bg = mode === 'grid_dream' ? 0x080b12 : 0xf1e5d0;
+      renderer.setClearColor(bg, 1);
+      scene.fog.color.set(bg);
 
       const floorMat = new THREE.MeshStandardMaterial({
         color: mode === 'grid_dream' ? 0x101725 : 0xe7d8bd,
-        roughness: 0.85,
+        roughness: 0.88,
         metalness: 0.02
       });
       const floor = new THREE.Mesh(new THREE.PlaneGeometry(120, 120, 80, 80), floorMat);
@@ -365,12 +328,424 @@
       if (mode === 'void_table') buildVoidTableWorld();
     }
 
+    function addGridLines(color, opacity, step) {
+      const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity });
+      for (let i = -60; i <= 60; i += step) {
+        worldGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-60, 0.012, i), new THREE.Vector3(60, 0.012, i)]), mat));
+        worldGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(i, 0.012, -60), new THREE.Vector3(i, 0.012, 60)]), mat));
+      }
+    }
+
     function buildInkMountainWorld() {
-      addGridLines(0x2a2118, 0.14, 3.0);
-      for (let i = 0; i < 38; i++) {
+      addGridLines(0x2a2118, 0.13, 3.0);
+      for (let i = 0; i < 40; i++) {
         const geo = new THREE.ConeGeometry(rand(0.8, 2.8), rand(2.8, 9.2), 5 + Math.floor(Math.random() * 4));
-        const mat = new THREE.MeshStandardMaterial({
-          color: new THREE.Color(rand(0.13, 0.34), rand(0.12, 0.25), rand(0.09, 0.18)),
-          roughness: 1,
-          transparent: true,
-          opa
+        const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(rand(0.13, 0.34), rand(0.12, 0.25), rand(0.09, 0.18)), roughness: 1, transparent: true, opacity: rand(0.22, 0.62) });
+        const m = new THREE.Mesh(geo, mat);
+        const a = rand(0, Math.PI * 2), r = rand(10, 45);
+        m.position.set(Math.cos(a) * r, geo.parameters.height / 2 - 0.05, Math.sin(a) * r);
+        m.rotation.y = rand(0, Math.PI);
+        worldGroup.add(m);
+      }
+      for (let i = 0; i < 130; i++) addDustParticle(false);
+    }
+
+    function buildGridDreamWorld() {
+      addGridLines(0x79b8ff, 0.38, 2.0);
+      for (let i = 0; i < 48; i++) {
+        const geo = new THREE.BoxGeometry(rand(0.35, 1.8), rand(0.25, 5.0), rand(0.35, 1.8));
+        const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(rand(0.05, 0.18), rand(0.16, 0.45), rand(0.45, 0.9)), roughness: 0.45, metalness: 0.12, emissive: 0x0a162a, emissiveIntensity: 0.4 });
+        const m = new THREE.Mesh(geo, mat);
+        m.position.set(rand(-34, 34), geo.parameters.height / 2, rand(-34, 34));
+        worldGroup.add(m);
+      }
+    }
+
+    function buildVoidTableWorld() {
+      addGridLines(0x1d1812, 0.11, 4.0);
+      const tableMat = new THREE.MeshStandardMaterial({ color: 0x2a2118, roughness: 0.9 });
+      const top = new THREE.Mesh(new THREE.BoxGeometry(8, 0.22, 3), tableMat);
+      top.position.set(0, 1.0, -8);
+      worldGroup.add(top);
+      for (const x of [-3.6, 3.6]) for (const z of [-1.2, 1.2]) {
+        const leg = new THREE.Mesh(new THREE.BoxGeometry(0.22, 1.8, 0.22), tableMat);
+        leg.position.set(x, 0.1, -8 + z);
+        worldGroup.add(leg);
+      }
+      for (let i = 0; i < 22; i++) {
+        const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.44, 0.035, 32), new THREE.MeshStandardMaterial({ color: 0xe8dcc7, roughness: 0.8 }));
+        plate.position.set(rand(-3.6, 3.6), 1.14, -8 + rand(-1.1, 1.1));
+        worldGroup.add(plate);
+      }
+      for (let i = 0; i < 90; i++) addDustParticle(true);
+    }
+
+    function addDustParticle(warm) {
+      const p = new THREE.Mesh(new THREE.SphereGeometry(rand(0.01, 0.045), 8, 8), new THREE.MeshBasicMaterial({ color: warm ? 0xd9c3a0 : 0x211b15, transparent: true, opacity: rand(0.08, 0.28) }));
+      p.position.set(rand(-35, 35), rand(0.5, 6), rand(-35, 35));
+      p.userData.floatSpeed = rand(0.2, 1.2);
+      p.userData.baseY = p.position.y;
+      worldGroup.add(p);
+    }
+
+    function buildAvatar() {
+      avatar = new THREE.Group();
+      scene.add(avatar);
+      const skin = new THREE.MeshStandardMaterial({ color: 0x17120d, roughness: 0.8 });
+      const cloth = new THREE.MeshStandardMaterial({ color: 0x2b2118, roughness: 0.9 });
+      const face = new THREE.MeshStandardMaterial({ color: 0xf2dfbd, roughness: 0.7 });
+
+      bodyParts.body = new THREE.Mesh(new THREE.CapsuleGeometry(0.32, 0.72, 8, 16), cloth);
+      bodyParts.body.position.y = 1.18;
+      avatar.add(bodyParts.body);
+      bodyParts.head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 24, 24), face);
+      bodyParts.head.position.y = 1.83;
+      avatar.add(bodyParts.head);
+      bodyParts.neck = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.09, 0.18, 16), face);
+      bodyParts.neck.position.y = 1.58;
+      avatar.add(bodyParts.neck);
+      makeLimb('leftArm', -0.43, 1.42, 0, 0.12, 0.74, skin);
+      makeLimb('rightArm', 0.43, 1.42, 0, 0.12, 0.74, skin);
+      makeLimb('leftLeg', -0.16, 0.62, 0, 0.14, 0.92, skin);
+      makeLimb('rightLeg', 0.16, 0.62, 0, 0.14, 0.92, skin);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.65, 0.012, 8, 80), new THREE.MeshBasicMaterial({ color: 0x1a1511, transparent: true, opacity: 0.28 }));
+      ring.rotation.x = Math.PI / 2;
+      ring.position.y = 0.035;
+      avatar.add(ring);
+      nameSprite = makeTextSprite('Avatar');
+      nameSprite.position.y = 2.25;
+      avatar.add(nameSprite);
+    }
+
+    function makeLimb(name, x, y, z, radius, length, mat) {
+      const limb = new THREE.Group();
+      const mesh = new THREE.Mesh(new THREE.CapsuleGeometry(radius, length, 8, 14), mat);
+      mesh.rotation.z = Math.PI / 2;
+      limb.add(mesh);
+      limb.position.set(x, y, z);
+      avatar.add(limb);
+      bodyParts[name] = limb;
+    }
+
+    function makeTextSprite(text) {
+      const c = document.createElement('canvas');
+      c.width = 512; c.height = 128;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = 'rgba(245,235,215,0.86)';
+      roundRect(ctx, 50, 32, 412, 58, 28); ctx.fill();
+      ctx.strokeStyle = 'rgba(20,16,12,0.22)'; ctx.lineWidth = 8; ctx.stroke();
+      ctx.fillStyle = '#15110d'; ctx.font = '36px Georgia, serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, 256, 62);
+      const tex = new THREE.CanvasTexture(c);
+      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
+      sprite.scale.set(1.8, 0.45, 1);
+      return sprite;
+    }
+
+    function updateNameSprite() {
+      const name = $('avatarName').value.trim() || 'Avatar';
+      localStorage.setItem('virtual-ink-avatar-name', name);
+      avatar.remove(nameSprite);
+      nameSprite.material.map.dispose();
+      nameSprite.material.dispose();
+      nameSprite = makeTextSprite(name);
+      nameSprite.position.y = 2.25;
+      avatar.add(nameSprite);
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath(); ctx.moveTo(x+r, y); ctx.arcTo(x+w, y, x+w, y+h, r); ctx.arcTo(x+w, y+h, x, y+h, r); ctx.arcTo(x, y+h, x, y, r); ctx.arcTo(x, y, x+w, y, r); ctx.closePath();
+    }
+
+    async function startTracking() {
+      $('avatarName').value = $('avatarName').value.trim() || localStorage.getItem('virtual-ink-avatar-name') || 'Avatar';
+      updateNameSprite();
+
+      pose = new Pose({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}` });
+      pose.setOptions({
+        modelComplexity: 1,
+        smoothLandmarks: true,
+        enableSegmentation: false,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
+      });
+      pose.onResults(onPoseResults);
+
+      mpCamera = new Camera(video, {
+        onFrame: async () => { await pose.send({ image: video }); },
+        width: 640,
+        height: 480
+      });
+      await mpCamera.start();
+      tracking = true;
+      setStatus('트래킹 시작. 몸을 기울여 방향을 잡고, 다리를 움직여 걸으세요. 오른손을 들고 흔들면 먹선이 그려집니다.');
+    }
+
+    function onPoseResults(results) {
+      latestLandmarks = results.poseLandmarks || null;
+      drawPose2D(latestLandmarks);
+      if (!latestLandmarks) return;
+      analyzePose(latestLandmarks);
+    }
+
+    function lm(i) { return latestLandmarks ? latestLandmarks[i] : null; }
+    function vis(p) { return p && (p.visibility === undefined || p.visibility > 0.35); }
+
+    function analyzePose(l) {
+      const leftShoulder = l[11], rightShoulder = l[12], leftHip = l[23], rightHip = l[24];
+      const leftKnee = l[25], rightKnee = l[26], leftAnkle = l[27], rightAnkle = l[28];
+      const rightWrist = l[16];
+
+      if (!vis(leftShoulder) || !vis(rightShoulder) || !vis(leftHip) || !vis(rightHip)) return;
+
+      const shoulderCX = (leftShoulder.x + rightShoulder.x) / 2;
+      const hipCX = (leftHip.x + rightHip.x) / 2;
+      const shoulderCY = (leftShoulder.y + rightShoulder.y) / 2;
+      const hipCY = (leftHip.y + rightHip.y) / 2;
+
+      const leanX = clamp((hipCX - shoulderCX) * 5.2, -1, 1);
+      const leanY = clamp((hipCY - shoulderCY - 0.2) * 3.5, -1, 1);
+
+      let legMotion = 0;
+      if (vis(leftKnee) && vis(rightKnee) && vis(leftAnkle) && vis(rightAnkle)) {
+        legMotion = Math.abs(leftKnee.y - rightKnee.y) * 3 + Math.abs(leftAnkle.y - rightAnkle.y) * 2;
+      }
+
+      let rightHandUp = 0;
+      let handWave = 0;
+      if (vis(rightWrist)) {
+        rightHandUp = rightWrist.y < rightShoulder.y ? 1 : 0;
+        handHistory.push({ x: rightWrist.x, y: rightWrist.y, t: performance.now() });
+        if (handHistory.length > 12) handHistory.shift();
+        for (let i = 1; i < handHistory.length; i++) {
+          handWave += Math.abs(handHistory[i].x - handHistory[i - 1].x) + Math.abs(handHistory[i].y - handHistory[i - 1].y);
+        }
+        handWave = clamp(handWave * 8, 0, 1.5);
+      }
+
+      smoothed.leanX = lerp(smoothed.leanX, leanX, 0.16);
+      smoothed.leanY = lerp(smoothed.leanY, leanY, 0.16);
+      smoothed.legMotion = lerp(smoothed.legMotion, legMotion, 0.2);
+      smoothed.rightHandUp = lerp(smoothed.rightHandUp, rightHandUp, 0.24);
+      smoothed.handWave = lerp(smoothed.handWave, handWave, 0.22);
+    }
+
+    function drawPose2D(l) {
+      poseCtx.clearRect(0, 0, poseCanvas.width, poseCanvas.height);
+      poseCtx.drawImage(video, 0, 0, poseCanvas.width, poseCanvas.height);
+      if (!l) return;
+      poseCtx.fillStyle = 'rgba(245,235,215,.9)';
+      poseCtx.strokeStyle = 'rgba(20,16,12,.9)';
+      poseCtx.lineWidth = 2;
+      const links = [[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28]];
+      for (const [a,b] of links) {
+        if (!vis(l[a]) || !vis(l[b])) continue;
+        poseCtx.beginPath(); poseCtx.moveTo(l[a].x * poseCanvas.width, l[a].y * poseCanvas.height); poseCtx.lineTo(l[b].x * poseCanvas.width, l[b].y * poseCanvas.height); poseCtx.stroke();
+      }
+      for (const i of [11,12,13,14,15,16,23,24,25,26,27,28]) {
+        if (!vis(l[i])) continue;
+        poseCtx.beginPath(); poseCtx.arc(l[i].x * poseCanvas.width, l[i].y * poseCanvas.height, 3, 0, Math.PI*2); poseCtx.fill();
+      }
+    }
+
+    function updateAvatar(dt, elapsed) {
+      const walkingSignal = autoWalk ? 1 : clamp(smoothed.legMotion * 2.8, 0, 1);
+      const hasIntent = autoWalk || Math.abs(smoothed.leanX) > 0.12 || Math.abs(smoothed.leanY) > 0.08;
+      const isWalking = walkingSignal > 0.18 && hasIntent;
+
+      const forward = new THREE.Vector3(Math.sin(avatar.rotation.y), 0, Math.cos(avatar.rotation.y) * -1);
+      const right = new THREE.Vector3(forward.z, 0, -forward.x);
+
+      const desired = new THREE.Vector3();
+      desired.addScaledVector(right, smoothed.leanX);
+      desired.addScaledVector(forward, -smoothed.leanY + 0.35);
+      if (autoWalk) desired.set(Math.sin(elapsed * 0.4), 0, -1).normalize();
+      if (desired.length() > 0.01) {
+        desired.normalize();
+        moveDir.lerp(desired, 0.08);
+        const targetYaw = Math.atan2(moveDir.x, -moveDir.z);
+        avatar.rotation.y = lerpAngle(avatar.rotation.y, targetYaw, 0.08);
+      }
+
+      const speed = isWalking ? val('moveSpeed') * (0.35 + walkingSignal) : 0;
+      avatarVelocity.lerp(moveDir.clone().multiplyScalar(speed), 0.1);
+      avatar.position.add(avatarVelocity);
+
+      avatar.position.x = clamp(avatar.position.x, -48, 48);
+      avatar.position.z = clamp(avatar.position.z, -48, 48);
+
+      if (isWalking) walkPhase += dt * 8 * (0.6 + walkingSignal);
+      const swing = Math.sin(walkPhase) * (isWalking ? 0.75 : 0.08);
+      bodyParts.leftLeg.rotation.z = swing * 0.45;
+      bodyParts.rightLeg.rotation.z = -swing * 0.45;
+      bodyParts.leftArm.rotation.z = -swing * 0.38 - 0.1;
+      bodyParts.rightArm.rotation.z = swing * 0.38 + 0.1;
+      bodyParts.body.position.y = 1.18 + Math.abs(Math.sin(walkPhase)) * (isWalking ? 0.045 : 0.01);
+      bodyParts.head.position.y = 1.83 + Math.abs(Math.sin(walkPhase)) * (isWalking ? 0.035 : 0.006);
+
+      updateCameraFollow();
+      updateHandDrawing(elapsed);
+    }
+
+    function updateCameraFollow() {
+      const behind = new THREE.Vector3(0, 2.7, 6.8).applyAxisAngle(new THREE.Vector3(0,1,0), avatar.rotation.y);
+      const targetPos = avatar.position.clone().add(behind);
+      camera.position.lerp(targetPos, 0.04);
+      orbit.target.lerp(avatar.position.clone().add(new THREE.Vector3(0, 1.2, 0)), 0.08);
+    }
+
+    function updateHandDrawing(elapsed) {
+      const drawActive = smoothed.rightHandUp > 0.55 && smoothed.handWave > 0.28;
+      const rightHand = new THREE.Vector3(0.58, 1.56, -0.05).applyAxisAngle(new THREE.Vector3(0,1,0), avatar.rotation.y).add(avatar.position);
+      rightHand.y += Math.sin(elapsed * 7) * 0.05;
+      rightHand.x += smoothed.leanX * 0.25;
+      rightHand.z += smoothed.handWave * 0.1;
+
+      if (drawActive) {
+        if (lastHandWorld) spawnInkStroke(lastHandWorld, rightHand);
+        lastHandWorld = rightHand.clone();
+        bodyParts.rightArm.rotation.z = -1.05 + Math.sin(elapsed * 9) * 0.4;
+      } else {
+        lastHandWorld = null;
+      }
+    }
+
+    function spawnInkStroke(a, b) {
+      const points = [];
+      const steps = 6;
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const p = a.clone().lerp(b, t);
+        p.x += rand(-0.025, 0.025);
+        p.y += rand(-0.025, 0.025);
+        p.z += rand(-0.025, 0.025);
+        points.push(p);
+      }
+      const geo = new THREE.BufferGeometry().setFromPoints(points);
+      const mat = new THREE.LineBasicMaterial({ color: 0x050403, transparent: true, opacity: 0.72, depthWrite: false });
+      const line = new THREE.Line(geo, mat);
+      line.userData.birth = clock.elapsedTime;
+      line.userData.life = val('inkLife');
+      inkGroup.add(line);
+      inkObjects.push(line);
+
+      const particleCount = Math.floor(8 + val('brushSize') * 90);
+      for (let i = 0; i < particleCount; i++) spawnInkParticle(b);
+    }
+
+    const inkTexture = makeInkTexture();
+    function makeInkTexture() {
+      const c = document.createElement('canvas'); c.width = 128; c.height = 128;
+      const ctx = c.getContext('2d');
+      const g = ctx.createRadialGradient(64,64,2,64,64,62);
+      g.addColorStop(0,'rgba(0,0,0,.95)'); g.addColorStop(.35,'rgba(0,0,0,.38)'); g.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle = g; ctx.fillRect(0,0,128,128);
+      return new THREE.CanvasTexture(c);
+    }
+
+    function spawnInkParticle(pos) {
+      const size = val('brushSize') * rand(0.4, 1.8);
+      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: inkTexture, color: 0x050403, transparent: true, opacity: rand(0.08, 0.32), depthWrite: false }));
+      sprite.position.copy(pos).add(new THREE.Vector3(rand(-size, size), rand(-size, size), rand(-size, size)));
+      sprite.scale.set(size, size * rand(0.6, 1.5), 1);
+      sprite.userData.birth = clock.elapsedTime;
+      sprite.userData.life = val('inkLife') * rand(0.5, 1.25);
+      sprite.userData.vel = new THREE.Vector3(rand(-0.004,0.004), rand(-0.001,0.006), rand(-0.004,0.004));
+      inkGroup.add(sprite);
+      inkObjects.push(sprite);
+    }
+
+    function updateInk(elapsed) {
+      for (let i = inkObjects.length - 1; i >= 0; i--) {
+        const o = inkObjects[i];
+        const age = elapsed - o.userData.birth;
+        const life = o.userData.life || val('inkLife');
+        const t = clamp(age / life, 0, 1);
+        if (o.isSprite) {
+          o.position.add(o.userData.vel);
+          o.material.opacity *= 0.996;
+          o.scale.multiplyScalar(1 + 0.0018);
+        } else if (o.material) {
+          o.material.opacity = 0.72 * (1 - t);
+        }
+        if (age > life) {
+          inkGroup.remove(o);
+          if (o.geometry) o.geometry.dispose();
+          if (o.material) o.material.dispose();
+          inkObjects.splice(i, 1);
+        }
+      }
+    }
+
+    function animateWorld(elapsed) {
+      if (!worldGroup) return;
+      for (const o of worldGroup.children) {
+        if (o.userData && o.userData.floatSpeed) {
+          o.position.y = o.userData.baseY + Math.sin(elapsed * o.userData.floatSpeed + o.position.x) * 0.18;
+        }
+      }
+    }
+
+    function lerpAngle(a, b, t) {
+      const d = Math.atan2(Math.sin(b - a), Math.cos(b - a));
+      return a + d * t;
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const dt = clock.getDelta();
+      const elapsed = clock.elapsedTime;
+      updateAvatar(dt, elapsed);
+      updateInk(elapsed);
+      animateWorld(elapsed);
+      orbit.update();
+      renderer.render(scene, camera);
+    }
+
+    function clearInk() {
+      for (const o of inkObjects) {
+        inkGroup.remove(o);
+        if (o.geometry) o.geometry.dispose();
+        if (o.material) o.material.dispose();
+      }
+      inkObjects = [];
+    }
+
+    function resetAvatar() {
+      avatar.position.set(0,0,0);
+      avatar.rotation.set(0,0,0);
+      avatarVelocity.set(0,0,0);
+      setStatus('캐릭터 위치를 월드 중앙으로 리셋했습니다.');
+    }
+
+    function disposeGroup(group) {
+      group.traverse(o => {
+        if (o.geometry) o.geometry.dispose();
+        if (o.material) {
+          if (Array.isArray(o.material)) o.material.forEach(m => m.dispose());
+          else o.material.dispose();
+        }
+      });
+    }
+
+    $('startBtn').addEventListener('click', startTracking);
+    $('resetBtn').addEventListener('click', resetAvatar);
+    $('clearInkBtn').addEventListener('click', clearInk);
+    $('autoWalkBtn').addEventListener('click', () => { autoWalk = !autoWalk; $('autoWalkBtn').textContent = autoWalk ? '자동 중지' : '자동 걷기'; });
+    $('hideBtn').addEventListener('click', () => ui.classList.toggle('hidden'));
+    $('shotBtn').addEventListener('click', () => {
+      const a = document.createElement('a');
+      a.download = `virtual-ink-world-${Date.now()}.png`;
+      a.href = renderer.domElement.toDataURL('image/png');
+      a.click();
+    });
+    $('avatarName').addEventListener('change', updateNameSprite);
+    controls.worldMode.addEventListener('change', buildWorld);
+    window.addEventListener('keydown', e => {
+      const k = e.key.toLowerCase();
+      if (k === 'h') ui.classList.toggle('hidden');
+      if (k === 'c') clearInk();
+      if (k === 'r') resetAvatar();
+    });
+  </script>
+</body>
+</html>
