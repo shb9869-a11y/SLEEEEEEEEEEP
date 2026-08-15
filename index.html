@@ -1,205 +1,689 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Liquid Spark Camera</title>
-<style>
-  html,body{margin:0;height:100%;overflow:hidden;background:#000}
-  canvas{display:block;width:100vw;height:100vh}
-  #ui{
-    position:fixed;left:14px;top:14px;z-index:10;
-    color:#fff;font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;
-    background:rgba(0,0,0,.38);backdrop-filter:blur(8px);
-    padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.12)
-  }
-  #ui b{display:block;margin-bottom:2px}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>RF & Sound Decoder Simulator | 미디어아트 프로토타입 시뮬레이터</title>
+    <style>
+        :root {
+            --bg-color: #0d0f12;
+            --panel-bg: #181b20;
+            --panel-border: #2a303c;
+            --metal-accent: #3a4250;
+            --screen-bg: #050a08;
+            --screen-cyan: #00ffcc;
+            --screen-green: #39ff14;
+            --screen-amber: #ffaa00;
+            --screen-red: #ff3366;
+            --text-muted: #7e8b9b;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            color: #e1e7ed;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 10px;
+        }
+
+        .device-container {
+            background: linear-gradient(145deg, #22262d, #14171b);
+            border: 2px solid var(--panel-border);
+            border-radius: 28px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 1px 2px rgba(255,255,255,0.1);
+            width: 100%;
+            max-width: 440px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .device-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding: 0 4px;
+        }
+
+        .device-title {
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .badge-rf {
+            font-size: 10px;
+            background: #2a3441;
+            color: var(--screen-cyan);
+            padding: 3px 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(0,255,204,0.3);
+            font-family: monospace;
+        }
+
+        /* Screen Housing */
+        .screen-bezel {
+            width: 100%;
+            background: #000;
+            border: 4px solid #111417;
+            border-radius: 20px;
+            padding: 10px;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.9), 0 2px 5px rgba(255,255,255,0.05);
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .screen-glass {
+            background: var(--screen-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #1a3325;
+            box-shadow: inset 0 0 20px rgba(0, 255, 150, 0.05);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 220px;
+        }
+
+        /* Controls Section */
+        .controls-grid {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .knob-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.25);
+            padding: 12px 6px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .knob-label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            text-align: center;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .knob-outer {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: conic-gradient(from 180deg at 50% 50%, #1f242d 0deg, #3d4656 120deg, #1f242d 240deg, #3d4656 360deg);
+            box-shadow: 0 6px 14px rgba(0,0,0,0.6), inset 0 2px 3px rgba(255,255,255,0.2), inset 0 -3px 5px rgba(0,0,0,0.8);
+            position: relative;
+            cursor: pointer;
+            touch-action: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .knob-inner {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #2c323e 0%, #171a20 100%);
+            position: relative;
+            box-shadow: inset 0 1px 2px rgba(255,255,255,0.15);
+        }
+
+        .knob-indicator {
+            position: absolute;
+            top: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 12px;
+            background: var(--screen-cyan);
+            border-radius: 2px;
+            box-shadow: 0 0 8px var(--screen-cyan);
+        }
+
+        .knob-val {
+            font-size: 11px;
+            font-family: monospace;
+            font-weight: 600;
+            color: #d1d9e2;
+            margin-top: 8px;
+        }
+
+        /* Buttons & Actions */
+        .action-bar {
+            width: 100%;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 14px;
+            background: #252c38;
+            border: 1px solid #3d4658;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+            background: #1e232c;
+        }
+
+        .btn.active {
+            background: #11382f;
+            border-color: var(--screen-cyan);
+            color: var(--screen-cyan);
+            box-shadow: 0 0 12px rgba(0, 255, 204, 0.3);
+        }
+
+        .instructions {
+            margin-top: 24px;
+            max-width: 440px;
+            font-size: 12px;
+            line-height: 1.6;
+            color: #6d7987;
+            background: #14171c;
+            padding: 16px;
+            border-radius: 16px;
+            border: 1px solid #202630;
+        }
+
+        .instructions strong {
+            color: #9eb1c7;
+        }
+    </style>
 </head>
 <body>
-<div id="ui">
-  <b>LIQUID SPARK CAMERA</b>
-  webcam → ~180k GPU particles → liquid wobble
-</div>
-<canvas id="c"></canvas>
-<video id="v" autoplay playsinline muted style="display:none"></video>
 
-<script>
-const canvas = document.getElementById('c');
-const gl = canvas.getContext('webgl', {
-  antialias:false, alpha:false, premultipliedAlpha:false
-});
-if (!gl) { alert('WebGL not supported'); throw new Error('WebGL'); }
+    <div class="device-container">
+        <div class="device-header">
+            <div class="device-title">RESONANCE DECODER V1</div>
+            <div class="badge-rf" id="rfBadge">2.450 GHz ISM</div>
+        </div>
 
-const DPR = Math.min(devicePixelRatio || 1, 2);
-function resize(){
-  canvas.width = innerWidth * DPR;
-  canvas.height = innerHeight * DPR;
-  gl.viewport(0,0,canvas.width,canvas.height);
-}
-addEventListener('resize', resize); resize();
+        <!-- 1.69" TFT / OLED Virtual Screen -->
+        <div class="screen-bezel">
+            <div class="screen-glass">
+                <canvas id="screenCanvas" width="400" height="240"></canvas>
+            </div>
+        </div>
 
-const vert = `
-attribute vec2 a_pos;
-uniform float u_time;
-uniform vec2 u_res;
-uniform sampler2D u_cam;
-varying float v_a;
+        <!-- 3 Rotary Knobs -->
+        <div class="controls-grid">
+            <!-- Knob 1: Carrier Tuning (Heterodyne & Radio Noise) -->
+            <div class="knob-wrapper">
+                <div class="knob-label">CARRIER<br>TUNING</div>
+                <div class="knob-outer" id="knob1" data-val="0.25">
+                    <div class="knob-inner">
+                        <div class="knob-indicator"></div>
+                    </div>
+                </div>
+                <div class="knob-val" id="val1">2.410G</div>
+            </div>
 
-float hash(vec2 p){
-  return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453123);
-}
-float noise(vec2 p){
-  vec2 i = floor(p), f = fract(p);
-  float a = hash(i);
-  float b = hash(i + vec2(1.,0.));
-  float c = hash(i + vec2(0.,1.));
-  float d = hash(i + vec2(1.,1.));
-  vec2 u = f*f*(3.-2.*f);
-  return mix(a,b,u.x) + (c-a)*u.y*(1.-u.x) + (d-b)*u.x*u.y;
-}
-vec2 flow(vec2 p){
-  float t = u_time * 0.12;
-  float n1 = noise(p*2.2 + vec2(t, -t));
-  float n2 = noise(p*2.2 + vec2(-t, t));
-  float a = (n1 - 0.5) * 6.28318;
-  return vec2(cos(a), sin(a)) * (0.02 + n2*0.03);
-}
+            <!-- Knob 2: Resolution / Bitcrush (Glitch / Lo-Fi) -->
+            <div class="knob-wrapper">
+                <div class="knob-label">DIGITAL<br>RESOLUTION</div>
+                <div class="knob-outer" id="knob2" data-val="0.30">
+                    <div class="knob-inner">
+                        <div class="knob-indicator"></div>
+                    </div>
+                </div>
+                <div class="knob-val" id="val2">4 BIT</div>
+            </div>
 
-void main(){
-  vec2 uv = a_pos * 0.5 + 0.5;
+            <!-- Knob 3: Resonance & Filter (Phase / Pitch) -->
+            <div class="knob-wrapper">
+                <div class="knob-label">RESONANCE<br>& FILTER</div>
+                <div class="knob-outer" id="knob3" data-val="0.20">
+                    <div class="knob-inner">
+                        <div class="knob-indicator"></div>
+                    </div>
+                </div>
+                <div class="knob-val" id="val3">480 Hz</div>
+            </div>
+        </div>
 
-  // 카메라 밝기
-  vec4 cam = texture2D(u_cam, vec2(uv.x, 1.0-uv.y));
-  float lum = dot(cam.rgb, vec3(0.299,0.587,0.114));
+        <!-- Action Bar -->
+        <div class="action-bar">
+            <button class="btn" id="audioToggleBtn">
+                <span id="powerIcon">⚡</span> 오디오 시작
+            </button>
+            <button class="btn" id="micToggleBtn">
+                🎙️ 마이크 연결
+            </button>
+            <button class="btn" id="randomDriftBtn">
+                🎲 주파수 교란
+            </button>
+        </div>
+    </div>
 
-  // 액체 같은 꿀렁임
-  vec2 p = a_pos;
-  vec2 f = flow(p + flow(p*1.7));
-  p += f * (0.8 + lum*1.6);
+    <!-- Description / Concept -->
+    <div class="instructions">
+        <strong>🕹️ 인터랙션 튜닝 가이드:</strong><br>
+        • 노브가 어긋나 있을 때는 <strong>모듈러 신디사이저, 글리치 노이즈, 링모듈레이션(IDM 전자음악)</strong>이 발생합니다.<br>
+        • 3개 노브를 돌려 <strong>목표 스윗스팟(Sweet Spot)</strong>에 맞추면 디스플레이에 <span style="color:var(--screen-green)">[SIGNAL LOCKED 100%]</span>가 뜨며 맑은 원음이 복원됩니다.<br>
+        • <strong>[마이크 연결]</strong>을 켜면 실제 내 목소리가 실시간 전파 간섭/전자음으로 변조됩니다.
+    </div>
 
-  // 미세 떨림
-  float j = noise(p*40.0 + u_time*1.8) - 0.5;
-  p += vec2(j, -j) * 0.006;
+    <script>
+        // --- TARGET SWEET SPOTS (The secret frequencies to decode) ---
+        let targetK1 = 0.72; // ~2.462 GHz
+        let targetK2 = 0.85; // 16-bit resolution
+        let targetK3 = 0.65; // ~3.2 kHz cutoff
 
-  // 사람 형상 유지(밝을수록 안쪽으로 수축)
-  p *= mix(1.18, 0.86, smoothstep(0.08, 0.9, lum));
+        let k1 = 0.25, k2 = 0.30, k3 = 0.20; // Current knob positions (0.0 ~ 1.0)
+        let isAudioRunning = false;
+        let isMicActive = false;
 
-  gl_Position = vec4(p, 0.0, 1.0);
+        // --- WEB AUDIO API ENGINE ---
+        let audioCtx, analyser, dataArray;
+        let micStream, micSource;
+        let carrierOsc, carrierGain;
+        let noiseNode, noiseGain;
+        let synthDroneOsc, synthDroneGain;
+        let filterNode, waveshaperNode, delayNode, delayFeedbackNode, masterGain;
 
-  float size = mix(0.8, 2.6, lum);
-  size *= (u_res.y / 900.0);
-  gl_PointSize = size;
+        function initAudio() {
+            if (audioCtx) return;
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext();
 
-  v_a = smoothstep(0.04, 0.9, lum);
-}`;
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 512;
+            dataArray = new Uint8Array(analyser.frequencyBinCount);
 
-const frag = `
-precision mediump float;
-varying float v_a;
+            masterGain = audioCtx.createGain();
+            masterGain.gain.value = 0.85;
 
-void main(){
-  vec2 c = gl_PointCoord - 0.5;
-  float d = dot(c,c);
-  float m = exp(-18.0*d);      // 부드러운 스파클
-  float a = m * v_a;
-  gl_FragColor = vec4(vec3(1.0), a);
-}`;
+            // 1. Resonant Filter
+            filterNode = audioCtx.createBiquadFilter();
+            filterNode.type = 'lowpass';
+            filterNode.Q.value = 8.0;
 
-function compile(type, src){
-  const s = gl.createShader(type);
-  gl.shaderSource(s, src);
-  gl.compileShader(s);
-  if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)){
-    throw new Error(gl.getShaderInfoLog(s));
-  }
-  return s;
-}
-const prog = gl.createProgram();
-gl.attachShader(prog, compile(gl.VERTEX_SHADER, vert));
-gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, frag));
-gl.linkProgram(prog);
-if(!gl.getProgramParameter(prog, gl.LINK_STATUS)){
-  throw new Error(gl.getProgramInfoLog(prog));
-}
-gl.useProgram(prog);
+            // 2. Glitch Delay Loop (IDM Space)
+            delayNode = audioCtx.createDelay();
+            delayNode.delayTime.value = 0.18; // 180ms rhythmic tap
+            delayFeedbackNode = audioCtx.createGain();
+            delayFeedbackNode.gain.value = 0.45;
 
-// 입자 생성 (~180k)
-const GRID = 424; // 179,776 particles
-const data = new Float32Array(GRID*GRID*2);
-let k=0;
-for(let y=0;y<GRID;y++){
-  for(let x=0;x<GRID;x++){
-    data[k++] = x/(GRID-1)*2-1;
-    data[k++] = y/(GRID-1)*2-1;
-  }
-}
+            delayNode.connect(delayFeedbackNode);
+            delayFeedbackNode.connect(delayNode);
+            delayNode.connect(filterNode);
 
-const buf = gl.createBuffer();
-gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+            // 3. Bitcrusher Waveshaper
+            waveshaperNode = audioCtx.createWaveShaper();
+            updateBitcrushCurve(4);
 
-const loc = gl.getAttribLocation(prog, 'a_pos');
-gl.enableVertexAttribArray(loc);
-gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+            // 4. White Noise (Radio static)
+            const bufferSize = audioCtx.sampleRate * 2;
+            const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
+            }
+            noiseNode = audioCtx.createBufferSource();
+            noiseNode.buffer = noiseBuffer;
+            noiseNode.loop = true;
+            noiseGain = audioCtx.createGain();
+            noiseGain.gain.value = 0.15;
+            noiseNode.connect(noiseGain);
+            noiseGain.connect(filterNode);
+            noiseNode.start();
 
-const uTime = gl.getUniformLocation(prog, 'u_time');
-const uRes  = gl.getUniformLocation(prog, 'u_res');
-const uCam  = gl.getUniformLocation(prog, 'u_cam');
+            // 5. Heterodyne Carrier Oscillator (Ring Mod Interference)
+            carrierOsc = audioCtx.createOscillator();
+            carrierOsc.type = 'sawtooth';
+            carrierGain = audioCtx.createGain();
+            carrierGain.gain.value = 0.2;
+            carrierOsc.connect(carrierGain);
+            carrierGain.connect(filterNode);
+            carrierOsc.start();
 
-// 카메라 텍스처
-const tex = gl.createTexture();
-gl.bindTexture(gl.TEXTURE_2D, tex);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,2,2,0,gl.RGBA,gl.UNSIGNED_BYTE,
-  new Uint8Array([0,0,0,255, 0,0,0,255, 0,0,0,255, 0,0,0,255]));
+            // 6. Built-in Synth Drone (Fallback if mic is off)
+            synthDroneOsc = audioCtx.createOscillator();
+            synthDroneOsc.type = 'triangle';
+            synthDroneOsc.frequency.value = 110; // A2
+            synthDroneGain = audioCtx.createGain();
+            synthDroneGain.gain.value = 0.35;
+            synthDroneOsc.connect(synthDroneGain);
+            synthDroneGain.connect(filterNode);
+            synthDroneOsc.start();
 
-const video = document.getElementById('v');
+            // Connect signal chain
+            filterNode.connect(waveshaperNode);
+            waveshaperNode.connect(masterGain);
+            waveshaperNode.connect(delayNode);
+            masterGain.connect(analyser);
+            analyser.connect(audioCtx.destination);
 
-(async()=>{
-  try{
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video:{
-        facingMode:'user',
-        width:{ideal:1280},
-        height:{ideal:720}
-      },
-      audio:false
-    });
-    video.srcObject = stream;
-    await video.play();
-  }catch(err){
-    document.getElementById('ui').innerHTML =
-      '<b>Camera permission denied</b><br>' + err.message;
-  }
-})();
+            updateAudioParameters();
+        }
 
-gl.enable(gl.BLEND);
-gl.blendFunc(gl.ONE, gl.ONE); // additive bloom-like glow
-gl.clearColor(0,0,0,1);
+        // Custom Bitcrusher Distortion Curve
+        function updateBitcrushCurve(bits) {
+            const steps = Math.pow(2, bits);
+            const n_samples = 44100;
+            const curve = new Float32Array(n_samples);
+            for (let i = 0; i < n_samples; ++i) {
+                let x = (i * 2) / n_samples - 1;
+                curve[i] = Math.round(x * steps) / steps;
+            }
+            if (waveshaperNode) waveshaperNode.curve = curve;
+        }
 
-function frame(t){
-  t *= 0.001;
+        function updateAudioParameters() {
+            if (!audioCtx) return;
 
-  if(video.readyState >= 2){
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,video);
-    gl.uniform1i(uCam, 0);
-  }
+            // Calculate Sync % (Distance to Sweet Spot)
+            const err1 = Math.abs(k1 - targetK1);
+            const err2 = Math.abs(k2 - targetK2);
+            const err3 = Math.abs(k3 - targetK3);
+            const totalError = (err1 + err2 + err3) / 3.0;
+            const syncRate = Math.max(0, 1.0 - totalError * 2.2); // 0.0 to 1.0
 
-  gl.clear(gl.COLOR_BUFFER_BIT);
+            const now = audioCtx.currentTime;
 
-  gl.uniform1f(uTime, t);
-  gl.uniform2f(uRes, canvas.width, canvas.height);
+            // Knob 1 -> Carrier Frequency (Heterodyne Interference)
+            const carrierFreq = 150 + k1 * 3200;
+            carrierOsc.frequency.setTargetAtTime(carrierFreq, now, 0.05);
 
-  gl.drawArrays(gl.POINTS, 0, GRID*GRID);
-  requestAnimationFrame(frame);
-}
-requestAnimationFrame(frame);
-</script>
+            // If sync is high, noise and carrier interference drop to zero!
+            const interferenceAmount = 1.0 - syncRate;
+            carrierGain.gain.setTargetAtTime(0.25 * interferenceAmount, now, 0.05);
+            noiseGain.gain.setTargetAtTime(0.20 * interferenceAmount, now, 0.05);
+
+            // Knob 2 -> Resolution / Bitcrush (2 bit to 16 bit)
+            const bits = Math.round(2 + k2 * 14);
+            updateBitcrushCurve(bits);
+
+            // Knob 3 -> Filter Cutoff & Resonance
+            const cutoffFreq = 200 + Math.pow(k3, 2) * 8000;
+            filterNode.frequency.setTargetAtTime(cutoffFreq, now, 0.05);
+            filterNode.Q.setTargetAtTime(2.0 + (1.0 - syncRate) * 12.0, now, 0.05);
+
+            // Delay feedback changes with tuning
+            delayFeedbackNode.gain.setTargetAtTime(0.2 + (1.0 - syncRate) * 0.4, now, 0.05);
+
+            // UI Labels
+            document.getElementById('val1').innerText = (2.400 + k1 * 0.080).toFixed(3) + 'G';
+            document.getElementById('val2').innerText = bits + ' BIT';
+            document.getElementById('val3').innerText = cutoffFreq < 1000 ? Math.round(cutoffFreq) + ' Hz' : (cutoffFreq / 1000).toFixed(1) + ' kHz';
+        }
+
+        // --- MICROPHONE INPUT TOGGLE ---
+        async function toggleMic() {
+            if (!audioCtx) initAudio();
+            if (!isMicActive) {
+                try {
+                    micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                    micSource = audioCtx.createMediaStreamSource(micStream);
+                    micSource.connect(filterNode);
+                    if (synthDroneGain) synthDroneGain.gain.value = 0.05; // lower synth tone
+                    isMicActive = true;
+                    document.getElementById('micToggleBtn').classList.add('active');
+                    document.getElementById('micToggleBtn').innerHTML = '🎙️ 마이크 작동 중';
+                } catch (err) {
+                    alert('마이크 권한을 허용할 수 없습니다: ' + err.message);
+                }
+            } else {
+                if (micStream) {
+                    micStream.getTracks().forEach(track => track.stop());
+                }
+                if (synthDroneGain) synthDroneGain.gain.value = 0.35;
+                isMicActive = false;
+                document.getElementById('micToggleBtn').classList.remove('active');
+                document.getElementById('micToggleBtn').innerHTML = '🎙️ 마이크 연결';
+            }
+        }
+
+        // --- ROTARY KNOB CONTROLLER (Touch / Drag) ---
+        function setupKnobs() {
+            const knobs = [
+                { el: document.getElementById('knob1'), get: () => k1, set: (v) => { k1 = v; } },
+                { el: document.getElementById('knob2'), get: () => k2, set: (v) => { k2 = v; } },
+                { el: document.getElementById('knob3'), get: () => k3, set: (v) => { k3 = v; } }
+            ];
+
+            knobs.forEach(k => {
+                let startY = 0;
+                let startVal = 0;
+
+                const updateRotation = (val) => {
+                    const deg = -135 + val * 270;
+                    k.el.style.transform = `rotate(${deg}deg)`;
+                };
+
+                updateRotation(k.get());
+
+                const onMove = (clientY) => {
+                    const delta = (startY - clientY) / 160;
+                    let nextVal = Math.min(1.0, Math.max(0.0, startVal + delta));
+                    k.set(nextVal);
+                    updateRotation(nextVal);
+                    updateAudioParameters();
+                };
+
+                const onStart = (clientY) => {
+                    startY = clientY;
+                    startVal = k.get();
+                    if (!audioCtx && isAudioRunning) initAudio();
+                };
+
+                k.el.addEventListener('mousedown', (e) => {
+                    onStart(e.clientY);
+                    const mouseMove = (ev) => onMove(ev.clientY);
+                    const mouseUp = () => {
+                        window.removeEventListener('mousemove', mouseMove);
+                        window.removeEventListener('mouseup', mouseUp);
+                    };
+                    window.addEventListener('mousemove', mouseMove);
+                    window.addEventListener('mouseup', mouseUp);
+                });
+
+                k.el.addEventListener('touchstart', (e) => {
+                    onStart(e.touches[0].clientY);
+                    const touchMove = (ev) => onMove(ev.touches[0].clientY);
+                    const touchEnd = () => {
+                        window.removeEventListener('touchmove', touchMove);
+                        window.removeEventListener('touchend', touchEnd);
+                    };
+                    window.addEventListener('touchmove', touchMove);
+                    window.addEventListener('touchend', touchEnd);
+                });
+            });
+        }
+
+        // --- OLED / TFT SCREEN RENDERING (Canvas 60 FPS) ---
+        const canvas = document.getElementById('screenCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let frameCount = 0;
+        let lastFpsTime = performance.now();
+        let currentFps = 60.0;
+
+        function drawScreen() {
+            requestAnimationFrame(drawScreen);
+
+            // FPS Calculation
+            frameCount++;
+            const now = performance.now();
+            if (now - lastFpsTime >= 500) {
+                currentFps = ((frameCount * 1000) / (now - lastFpsTime)).toFixed(1);
+                frameCount = 0;
+                lastFpsTime = now;
+            }
+
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // Background
+            ctx.fillStyle = '#060b09';
+            ctx.fillRect(0, 0, w, h);
+
+            // Calculate Sync %
+            const err1 = Math.abs(k1 - targetK1);
+            const err2 = Math.abs(k2 - targetK2);
+            const err3 = Math.abs(k3 - targetK3);
+            const totalError = (err1 + err2 + err3) / 3.0;
+            const syncRate = Math.max(0, 1.0 - totalError * 2.2);
+            const syncPercent = Math.round(syncRate * 100);
+
+            const isLocked = syncPercent >= 95;
+
+            // 1. Header Information Bar
+            ctx.font = '12px monospace';
+            ctx.fillStyle = isLocked ? '#39ff14' : '#00ffcc';
+            ctx.fillText(`RF: ${(2.400 + k1 * 0.080).toFixed(3)} GHz`, 16, 24);
+
+            ctx.fillStyle = isLocked ? '#39ff14' : (syncPercent > 50 ? '#ffaa00' : '#ff3366');
+            ctx.fillText(isLocked ? '● LOCKED 100%' : `SYNC: ${syncPercent}%`, 270, 24);
+
+            // 2. Oscilloscope Grid Lines
+            ctx.strokeStyle = 'rgba(0, 255, 204, 0.12)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(16, h / 2 + 10);
+            ctx.lineTo(w - 16, h / 2 + 10);
+            ctx.stroke();
+
+            // 3. Real-time Audio Waveform / Glitch Render
+            if (analyser) {
+                analyser.getByteTimeDomainData(dataArray);
+            }
+
+            ctx.lineWidth = isLocked ? 2.5 : 2.0;
+            ctx.strokeStyle = isLocked ? '#39ff14' : '#00ffcc';
+            ctx.shadowBlur = isLocked ? 10 : 6;
+            ctx.shadowColor = isLocked ? '#39ff14' : '#00ffcc';
+
+            ctx.beginPath();
+            const sliceWidth = (w - 32) / (dataArray ? dataArray.length : 256);
+            let x = 16;
+
+            for (let i = 0; i < (dataArray ? dataArray.length : 256); i++) {
+                let v = dataArray ? dataArray[i] / 128.0 : (1.0 + Math.sin(i * 0.1 + now * 0.01) * 0.3);
+
+                // Add visual interference jitter if not locked
+                if (!isLocked) {
+                    const noise = (Math.random() - 0.5) * (1.0 - syncRate) * 0.6;
+                    v += noise;
+                }
+
+                const y = (v * (h / 4)) + (h / 2) - 10;
+
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+
+                x += sliceWidth;
+            }
+            ctx.stroke();
+            ctx.shadowBlur = 0; // reset
+
+            // 4. Center Lock Announcement Banner
+            if (isLocked) {
+                ctx.fillStyle = 'rgba(57, 255, 20, 0.15)';
+                ctx.fillRect(40, h / 2 - 25, w - 80, 44);
+                ctx.strokeStyle = '#39ff14';
+                ctx.strokeRect(40, h / 2 - 25, w - 80, 44);
+
+                ctx.font = 'bold 15px monospace';
+                ctx.fillStyle = '#39ff14';
+                ctx.textAlign = 'center';
+                ctx.fillText('★ CARRIER LOCKED ★', w / 2, h / 2 + 2);
+                ctx.textAlign = 'left';
+            }
+
+            // 5. Bottom Status Bar (Hardware Info)
+            ctx.font = '10px monospace';
+            ctx.fillStyle = '#4e6258';
+            ctx.fillText(`DAC: SGTL5000 44.1k`, 16, h - 16);
+            ctx.fillText(`FPS: ${currentFps}`, 180, h - 16);
+            ctx.fillText(`RSSI: -${Math.round(55 + (1 - syncRate) * 40)}dBm`, 290, h - 16);
+        }
+
+        // --- BUTTON EVENT LISTENERS ---
+        document.getElementById('audioToggleBtn').addEventListener('click', () => {
+            initAudio();
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            isAudioRunning = !isAudioRunning;
+            const btn = document.getElementById('audioToggleBtn');
+            if (isAudioRunning) {
+                btn.classList.add('active');
+                btn.innerHTML = '⚡ 오디오 정지';
+            } else {
+                masterGain.gain.value = 0;
+                btn.classList.remove('active');
+                btn.innerHTML = '⚡ 오디오 시작';
+            }
+        });
+
+        document.getElementById('micToggleBtn').addEventListener('click', toggleMic);
+
+        document.getElementById('randomDriftBtn').addEventListener('click', () => {
+            targetK1 = Math.random() * 0.8 + 0.1;
+            targetK2 = Math.random() * 0.8 + 0.1;
+            targetK3 = Math.random() * 0.8 + 0.1;
+
+            const badge = document.getElementById('rfBadge');
+            badge.innerText = `${(2.400 + targetK1 * 0.080).toFixed(3)} GHz TARGET`;
+            badge.style.borderColor = 'var(--screen-amber)';
+            badge.style.color = 'var(--screen-amber)';
+            setTimeout(() => {
+                badge.style.borderColor = 'rgba(0,255,204,0.3)';
+                badge.style.color = 'var(--screen-cyan)';
+            }, 1000);
+
+            updateAudioParameters();
+        });
+
+        // Initialize UI & Screen
+        setupKnobs();
+        drawScreen();
+    </script>
 </body>
 </html>
