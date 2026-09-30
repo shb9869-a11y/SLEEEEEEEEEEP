@@ -2,184 +2,352 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
 <title>OBJECT → SOUND</title>
 
 <!-- TensorFlow.js -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
 
-<!-- COCO SSD Object Detection -->
+<!-- COCO-SSD -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
 
 <style>
-* {
-    box-sizing: border-box;
-}
+    * {
+        box-sizing: border-box;
+    }
 
-body {
-    margin: 0;
-    background: #080808;
-    color: #f5f5f5;
-    font-family: Arial, Helvetica, sans-serif;
-}
+    html, body {
+        margin: 0;
+        padding: 0;
+        background: #080808;
+        color: #f5f5f5;
+        font-family: Arial, Helvetica, sans-serif;
+    }
 
-main {
-    width: min(1100px, 94vw);
-    margin: 0 auto;
-    padding: 60px 0 100px;
-}
+    body {
+        min-height: 100vh;
+    }
 
-h1 {
-    font-size: clamp(42px, 8vw, 100px);
-    line-height: 0.9;
-    margin: 0 0 18px;
-    letter-spacing: -0.06em;
-}
+    main {
+        width: min(1100px, 94vw);
+        margin: 0 auto;
+        padding: 50px 0 100px;
+    }
 
-.subtitle {
-    color: #888;
-    margin-bottom: 45px;
-}
+    h1 {
+        margin: 0;
+        font-size: clamp(48px, 9vw, 110px);
+        line-height: 0.85;
+        letter-spacing: -0.07em;
+        font-weight: 700;
+    }
 
-.panel {
-    border-top: 1px solid #333;
-    padding-top: 24px;
-}
+    .subtitle {
+        margin-top: 22px;
+        margin-bottom: 45px;
+        color: #777;
+        font-size: 14px;
+    }
 
-.upload {
-    display: inline-block;
-    border: 1px solid #777;
-    padding: 13px 20px;
-    cursor: pointer;
-    margin-right: 8px;
-}
+    .controls {
+        padding-top: 22px;
+        border-top: 1px solid #333;
 
-.upload:hover,
-button:hover {
-    background: white;
-    color: black;
-}
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
 
-input[type=file] {
-    display: none;
-}
+    button,
+    .file-button {
+        appearance: none;
+        -webkit-appearance: none;
 
-button {
-    border: 1px solid #777;
-    background: transparent;
-    color: white;
-    padding: 13px 20px;
-    cursor: pointer;
-    font-size: 14px;
-}
+        position: relative;
 
-button:disabled {
-    opacity: .3;
-    cursor: default;
-}
+        border: 1px solid #666;
+        border-radius: 0;
 
-#status {
-    margin: 20px 0;
-    color: #999;
-    min-height: 24px;
-}
+        background: transparent;
+        color: white;
 
-.stage {
-    position: relative;
-    width: 100%;
-    background: #111;
-    display: none;
-}
+        padding: 15px 22px;
 
-video {
-    display: block;
-    width: 100%;
-    height: auto;
-}
+        font-size: 13px;
+        font-weight: 600;
 
-canvas {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-}
+        cursor: pointer;
 
-.info {
-    margin-top: 20px;
-    display: flex;
-    gap: 30px;
-    color: #777;
-    font-size: 12px;
-}
+        min-height: 48px;
 
-#objects {
-    margin-top: 20px;
-    font-family: monospace;
-    color: #aaa;
-    min-height: 50px;
-}
+        touch-action: manipulation;
+    }
+
+    button:hover,
+    .file-button:hover {
+        background: white;
+        color: black;
+    }
+
+    button:disabled {
+        opacity: 0.3;
+        cursor: default;
+    }
+
+    /*
+       중요:
+       input을 display:none으로 하지 않는다.
+
+       실제 file input을 버튼 위에 투명하게 덮어서
+       iOS Safari에서도 직접 터치되게 한다.
+    */
+
+    .file-button {
+        overflow: hidden;
+    }
+
+    #fileInput {
+        position: absolute;
+
+        top: 0;
+        left: 0;
+
+        width: 100%;
+        height: 100%;
+
+        opacity: 0;
+
+        cursor: pointer;
+
+        font-size: 100px;
+    }
+
+    #status {
+        width: 100%;
+        margin-top: 15px;
+
+        min-height: 25px;
+
+        color: #888;
+        font-size: 13px;
+    }
+
+    #filename {
+        width: 100%;
+
+        color: #aaa;
+        font-size: 12px;
+
+        margin-top: 3px;
+
+        word-break: break-all;
+    }
+
+    .stage {
+        position: relative;
+
+        display: none;
+
+        width: 100%;
+
+        margin-top: 30px;
+
+        background: #111;
+
+        overflow: hidden;
+    }
+
+    video {
+        display: block;
+
+        width: 100%;
+        height: auto;
+
+        background: black;
+    }
+
+    canvas {
+        position: absolute;
+
+        top: 0;
+        left: 0;
+
+        width: 100%;
+        height: 100%;
+
+        pointer-events: none;
+    }
+
+    #objects {
+        margin-top: 15px;
+
+        min-height: 22px;
+
+        color: #aaa;
+
+        font-family: monospace;
+        font-size: 12px;
+
+        line-height: 1.7;
+    }
+
+    .mapping {
+        display: flex;
+        flex-wrap: wrap;
+
+        gap: 10px 25px;
+
+        margin-top: 30px;
+        padding-top: 15px;
+
+        border-top: 1px solid #222;
+
+        color: #555;
+
+        font-size: 11px;
+        font-family: monospace;
+    }
+
+    .model-state {
+        margin-top: 40px;
+
+        color: #444;
+
+        font-size: 11px;
+    }
+
+    @media (max-width: 600px) {
+
+        main {
+            padding-top: 35px;
+        }
+
+        h1 {
+            font-size: 58px;
+        }
+
+        button,
+        .file-button {
+            flex: 1;
+            padding: 15px 10px;
+        }
+
+    }
 </style>
 </head>
+
 
 <body>
 
 <main>
 
-    <h1>OBJECT<br>→ SOUND</h1>
+    <h1>
+        OBJECT<br>
+        → SOUND
+    </h1>
 
     <div class="subtitle">
         Objects in the image become sound.
     </div>
 
-    <div class="panel">
 
-        <label class="upload">
+    <!-- ==========================================
+         CONTROLS
+    =========================================== -->
+
+    <div class="controls">
+
+        <div class="file-button">
+
             SELECT VIDEO
+
             <input
                 id="fileInput"
                 type="file"
                 accept="video/*"
             >
-        </label>
 
-        <button id="playButton" disabled>
+        </div>
+
+
+        <button
+            id="playButton"
+            disabled
+        >
             PLAY / GENERATE
         </button>
 
-        <button id="stopButton" disabled>
+
+        <button
+            id="stopButton"
+            disabled
+        >
             STOP
         </button>
+
 
         <div id="status">
             Loading object detection model...
         </div>
 
-        <div class="stage" id="stage">
-
-            <video
-                id="video"
-                playsinline
-                crossorigin="anonymous"
-            ></video>
-
-            <canvas id="canvas"></canvas>
-
-        </div>
-
-        <div id="objects"></div>
-
-        <div class="info">
-            <span>X → PAN</span>
-            <span>Y → PITCH</span>
-            <span>SIZE → VOLUME</span>
-            <span>MOTION → TIMBRE</span>
-        </div>
+        <div id="filename"></div>
 
     </div>
 
+
+    <!-- ==========================================
+         VIDEO
+    =========================================== -->
+
+    <div
+        class="stage"
+        id="stage"
+    >
+
+        <video
+            id="video"
+            playsinline
+            preload="metadata"
+        ></video>
+
+        <canvas
+            id="canvas"
+        ></canvas>
+
+    </div>
+
+
+    <!-- ==========================================
+         DETECTED OBJECTS
+    =========================================== -->
+
+    <div id="objects"></div>
+
+
+    <div class="mapping">
+
+        <span>X POSITION → PAN</span>
+
+        <span>Y POSITION → PITCH</span>
+
+        <span>OBJECT SIZE → VOLUME</span>
+
+        <span>MOTION → TIMBRE</span>
+
+    </div>
+
+
+    <div
+        class="model-state"
+        id="modelState"
+    >
+        AI MODEL: LOADING
+    </div>
+
 </main>
+
+
 
 <script>
 
@@ -187,11 +355,17 @@ canvas {
    ELEMENTS
 ========================================================== */
 
-const video = document.getElementById("video");
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+const video =
+    document.getElementById("video");
 
-const fileInput = document.getElementById("fileInput");
+const canvas =
+    document.getElementById("canvas");
+
+const ctx =
+    canvas.getContext("2d");
+
+const fileInput =
+    document.getElementById("fileInput");
 
 const playButton =
     document.getElementById("playButton");
@@ -199,8 +373,11 @@ const playButton =
 const stopButton =
     document.getElementById("stopButton");
 
-const status =
+const statusElement =
     document.getElementById("status");
+
+const filenameElement =
+    document.getElementById("filename");
 
 const stage =
     document.getElementById("stage");
@@ -208,117 +385,305 @@ const stage =
 const objectsDisplay =
     document.getElementById("objects");
 
+const modelState =
+    document.getElementById("modelState");
+
 
 /* ==========================================================
-   GLOBAL
+   STATE
 ========================================================== */
 
 let model = null;
 
-let audioContext = null;
+let modelReady = false;
 
-let masterGain = null;
-let delay = null;
-let delayFeedback = null;
+let videoReady = false;
 
 let running = false;
 
+let objectURL = null;
+
+
+/* AUDIO */
+
+let audioContext = null;
+
+let masterGain = null;
+
+let delayNode = null;
+
+let delayFeedback = null;
+
+
+/* DETECTION */
+
 let previousObjects = {};
 
-let lastDetection = 0;
+let lastDetectionTime = 0;
 
-const DETECTION_INTERVAL = 180;
+let detectionBusy = false;
+
+
+/*
+   약 5회/sec 정도 Detection.
+
+   모바일에서 너무 빠르게 AI를 돌리면
+   영상이 버벅이기 때문에 일부러 제한.
+*/
+
+const DETECTION_INTERVAL = 200;
 
 
 /* ==========================================================
    MUSICAL SCALE
-   D minor pentatonic-ish
 ========================================================== */
+
+/*
+   D minor pentatonic 계열.
+
+   무작위 chromatic 음보다
+   여러 객체가 동시에 검출됐을 때
+   비교적 음악적으로 섞이게 함.
+*/
 
 const SCALE = [
 
-    38, 41, 43, 45, 48,
-    50, 53, 55, 57, 60,
-    62, 65, 67, 69, 72,
-    74, 77, 79
+    38,
+    41,
+    43,
+    45,
+    48,
+
+    50,
+    53,
+    55,
+    57,
+    60,
+
+    62,
+    65,
+    67,
+    69,
+    72,
+
+    74,
+    77,
+    79
 
 ];
 
 
 function midiToFrequency(midi) {
 
-    return 440 *
+    return (
+        440 *
         Math.pow(
             2,
             (midi - 69) / 12
+        )
+    );
+
+}
+
+
+/* ==========================================================
+   MODEL
+========================================================== */
+
+async function loadDetectionModel() {
+
+    try {
+
+        statusElement.textContent =
+            "Loading object detection model...";
+
+        modelState.textContent =
+            "AI MODEL: LOADING";
+
+
+        /*
+           WebGL이 가능하면 WebGL 사용.
+        */
+
+        try {
+
+            await tf.setBackend("webgl");
+
+        } catch (error) {
+
+            console.log(
+                "WebGL unavailable. Using default backend."
+            );
+
+        }
+
+
+        await tf.ready();
+
+
+        model = await cocoSsd.load({
+            base: "lite_mobilenet_v2"
+        });
+
+
+        modelReady = true;
+
+
+        modelState.textContent =
+            "AI MODEL: READY";
+
+
+        statusElement.textContent =
+            videoReady
+            ? "Ready. Press PLAY / GENERATE."
+            : "AI ready. Select a video.";
+
+
+        updatePlayButton();
+
+
+    } catch (error) {
+
+        console.error(error);
+
+
+        modelReady = false;
+
+
+        modelState.textContent =
+            "AI MODEL: ERROR";
+
+
+        statusElement.textContent =
+            "Could not load AI model. Check internet connection.";
+
+    }
+
+}
+
+
+loadDetectionModel();
+
+
+/* ==========================================================
+   UPDATE BUTTON
+========================================================== */
+
+function updatePlayButton() {
+
+    playButton.disabled =
+        !(
+            modelReady &&
+            videoReady
         );
 
 }
 
 
 /* ==========================================================
-   LOAD MODEL
-========================================================== */
-
-async function loadModel() {
-
-    try {
-
-        status.textContent =
-            "Loading object detection model...";
-
-        model = await cocoSsd.load({
-            base: "lite_mobilenet_v2"
-        });
-
-        status.textContent =
-            "Ready. Select a video.";
-
-    }
-
-    catch (error) {
-
-        console.error(error);
-
-        status.textContent =
-            "Model loading failed.";
-
-    }
-
-}
-
-loadModel();
-
-
-/* ==========================================================
-   VIDEO UPLOAD
+   VIDEO SELECTION
 ========================================================== */
 
 fileInput.addEventListener(
     "change",
-    event => {
+    function(event) {
 
         const file =
+            event.target.files &&
             event.target.files[0];
 
-        if (!file)
+
+        if (!file) {
+
             return;
 
-        const url =
-            URL.createObjectURL(file);
+        }
 
-        video.src = url;
 
-        video.load();
+        /*
+           이전 Object URL 제거
+        */
+
+        if (objectURL) {
+
+            URL.revokeObjectURL(
+                objectURL
+            );
+
+        }
+
+
+        objectURL =
+            URL.createObjectURL(
+                file
+            );
+
+
+        videoReady = false;
+
+        running = false;
+
+
+        filenameElement.textContent =
+            file.name;
+
+
+        statusElement.textContent =
+            "Loading video...";
+
 
         stage.style.display =
             "block";
 
-        playButton.disabled =
-            false;
 
-        status.textContent =
-            file.name;
+        video.src =
+            objectURL;
+
+
+        video.load();
+
+
+        /*
+           loadedmetadata가 뜬 다음에
+           videoWidth / videoHeight를 알 수 있다.
+        */
+
+        video.onloadedmetadata =
+            function() {
+
+                canvas.width =
+                    video.videoWidth;
+
+                canvas.height =
+                    video.videoHeight;
+
+
+                videoReady = true;
+
+
+                statusElement.textContent =
+                    modelReady
+                    ? "Ready. Press PLAY / GENERATE."
+                    : "Video ready. Waiting for AI model...";
+
+
+                updatePlayButton();
+
+            };
+
+
+        video.onerror =
+            function() {
+
+                videoReady = false;
+
+                updatePlayButton();
+
+
+                statusElement.textContent =
+                    "This video could not be opened.";
+
+            };
 
     }
 );
@@ -330,14 +695,31 @@ fileInput.addEventListener(
 
 function createAudioEngine() {
 
-    if (audioContext)
+    if (audioContext) {
+
         return;
 
+    }
+
+
+    const AudioContextClass =
+
+        window.AudioContext ||
+        window.webkitAudioContext;
+
+
+    if (!AudioContextClass) {
+
+        statusElement.textContent =
+            "Web Audio is not supported by this browser.";
+
+        return;
+
+    }
+
+
     audioContext =
-        new (
-            window.AudioContext ||
-            window.webkitAudioContext
-        )();
+        new AudioContextClass();
 
 
     /* MASTER */
@@ -345,32 +727,43 @@ function createAudioEngine() {
     masterGain =
         audioContext.createGain();
 
+
     masterGain.gain.value =
-        0.45;
-
-
-    /* DELAY */
-
-    delay =
-        audioContext.createDelay(2);
-
-    delay.delayTime.value =
         0.32;
+
+
+    /*
+       DELAY
+
+       소리를 조금 공간적으로 만들기 위한
+       간단한 feedback delay.
+    */
+
+    delayNode =
+        audioContext.createDelay(
+            2.0
+        );
+
+
+    delayNode.delayTime.value =
+        0.31;
 
 
     delayFeedback =
         audioContext.createGain();
 
+
     delayFeedback.gain.value =
-        0.27;
+        0.23;
 
 
-    delay.connect(
+    delayNode.connect(
         delayFeedback
     );
 
+
     delayFeedback.connect(
-        delay
+        delayNode
     );
 
 
@@ -378,11 +771,13 @@ function createAudioEngine() {
         audioContext.destination
     );
 
+
     masterGain.connect(
-        delay
+        delayNode
     );
 
-    delay.connect(
+
+    delayNode.connect(
         audioContext.destination
     );
 
@@ -390,49 +785,68 @@ function createAudioEngine() {
 
 
 /* ==========================================================
-   PLAY NOTE
+   SOUND
 ========================================================== */
 
-function playNote({
-
+function playNote(
     frequency,
     volume,
     pan,
     movement,
     duration
+) {
 
-}) {
+    if (!audioContext) {
 
-    if (!audioContext)
         return;
+
+    }
 
 
     const now =
         audioContext.currentTime;
 
 
-    /* OSC 1 */
+    /* OSCILLATOR 1 */
 
     const osc1 =
         audioContext.createOscillator();
 
+
     osc1.type =
         "sine";
 
-    osc1.frequency.value =
-        frequency;
+
+    osc1.frequency.setValueAtTime(
+        frequency,
+        now
+    );
 
 
-    /* OSC 2 */
+    /* OSCILLATOR 2 */
 
     const osc2 =
         audioContext.createOscillator();
 
+
     osc2.type =
         "triangle";
 
-    osc2.frequency.value =
-        frequency * 1.5;
+
+    osc2.frequency.setValueAtTime(
+        frequency * 1.5,
+        now
+    );
+
+
+    /* OSC 2 volume */
+
+    const osc2Gain =
+        audioContext.createGain();
+
+
+    osc2Gain.gain.value =
+        0.20;
 
 
     /* FILTER */
@@ -440,69 +854,145 @@ function playNote({
     const filter =
         audioContext.createBiquadFilter();
 
+
     filter.type =
         "lowpass";
 
-    filter.frequency.value =
-        700 +
-        movement * 9000;
+
+    /*
+       움직임이 많으면 밝아짐.
+    */
+
+    const cutoff =
+
+        500 +
+        (
+            movement *
+            7000
+        );
 
 
-    /* GAIN */
+    filter.frequency.setValueAtTime(
+        cutoff,
+        now
+    );
+
+
+    filter.Q.value =
+        2;
+
+
+    /* NOTE GAIN */
 
     const gain =
         audioContext.createGain();
 
+
     gain.gain.setValueAtTime(
-        0,
+        0.0001,
         now
     );
 
-    gain.gain.linearRampToValueAtTime(
-        volume,
+
+    gain.gain.exponentialRampToValueAtTime(
+        Math.max(
+            0.001,
+            volume
+        ),
         now + 0.04
     );
 
+
     gain.gain.exponentialRampToValueAtTime(
-        0.001,
+        0.0001,
         now + duration
     );
 
 
     /* PAN */
 
-    const panner =
-        audioContext.createStereoPanner();
+    let outputNode = gain;
 
-    panner.pan.value =
-        Math.max(
-            -1,
-            Math.min(1, pan)
+
+    if (
+        typeof audioContext.createStereoPanner
+        ===
+        "function"
+    ) {
+
+        const panner =
+            audioContext.createStereoPanner();
+
+
+        panner.pan.setValueAtTime(
+
+            Math.max(
+                -1,
+                Math.min(
+                    1,
+                    pan
+                )
+            ),
+
+            now
+
         );
+
+
+        gain.connect(
+            panner
+        );
+
+
+        panner.connect(
+            masterGain
+        );
+
+
+        outputNode = panner;
+
+    } else {
+
+        gain.connect(
+            masterGain
+        );
+
+    }
 
 
     /* CONNECTION */
 
-    osc1.connect(filter);
-    osc2.connect(filter);
+    osc1.connect(
+        filter
+    );
 
-    filter.connect(gain);
 
-    gain.connect(panner);
+    osc2.connect(
+        osc2Gain
+    );
 
-    panner.connect(
-        masterGain
+
+    osc2Gain.connect(
+        filter
+    );
+
+
+    filter.connect(
+        gain
     );
 
 
     /* START */
 
     osc1.start(now);
+
     osc2.start(now);
+
 
     osc1.stop(
         now + duration + 0.1
     );
+
 
     osc2.stop(
         now + duration + 0.1
@@ -513,25 +1003,29 @@ function playNote({
 
 /* ==========================================================
    CLASS HASH
-
-   Different object classes receive slightly different
-   musical offsets.
 ========================================================== */
 
-function classHash(name) {
+function classHash(text) {
 
     let hash = 0;
 
+
     for (
         let i = 0;
-        i < name.length;
+        i < text.length;
         i++
     ) {
 
-        hash +=
-            name.charCodeAt(i);
+        hash =
+            (
+                hash +
+                text.charCodeAt(i)
+            )
+            %
+            1000;
 
     }
+
 
     return hash;
 
@@ -539,7 +1033,7 @@ function classHash(name) {
 
 
 /* ==========================================================
-   SOUND FROM OBJECT
+   OBJECT → SOUND
 ========================================================== */
 
 function objectToSound(
@@ -547,34 +1041,62 @@ function objectToSound(
     index
 ) {
 
-    const [
-        x,
-        y,
-        width,
-        height
-    ] = prediction.bbox;
+    const bbox =
+        prediction.bbox;
 
 
-    const cx =
-        x + width / 2;
+    const x =
+        bbox[0];
 
-    const cy =
-        y + height / 2;
+    const y =
+        bbox[1];
+
+    const width =
+        bbox[2];
+
+    const height =
+        bbox[3];
 
 
-    const xNorm =
-        cx / video.videoWidth;
+    const centerX =
+        x +
+        width / 2;
 
-    const yNorm =
-        cy / video.videoHeight;
 
+    const centerY =
+        y +
+        height / 2;
+
+
+    /* -----------------------------------------
+       NORMALIZED POSITION
+    ----------------------------------------- */
+
+    const xNormalized =
+
+        centerX /
+        video.videoWidth;
+
+
+    const yNormalized =
+
+        centerY /
+        video.videoHeight;
+
+
+    /* -----------------------------------------
+       AREA
+    ----------------------------------------- */
 
     const area =
+
         (
             width *
             height
         )
+
         /
+
         (
             video.videoWidth *
             video.videoHeight
@@ -582,14 +1104,27 @@ function objectToSound(
 
 
     /* -----------------------------------------
-       POSITION → PITCH
+       Y → PITCH
     ----------------------------------------- */
 
     let scaleIndex =
+
         Math.floor(
-            (1 - yNorm) *
-            (SCALE.length - 1)
+
+            (
+                1 -
+                yNormalized
+            )
+
+            *
+
+            (
+                SCALE.length -
+                1
+            )
+
         );
+
 
     scaleIndex =
         Math.max(
@@ -602,27 +1137,41 @@ function objectToSound(
 
 
     let midi =
-        SCALE[scaleIndex];
+        SCALE[
+            scaleIndex
+        ];
 
 
-    /* object class variation */
+    /*
+       객체 종류마다 약간 다른 음정.
+    */
 
     midi +=
+
         classHash(
             prediction.class
-        ) % 5;
+        )
+
+        %
+
+        4;
 
 
     const frequency =
-        midiToFrequency(midi);
+        midiToFrequency(
+            midi
+        );
 
 
     /* -----------------------------------------
-       X → STEREO PAN
+       X → PAN
     ----------------------------------------- */
 
     const pan =
-        xNorm * 2 - 1;
+
+        xNormalized *
+        2 -
+        1;
 
 
     /* -----------------------------------------
@@ -630,10 +1179,14 @@ function objectToSound(
     ----------------------------------------- */
 
     const volume =
+
         Math.min(
-            0.16,
-            0.025 +
-            area * 0.5
+
+            0.12,
+
+            0.018 +
+            area * 0.42
+
         );
 
 
@@ -641,66 +1194,101 @@ function objectToSound(
        MOTION
     ----------------------------------------- */
 
+    /*
+       이건 정교한 tracking은 아니고
+       같은 class/index의 이전 위치와 비교하는
+       프로토타입용 motion estimation.
+    */
+
     const key =
+
         prediction.class +
         "_" +
         index;
 
 
-    let movement = 0;
+    let movement =
+        0;
 
 
-    if (previousObjects[key]) {
+    if (
+        previousObjects[key]
+    ) {
 
         const previous =
             previousObjects[key];
 
+
         const dx =
-            cx - previous.x;
+            centerX -
+            previous.x;
+
 
         const dy =
-            cy - previous.y;
+            centerY -
+            previous.y;
+
 
         movement =
+
             Math.sqrt(
+
                 dx * dx +
                 dy * dy
+
             )
+
             /
+
             Math.max(
+
                 video.videoWidth,
                 video.videoHeight
+
             );
 
     }
 
 
     previousObjects[key] = {
-        x: cx,
-        y: cy
+
+        x: centerX,
+        y: centerY
+
     };
 
 
     movement =
+
         Math.min(
+
             1,
-            movement * 15
+
+            movement *
+            15
+
         );
 
 
     /* -----------------------------------------
-       NOTE LENGTH
+       SIZE → DURATION
     ----------------------------------------- */
 
     const duration =
-        0.35 +
+
+        0.28 +
+
         Math.min(
-            1.8,
-            area * 6
+
+            1.7,
+
+            area *
+            7
+
         );
 
 
-    playNote({
+    playNote(
 
         frequency,
         volume,
@@ -708,13 +1296,13 @@ function objectToSound(
         movement,
         duration
 
-    });
+    );
 
 }
 
 
 /* ==========================================================
-   DRAW DETECTIONS
+   DRAW
 ========================================================== */
 
 function drawPredictions(
@@ -722,80 +1310,158 @@ function drawPredictions(
 ) {
 
     ctx.clearRect(
+
         0,
         0,
+
         canvas.width,
         canvas.height
+
     );
 
 
-    ctx.lineWidth = 2;
+    /*
+       선 두께를 원본 해상도에 맞게 조절.
+    */
+
+    const lineWidth =
+
+        Math.max(
+
+            2,
+
+            canvas.width /
+            500
+
+        );
+
+
+    ctx.lineWidth =
+        lineWidth;
+
+
+    const fontSize =
+
+        Math.max(
+
+            13,
+
+            canvas.width /
+            65
+
+        );
+
 
     ctx.font =
-        "14px monospace";
+        `${fontSize}px monospace`;
 
 
     predictions.forEach(
         prediction => {
 
-            const [
-                x,
-                y,
-                width,
-                height
-            ] = prediction.bbox;
+            const bbox =
+                prediction.bbox;
+
+
+            const x =
+                bbox[0];
+
+            const y =
+                bbox[1];
+
+            const width =
+                bbox[2];
+
+            const height =
+                bbox[3];
 
 
             /* BOX */
 
             ctx.strokeStyle =
-                "rgba(255,255,255,.9)";
+                "rgba(255,255,255,0.95)";
+
 
             ctx.strokeRect(
+
                 x,
                 y,
+
                 width,
                 height
+
             );
 
 
             /* LABEL */
 
             const label =
+
                 prediction.class +
                 " " +
-                prediction.score
-                    .toFixed(2);
+                Math.round(
+                    prediction.score *
+                    100
+                )
+                +
+                "%";
 
 
-            const metrics =
-                ctx.measureText(label);
+            const textWidth =
+
+                ctx.measureText(
+                    label
+                ).width;
+
+
+            const labelHeight =
+
+                fontSize +
+                10;
+
+
+            const labelY =
+
+                Math.max(
+
+                    labelHeight,
+
+                    y
+
+                );
 
 
             ctx.fillStyle =
-                "rgba(0,0,0,.75)";
+                "rgba(0,0,0,0.80)";
+
 
             ctx.fillRect(
+
                 x,
-                Math.max(
-                    0,
-                    y - 22
-                ),
-                metrics.width + 10,
-                22
+
+                labelY -
+                labelHeight,
+
+                textWidth +
+                12,
+
+                labelHeight
+
             );
 
 
             ctx.fillStyle =
-                "white";
+                "#ffffff";
+
 
             ctx.fillText(
+
                 label,
-                x + 5,
-                Math.max(
-                    15,
-                    y - 6
-                )
+
+                x + 6,
+
+                labelY - 6
+
             );
 
         }
@@ -812,16 +1478,7 @@ async function detectionLoop(
     timestamp
 ) {
 
-    if (!running)
-        return;
-
-
-    if (
-        video.paused ||
-        video.ended
-    ) {
-
-        running = false;
+    if (!running) {
 
         return;
 
@@ -829,53 +1486,101 @@ async function detectionLoop(
 
 
     if (
+        video.paused ||
+        video.ended
+    ) {
+
+        return;
+
+    }
+
+
+    /*
+       이전 detect()가 끝나지 않았으면
+       중복 실행하지 않는다.
+    */
+
+    if (
+        !detectionBusy &&
         timestamp -
-        lastDetection
-        >
+        lastDetectionTime
+        >=
         DETECTION_INTERVAL
     ) {
 
-        lastDetection =
+        detectionBusy =
+            true;
+
+
+        lastDetectionTime =
             timestamp;
 
 
         try {
 
             let predictions =
+
                 await model.detect(
                     video
                 );
 
 
+            /*
+               낮은 confidence 제거.
+            */
+
             predictions =
-                predictions
-                    .filter(
-                        p =>
-                            p.score >
-                            0.45
-                    )
-                    .sort(
-                        (a, b) => {
 
-                            const areaA =
-                                a.bbox[2] *
-                                a.bbox[3];
+                predictions.filter(
 
-                            const areaB =
-                                b.bbox[2] *
-                                b.bbox[3];
+                    prediction =>
+                        prediction.score
+                        >=
+                        0.45
 
-                            return (
-                                areaB -
-                                areaA
-                            );
+                );
 
-                        }
-                    )
-                    .slice(
-                        0,
-                        6
+
+            /*
+               큰 객체 우선.
+            */
+
+            predictions.sort(
+
+                (a, b) => {
+
+                    const areaA =
+
+                        a.bbox[2] *
+                        a.bbox[3];
+
+
+                    const areaB =
+
+                        b.bbox[2] *
+                        b.bbox[3];
+
+
+                    return (
+                        areaB -
+                        areaA
                     );
+
+                }
+
+            );
+
+
+            /*
+               동시에 너무 많은 객체가
+               소리를 내지 않도록 최대 6개.
+            */
+
+            predictions =
+                predictions.slice(
+                    0,
+                    6
+                );
 
 
             drawPredictions(
@@ -883,54 +1588,85 @@ async function detectionLoop(
             );
 
 
-            objectsDisplay.innerHTML =
+            if (
                 predictions.length
-                ?
-                predictions
+                ===
+                0
+            ) {
+
+                objectsDisplay.textContent =
+                    "NO OBJECTS";
+
+            } else {
+
+                objectsDisplay.textContent =
+
+                    predictions
+
                     .map(
-                        p =>
-                            p.class
+
+                        prediction =>
+
+                            prediction.class
                             +
                             " "
                             +
                             Math.round(
-                                p.score *
+                                prediction.score *
                                 100
                             )
                             +
                             "%"
-                    )
-                    .join(
-                        " · "
-                    )
-                :
-                "No objects";
 
+                    )
+
+                    .join(
+                        "   ·   "
+                    );
+
+            }
+
+
+            /*
+               검출된 객체를
+               각각 소리로 변환.
+            */
 
             predictions.forEach(
+
                 (
                     prediction,
                     index
                 ) => {
 
                     objectToSound(
+
                         prediction,
                         index
+
                     );
 
                 }
+
             );
 
 
-        }
-
-        catch (error) {
+        } catch (error) {
 
             console.error(
+                "Detection error:",
                 error
             );
 
+
+            statusElement.textContent =
+                "Detection error. See browser console.";
+
         }
+
+
+        detectionBusy =
+            false;
 
     }
 
@@ -943,67 +1679,114 @@ async function detectionLoop(
 
 
 /* ==========================================================
-   START
+   PLAY
 ========================================================== */
 
 playButton.addEventListener(
     "click",
-    async () => {
+    async function() {
 
-        if (!model) {
-
-            status.textContent =
-                "Model is still loading.";
+        if (
+            !modelReady ||
+            !videoReady
+        ) {
 
             return;
 
         }
 
 
+        /*
+           iPhone은 사용자 터치 이벤트 내부에서
+           AudioContext를 만들어야 한다.
+        */
+
         createAudioEngine();
 
 
         if (
+            audioContext &&
             audioContext.state
             ===
             "suspended"
         ) {
 
-            await audioContext.resume();
+            try {
+
+                await audioContext.resume();
+
+            } catch (error) {
+
+                console.error(error);
+
+            }
 
         }
 
 
+        /*
+           Canvas 크기 재확인.
+        */
+
         canvas.width =
             video.videoWidth;
+
 
         canvas.height =
             video.videoHeight;
 
 
-        previousObjects = {};
+        /*
+           처음부터 재생.
+        */
 
-        lastDetection = 0;
-
-
-        video.currentTime = 0;
-
-
-        await video.play();
+        video.currentTime =
+            0;
 
 
-        running = true;
+        previousObjects =
+            {};
+
+
+        lastDetectionTime =
+            0;
+
+
+        detectionBusy =
+            false;
+
+
+        try {
+
+            await video.play();
+
+        } catch (error) {
+
+            console.error(error);
+
+
+            statusElement.textContent =
+                "Video playback failed.";
+
+            return;
+
+        }
+
+
+        running =
+            true;
 
 
         playButton.disabled =
             true;
 
+
         stopButton.disabled =
             false;
 
 
-        status.textContent =
-            "Detecting objects → generating sound";
+        statusElement.textContent =
+            "DETECTING → GENERATING SOUND";
 
 
         requestAnimationFrame(
@@ -1020,27 +1803,36 @@ playButton.addEventListener(
 
 function stopEverything() {
 
-    running = false;
+    running =
+        false;
+
 
     video.pause();
 
 
     ctx.clearRect(
+
         0,
         0,
+
         canvas.width,
         canvas.height
+
     );
 
 
-    playButton.disabled =
-        false;
+    objectsDisplay.textContent =
+        "";
+
 
     stopButton.disabled =
         true;
 
 
-    status.textContent =
+    updatePlayButton();
+
+
+    statusElement.textContent =
         "Stopped.";
 
 }
@@ -1052,20 +1844,47 @@ stopButton.addEventListener(
 );
 
 
+/* ==========================================================
+   VIDEO END
+========================================================== */
+
 video.addEventListener(
     "ended",
-    () => {
+    function() {
 
-        running = false;
-
-        playButton.disabled =
+        running =
             false;
+
 
         stopButton.disabled =
             true;
 
-        status.textContent =
+
+        updatePlayButton();
+
+
+        statusElement.textContent =
             "Finished.";
+
+    }
+);
+
+
+/* ==========================================================
+   PAGE CLEANUP
+========================================================== */
+
+window.addEventListener(
+    "beforeunload",
+    function() {
+
+        if (objectURL) {
+
+            URL.revokeObjectURL(
+                objectURL
+            );
+
+        }
 
     }
 );
