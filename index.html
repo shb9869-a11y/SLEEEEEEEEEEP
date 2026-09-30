@@ -2,9 +2,13 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-<title>OBJECT → SOUND</title>
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+>
+
+<title>PRESENCE → SOUND</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
@@ -15,11 +19,11 @@
     box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
     margin: 0;
-    padding: 0;
-    background: #080808;
-    color: #f5f5f5;
+    background: #050505;
+    color: #eee;
     font-family: Arial, Helvetica, sans-serif;
 }
 
@@ -28,74 +32,86 @@ body {
 }
 
 main {
-    width: min(1100px, 94vw);
+    width: min(1200px, 94vw);
     margin: auto;
     padding: 45px 0 100px;
 }
 
 h1 {
     margin: 0;
-    font-size: clamp(50px, 9vw, 110px);
-    line-height: .84;
+
+    font-size: clamp(
+        52px,
+        9vw,
+        115px
+    );
+
+    line-height: .82;
     letter-spacing: -.07em;
 }
 
 .subtitle {
-    margin-top: 22px;
+    margin-top: 25px;
     margin-bottom: 40px;
-    color: #777;
-    font-size: 13px;
+
+    color: #666;
+
+    font-size: 12px;
+    font-family: monospace;
 }
 
-.controls {
-    border-top: 1px solid #333;
-    padding-top: 22px;
-}
+
+/* ========================================
+   BUTTONS
+======================================== */
 
 .buttons {
     display: flex;
     flex-wrap: wrap;
+
     gap: 8px;
+
+    border-top: 1px solid #292929;
+
+    padding-top: 20px;
 }
 
 button,
-.file-button {
-
-    appearance: none;
-    -webkit-appearance: none;
+.fileButton {
 
     position: relative;
 
-    border: 1px solid #666;
+    min-height: 50px;
+
+    padding: 15px 22px;
+
+    border: 1px solid #555;
     border-radius: 0;
 
     background: transparent;
     color: white;
 
-    min-height: 48px;
-
-    padding: 14px 20px;
-
     font-size: 12px;
-    font-weight: 600;
+    font-weight: bold;
 
     cursor: pointer;
+
+    overflow: hidden;
+
+    appearance: none;
+    -webkit-appearance: none;
 
     touch-action: manipulation;
 }
 
 button:hover,
-.file-button:hover {
+.fileButton:hover {
     background: white;
     color: black;
 }
 
 button:disabled {
-    opacity: .3;
-}
-
-.file-button {
-    overflow: hidden;
+    opacity: .25;
 }
 
 #fileInput {
@@ -109,10 +125,15 @@ button:disabled {
 
     opacity: 0;
 
-    cursor: pointer;
-
     font-size: 100px;
+
+    cursor: pointer;
 }
+
+
+/* ========================================
+   MIXER
+======================================== */
 
 .mixer {
 
@@ -121,59 +142,66 @@ button:disabled {
     grid-template-columns:
         repeat(
             auto-fit,
-            minmax(190px, 1fr)
+            minmax(180px, 1fr)
         );
 
-    gap: 20px;
+    gap: 25px;
 
     margin-top: 30px;
 
     padding: 22px;
 
-    border: 1px solid #222;
+    border: 1px solid #202020;
 }
 
 .control label {
 
     display: flex;
 
-    justify-content:
-        space-between;
+    justify-content: space-between;
 
     margin-bottom: 10px;
 
     color: #777;
 
-    font-size: 10px;
     font-family: monospace;
+    font-size: 10px;
 }
 
 input[type="range"] {
-
     width: 100%;
-
     accent-color: white;
 }
 
+
+/* ========================================
+   STATUS
+======================================== */
+
 #status {
 
-    margin-top: 18px;
-
-    min-height: 20px;
+    margin-top: 17px;
 
     color: #888;
 
-    font-size: 12px;
+    font-size: 11px;
+    font-family: monospace;
 }
 
 #filename {
 
-    margin-top: 5px;
+    margin-top: 6px;
 
-    color: #555;
+    color: #444;
 
-    font-size: 11px;
+    font-size: 10px;
+    font-family: monospace;
 }
+
+
+/* ========================================
+   VIDEO
+======================================== */
 
 .stage {
 
@@ -190,36 +218,52 @@ input[type="range"] {
     overflow: hidden;
 }
 
-video {
+
+/*
+   실제 video는 숨긴다.
+
+   Canvas가 최종 영상을 그린다.
+*/
+
+#video {
+    display: none;
+}
+
+#visualCanvas {
 
     display: block;
 
     width: 100%;
     height: auto;
+
+    background: black;
 }
 
-canvas {
 
-    position: absolute;
+/*
+   detection 전용 canvas.
+   화면에는 보이지 않는다.
+*/
 
-    inset: 0;
-
-    width: 100%;
-    height: 100%;
-
-    pointer-events: none;
+#analysisCanvas {
+    display: none;
 }
+
+
+/* ========================================
+   INFO
+======================================== */
 
 #objects {
 
     margin-top: 15px;
 
-    color: #aaa;
+    min-height: 18px;
 
-    font-size: 11px;
+    color: #888;
+
     font-family: monospace;
-
-    min-height: 20px;
+    font-size: 10px;
 }
 
 .telemetry {
@@ -229,27 +273,26 @@ canvas {
     grid-template-columns:
         repeat(
             auto-fit,
-            minmax(130px,1fr)
+            minmax(120px, 1fr)
         );
 
-    gap: 1px;
+    margin-top: 25px;
 
-    margin-top: 30px;
+    gap: 1px;
 
     background: #222;
 }
 
-.telemetry > div {
+.telemetry div {
 
-    background: #080808;
+    background: #050505;
 
-    padding: 15px;
+    padding: 14px;
+
+    color: #444;
 
     font-family: monospace;
-
-    font-size: 10px;
-
-    color: #555;
+    font-size: 9px;
 }
 
 .telemetry strong {
@@ -260,56 +303,63 @@ canvas {
 
     color: #aaa;
 
-    font-size: 17px;
-
+    font-size: 16px;
     font-weight: normal;
 }
 
 #modelState {
 
-    margin-top: 35px;
+    margin-top: 30px;
 
-    color: #444;
+    color: #333;
 
-    font-size: 10px;
     font-family: monospace;
+    font-size: 9px;
 }
+
 
 @media(max-width:600px) {
 
+    main {
+        padding-top: 35px;
+    }
+
     h1 {
-        font-size: 60px;
+        font-size: 58px;
     }
 
     button,
-    .file-button {
+    .fileButton {
         flex: 1;
     }
-
 }
 
 </style>
 </head>
+
+
 
 <body>
 
 <main>
 
 <h1>
-OBJECT<br>
+PRESENCE<br>
 → SOUND
 </h1>
 
 <div class="subtitle">
-The image becomes an ambient instrument.
+THE IMAGE REMAINS. PRESENCE DISTURBS THE FIELD.
 </div>
 
 
-<div class="controls">
+<!-- ========================================
+     BUTTONS
+======================================== -->
 
 <div class="buttons">
 
-<div class="file-button">
+<div class="fileButton">
 
 SELECT VIDEO
 
@@ -326,7 +376,7 @@ SELECT VIDEO
     id="playButton"
     disabled
 >
-PLAY / GENERATE
+GENERATE
 </button>
 
 
@@ -340,9 +390,10 @@ STOP
 </div>
 
 
-<!-- =======================================================
+
+<!-- ========================================
      MIXER
-======================================================= -->
+======================================== -->
 
 <div class="mixer">
 
@@ -351,7 +402,7 @@ STOP
 
 <label>
 <span>VIDEO SOUND</span>
-<span id="videoValue">70%</span>
+<span id="videoValue">50%</span>
 </label>
 
 <input
@@ -360,17 +411,18 @@ STOP
     min="0"
     max="1"
     step=".01"
-    value=".7"
+    value=".5"
 >
 
 </div>
 
 
+
 <div class="control">
 
 <label>
-<span>GENERATED SOUND</span>
-<span id="generatedValue">70%</span>
+<span>GENERATED</span>
+<span id="generatedValue">75%</span>
 </label>
 
 <input
@@ -379,85 +431,106 @@ STOP
     min="0"
     max="1"
     step=".01"
-    value=".7"
+    value=".75"
 >
 
 </div>
 
 
+
 <div class="control">
 
 <label>
-<span>AMBIENT</span>
-<span id="ambientValue">70%</span>
+<span>DRONE</span>
+<span id="droneValue">65%</span>
 </label>
 
 <input
-    id="ambientAmount"
+    id="droneAmount"
     type="range"
     min="0"
     max="1"
     step=".01"
-    value=".7"
+    value=".65"
 >
 
 </div>
 
 
+
 <div class="control">
 
 <label>
-<span>TEXTURE</span>
-<span id="textureValue">55%</span>
+<span>CRACKLE</span>
+<span id="crackleValue">45%</span>
 </label>
 
 <input
-    id="textureAmount"
+    id="crackleAmount"
     type="range"
     min="0"
     max="1"
     step=".01"
-    value=".55"
+    value=".45"
 >
 
 </div>
 
 
+
 <div class="control">
 
 <label>
-<span>MOTION RESPONSE</span>
-<span id="motionValue">75%</span>
+<span>REACTION</span>
+<span id="reactionValue">100%</span>
 </label>
 
 <input
-    id="motionResponse"
+    id="reactionAmount"
     type="range"
     min="0"
     max="2"
     step=".01"
-    value="1.5"
+    value="1"
 >
 
 </div>
 
 
+
+<div class="control">
+
+<label>
+<span>COLOR SATURATION</span>
+<span id="saturationValue">180%</span>
+</label>
+
+<input
+    id="saturationAmount"
+    type="range"
+    min="1"
+    max="3"
+    step=".05"
+    value="1.8"
+>
+
+</div>
+
 </div>
 
 
+
 <div id="status">
-Loading AI...
+LOADING DETECTION MODEL...
 </div>
 
 <div id="filename"></div>
 
-</div>
 
 
-
-<!-- =======================================================
-     VIDEO
-======================================================= -->
+<!-- ========================================
+     OUTPUT VIDEO
+======================================== -->
 
 <div
     class="stage"
@@ -467,28 +540,30 @@ Loading AI...
 <video
     id="video"
     playsinline
-    preload="metadata"
+    preload="auto"
 ></video>
 
 <canvas
-    id="canvas"
+    id="visualCanvas"
+></canvas>
+
+<canvas
+    id="analysisCanvas"
 ></canvas>
 
 </div>
 
 
+
 <div id="objects"></div>
 
 
-<!-- =======================================================
-     TELEMETRY
-======================================================= -->
 
 <div class="telemetry">
 
 <div>
 OBJECTS
-<strong id="objectCount">0</strong>
+<strong id="objectMeter">0</strong>
 </div>
 
 <div>
@@ -497,13 +572,13 @@ MOTION
 </div>
 
 <div>
-AMBIENCE
-<strong id="ambienceMeter">0.00</strong>
+FIELD
+<strong id="fieldMeter">0 Hz</strong>
 </div>
 
 <div>
 DETECTION
-<strong id="fpsMeter">0 Hz</strong>
+<strong id="detectionMeter">0 Hz</strong>
 </div>
 
 </div>
@@ -513,292 +588,375 @@ DETECTION
 AI MODEL: LOADING
 </div>
 
+
 </main>
 
 
 
 <script>
 
-/* ==========================================================
+/* =========================================================
    DOM
-========================================================== */
+========================================================= */
 
 const video =
-document.getElementById("video");
-
-const canvas =
-document.getElementById("canvas");
-
-const ctx =
-canvas.getContext("2d");
-
+    document.getElementById("video");
 
 const fileInput =
-document.getElementById("fileInput");
+    document.getElementById("fileInput");
 
 const playButton =
-document.getElementById("playButton");
+    document.getElementById("playButton");
 
 const stopButton =
-document.getElementById("stopButton");
+    document.getElementById("stopButton");
 
 const stage =
-document.getElementById("stage");
+    document.getElementById("stage");
+
+
+const visualCanvas =
+    document.getElementById("visualCanvas");
+
+const visualCtx =
+    visualCanvas.getContext("2d");
+
+
+const analysisCanvas =
+    document.getElementById("analysisCanvas");
+
+const analysisCtx =
+    analysisCanvas.getContext("2d");
 
 
 const statusElement =
-document.getElementById("status");
+    document.getElementById("status");
 
 const filenameElement =
-document.getElementById("filename");
+    document.getElementById("filename");
 
-const objectsDisplay =
-document.getElementById("objects");
+const objectsElement =
+    document.getElementById("objects");
 
 const modelState =
-document.getElementById("modelState");
+    document.getElementById("modelState");
 
 
 const videoVolume =
-document.getElementById("videoVolume");
+    document.getElementById("videoVolume");
 
 const generatedVolume =
-document.getElementById("generatedVolume");
+    document.getElementById("generatedVolume");
 
-const ambientAmount =
-document.getElementById("ambientAmount");
+const droneAmount =
+    document.getElementById("droneAmount");
 
-const textureAmount =
-document.getElementById("textureAmount");
+const crackleAmount =
+    document.getElementById("crackleAmount");
 
-const motionResponse =
-document.getElementById("motionResponse");
+const reactionAmount =
+    document.getElementById("reactionAmount");
+
+const saturationAmount =
+    document.getElementById("saturationAmount");
 
 
 const videoValue =
-document.getElementById("videoValue");
+    document.getElementById("videoValue");
 
 const generatedValue =
-document.getElementById("generatedValue");
+    document.getElementById("generatedValue");
 
-const ambientValue =
-document.getElementById("ambientValue");
+const droneValue =
+    document.getElementById("droneValue");
 
-const textureValue =
-document.getElementById("textureValue");
+const crackleValue =
+    document.getElementById("crackleValue");
 
-const motionValue =
-document.getElementById("motionValue");
+const reactionValue =
+    document.getElementById("reactionValue");
+
+const saturationValue =
+    document.getElementById("saturationValue");
 
 
-const objectCount =
-document.getElementById("objectCount");
+const objectMeter =
+    document.getElementById("objectMeter");
 
 const motionMeter =
-document.getElementById("motionMeter");
+    document.getElementById("motionMeter");
 
-const ambienceMeter =
-document.getElementById("ambienceMeter");
+const fieldMeter =
+    document.getElementById("fieldMeter");
 
-const fpsMeter =
-document.getElementById("fpsMeter");
+const detectionMeter =
+    document.getElementById("detectionMeter");
 
 
-/* ==========================================================
+
+/* =========================================================
    STATE
-========================================================== */
+========================================================= */
 
 let model = null;
 
 let modelReady = false;
-
 let videoReady = false;
 
 let running = false;
-
 let objectURL = null;
 
-let detectionBusy = false;
+let currentPredictions = [];
 
-let previousObjects = {};
+let previousObjects = [];
+
+let detectionBusy = false;
 
 let lastDetectionTime = 0;
 
 let detectionCounter = 0;
-
-let detectionFPSStart =
-performance.now();
+let detectionCounterStart = performance.now();
 
 
 /*
-    기존 200ms → 70ms
+   빠른 detection 요청.
 
-    최대 약 14 detection/sec.
-
-    실제 속도는 기기 GPU 성능에 따라 달라진다.
+   모델 자체가 55ms보다 느리면
+   가능한 최대 속도로 자동 동작한다.
 */
 
-const DETECTION_INTERVAL = 70;
+const DETECTION_INTERVAL = 55;
 
 
-/* ==========================================================
+
+/* =========================================================
    AUDIO STATE
-========================================================== */
+========================================================= */
 
 let audioContext = null;
 
 let masterGain = null;
 
-let ambientGain = null;
+let droneGain = null;
+let droneFilter = null;
+let dronePanner = null;
 
-let textureGain = null;
-
-let ambientFilter = null;
-
-let ambientPanner = null;
-
+let noiseGain = null;
 let noiseFilter = null;
 
-let noiseSource = null;
+let pulseGain = null;
 
-let droneOscillators = [];
-
-let delay = null;
-
-let delayFeedback = null;
+let delayNode = null;
+let feedbackGain = null;
 
 let compressor = null;
 
+let droneVoices = [];
 
-/* ==========================================================
-   SCALE
-========================================================== */
+let noiseSource = null;
+
+let lastHitTime = 0;
+let lastGlitchTime = 0;
+let lastPulseTime = 0;
+
 
 /*
-   D / A 기반.
+   D 계열의 중심.
 
-   드론이 D를 중심으로 유지되고
-   움직임이 harmonic colour를 바꾼다.
+   개별 멜로디가 아니라
+   하나의 tonal field를 만든다.
 */
 
-const ROOT = 73.42; // D2
-
-const SCALE = [
-    0,
-    3,
-    5,
-    7,
-    10,
-    12,
-    15,
-    17,
-    19,
-    22,
-    24
-];
+const ROOT = 73.416;
 
 
-/* ==========================================================
+
+/* =========================================================
    UI
-========================================================== */
+========================================================= */
 
-function percent(value) {
+function percentage(value) {
 
-    return Math.round(
-        value * 100
-    ) + "%";
+    return (
+        Math.round(
+            Number(value) * 100
+        )
+        +
+        "%"
+    );
 
 }
 
 
-videoVolume.oninput = () => {
+videoVolume.addEventListener(
+    "input",
+    updateVideoVolume
+);
 
-    video.volume =
+
+function updateVideoVolume() {
+
+    const value =
         Number(
             videoVolume.value
         );
 
+
     videoValue.textContent =
-        percent(
-            videoVolume.value
-        );
-
-};
+        percentage(value);
 
 
-generatedVolume.oninput = () => {
+    /*
+       중요.
 
-    generatedValue.textContent =
-        percent(
-            generatedVolume.value
-        );
+       0이면 muted 자체를 TRUE로 만든다.
+       따라서 0에서 원본 소리가 남을 수 없다.
+    */
 
-    if(masterGain) {
+    if(value <= 0.001) {
 
-        masterGain.gain.setTargetAtTime(
-
-            Number(
-                generatedVolume.value
-            ),
-
-            audioContext.currentTime,
-
-            .05
-
-        );
+        video.muted = true;
+        video.volume = 0;
 
     }
 
-};
+    else {
+
+        video.muted = false;
+        video.volume = value;
+
+    }
+
+}
 
 
-ambientAmount.oninput = () => {
+generatedVolume.addEventListener(
+    "input",
+    () => {
 
-    ambientValue.textContent =
-        percent(
-            ambientAmount.value
-        );
-
-};
-
-
-textureAmount.oninput = () => {
-
-    textureValue.textContent =
-        percent(
-            textureAmount.value
-        );
-
-};
+        const value =
+            Number(
+                generatedVolume.value
+            );
 
 
-motionResponse.oninput = () => {
-
-    motionValue.textContent =
-
-        Math.round(
-            motionResponse.value *
-            100
-        )
-
-        +
-
-        "%";
-
-};
+        generatedValue.textContent =
+            percentage(value);
 
 
-/* ==========================================================
-   AI
-========================================================== */
+        if(
+            audioContext &&
+            masterGain
+        ) {
+
+            masterGain.gain
+                .setTargetAtTime(
+
+                    value,
+
+                    audioContext.currentTime,
+
+                    .05
+
+                );
+
+        }
+
+    }
+);
+
+
+droneAmount.addEventListener(
+    "input",
+    () => {
+
+        droneValue.textContent =
+            percentage(
+                droneAmount.value
+            );
+
+    }
+);
+
+
+crackleAmount.addEventListener(
+    "input",
+    () => {
+
+        crackleValue.textContent =
+            percentage(
+                crackleAmount.value
+            );
+
+    }
+);
+
+
+reactionAmount.addEventListener(
+    "input",
+    () => {
+
+        reactionValue.textContent =
+
+            Math.round(
+                Number(
+                    reactionAmount.value
+                )
+                *
+                100
+            )
+            +
+            "%";
+
+    }
+);
+
+
+saturationAmount.addEventListener(
+    "input",
+    () => {
+
+        saturationValue.textContent =
+
+            Math.round(
+                Number(
+                    saturationAmount.value
+                )
+                *
+                100
+            )
+            +
+            "%";
+
+    }
+);
+
+
+
+/* =========================================================
+   MODEL
+========================================================= */
 
 async function loadModel() {
 
     try {
 
-        await tf.setBackend(
-            "webgl"
-        );
+        try {
+
+            await tf.setBackend(
+                "webgl"
+            );
+
+        }
+
+        catch(error) {
+
+            console.log(
+                "WebGL fallback"
+            );
+
+        }
+
 
         await tf.ready();
 
@@ -806,7 +964,7 @@ async function loadModel() {
         model =
             await cocoSsd.load({
                 base:
-                "lite_mobilenet_v2"
+                    "lite_mobilenet_v2"
             });
 
 
@@ -818,11 +976,10 @@ async function loadModel() {
 
 
         statusElement.textContent =
-            "AI ready. Select video.";
+            "SELECT VIDEO";
 
 
         updatePlayButton();
-
 
     }
 
@@ -836,7 +993,7 @@ async function loadModel() {
 
 
         statusElement.textContent =
-            "AI model failed to load.";
+            "MODEL LOAD ERROR";
 
     }
 
@@ -846,116 +1003,157 @@ async function loadModel() {
 loadModel();
 
 
-/* ==========================================================
-   VIDEO
-========================================================== */
+
+/* =========================================================
+   VIDEO LOAD
+========================================================= */
 
 fileInput.addEventListener(
-"change",
-event => {
+    "change",
+    event => {
 
-    const file =
-        event.target.files[0];
-
-
-    if(!file) return;
+        const file =
+            event.target.files[0];
 
 
-    if(objectURL) {
-
-        URL.revokeObjectURL(
-            objectURL
-        );
-
-    }
+        if(!file)
+            return;
 
 
-    objectURL =
-        URL.createObjectURL(
-            file
-        );
+        if(objectURL) {
+
+            URL.revokeObjectURL(
+                objectURL
+            );
+
+        }
 
 
-    filenameElement.textContent =
-        file.name;
-
-
-    stage.style.display =
-        "block";
-
-
-    videoReady = false;
-
-
-    video.src =
-        objectURL;
-
-
-    video.load();
-
-
-    statusElement.textContent =
-        "Loading video...";
-
-
-    video.onloadedmetadata =
-    () => {
-
-        canvas.width =
-            video.videoWidth;
-
-        canvas.height =
-            video.videoHeight;
-
-
-        videoReady = true;
-
-
-        video.volume =
-            Number(
-                videoVolume.value
+        objectURL =
+            URL.createObjectURL(
+                file
             );
 
 
+        videoReady = false;
+
+
+        video.src =
+            objectURL;
+
+
+        video.load();
+
+
+        filenameElement.textContent =
+            file.name;
+
+
+        stage.style.display =
+            "block";
+
+
         statusElement.textContent =
-            modelReady
-            ?
-            "Ready."
-            :
-            "Waiting for AI...";
+            "LOADING VIDEO...";
 
 
-        updatePlayButton();
+        video.onloadedmetadata =
+            () => {
 
-    };
+                /*
+                   Canvas는 실제 영상 해상도.
+                */
 
-});
+                visualCanvas.width =
+                    video.videoWidth;
+
+                visualCanvas.height =
+                    video.videoHeight;
+
+
+                /*
+                   detection은 저해상도로 돌린다.
+
+                   이것 때문에 Detection이
+                   상당히 빨라진다.
+                */
+
+                const detectionWidth =
+                    Math.min(
+                        640,
+                        video.videoWidth
+                    );
+
+
+                const ratio =
+                    video.videoHeight /
+                    video.videoWidth;
+
+
+                analysisCanvas.width =
+                    detectionWidth;
+
+                analysisCanvas.height =
+                    Math.round(
+                        detectionWidth *
+                        ratio
+                    );
+
+
+                videoReady = true;
+
+
+                updateVideoVolume();
+
+
+                statusElement.textContent =
+                    modelReady
+                    ?
+                    "READY"
+                    :
+                    "WAITING FOR AI";
+
+
+                updatePlayButton();
+
+            };
+
+    }
+);
+
 
 
 function updatePlayButton() {
 
     playButton.disabled =
-        !(modelReady && videoReady);
+        !(
+            modelReady &&
+            videoReady
+        );
 
 }
 
 
-/* ==========================================================
+
+/* =========================================================
    AUDIO ENGINE
-========================================================== */
+========================================================= */
 
 function createAudioEngine() {
 
-    if(audioContext) return;
+    if(audioContext)
+        return;
 
 
     const AC =
+
         window.AudioContext ||
         window.webkitAudioContext;
 
 
     audioContext =
         new AC();
+
 
 
     /* MASTER */
@@ -970,6 +1168,7 @@ function createAudioEngine() {
         );
 
 
+
     /* COMPRESSOR */
 
     compressor =
@@ -977,52 +1176,53 @@ function createAudioEngine() {
 
 
     compressor.threshold.value =
-        -18;
+        -20;
 
     compressor.knee.value =
-        12;
+        15;
 
     compressor.ratio.value =
         5;
 
     compressor.attack.value =
-        .01;
+        .02;
 
     compressor.release.value =
-        .4;
+        .7;
+
 
 
     /* DELAY */
 
-    delay =
+    delayNode =
         audioContext.createDelay(
-            3
+            4
         );
 
 
-    delay.delayTime.value =
-        .42;
+    delayNode.delayTime.value =
+        .58;
 
 
-    delayFeedback =
+    feedbackGain =
         audioContext.createGain();
 
 
-    delayFeedback.gain.value =
-        .32;
+    feedbackGain.gain.value =
+        .38;
 
 
-    delay.connect(
-        delayFeedback
+    delayNode.connect(
+        feedbackGain
     );
 
 
-    delayFeedback.connect(
-        delay
+    feedbackGain.connect(
+        delayNode
     );
 
 
-    delay.connect(
+    delayNode.connect(
         compressor
     );
 
@@ -1033,7 +1233,7 @@ function createAudioEngine() {
 
 
     masterGain.connect(
-        delay
+        delayNode
     );
 
 
@@ -1044,162 +1244,187 @@ function createAudioEngine() {
 
     createDrone();
 
-    createNoiseTexture();
+    createNoiseField();
 
 }
 
 
-/* ==========================================================
-   AMBIENT DRONE
-========================================================== */
+
+/* =========================================================
+   DRONE
+========================================================= */
 
 function createDrone() {
 
-    ambientGain =
+    droneGain =
         audioContext.createGain();
 
 
-    ambientGain.gain.value =
+    droneGain.gain.value =
         0;
 
 
-    ambientFilter =
+    droneFilter =
         audioContext.createBiquadFilter();
 
 
-    ambientFilter.type =
+    droneFilter.type =
         "lowpass";
 
 
-    ambientFilter.frequency.value =
-        650;
+    droneFilter.frequency.value =
+        420;
 
 
-    ambientFilter.Q.value =
-        1.5;
+    droneFilter.Q.value =
+        .8;
 
 
-    ambientPanner =
+    dronePanner =
         audioContext.createStereoPanner();
 
 
     /*
-       D2 / A2 / D3 / F3
-
-       약간씩 detune해서
-       완전히 고정된 synth tone처럼
-       들리지 않게 한다.
+       일부러 완벽한 화음이 아닌
+       살짝 흐린 frequency cluster.
     */
 
-    const frequencies = [
+    const voices = [
 
-        ROOT,
+        {
+            ratio: .5,
+            type: "sine",
+            gain: .55,
+            detune: -5
+        },
 
-        ROOT * 1.5,
+        {
+            ratio: 1,
+            type: "sawtooth",
+            gain: .11,
+            detune: -8
+        },
 
-        ROOT * 2,
+        {
+            ratio: 1.5,
+            type: "triangle",
+            gain: .10,
+            detune: 6
+        },
 
-        ROOT * 2.378
+        {
+            ratio: 2.02,
+            type: "sawtooth",
+            gain: .035,
+            detune: 11
+        },
+
+        {
+            ratio: 3.01,
+            type: "triangle",
+            gain: .025,
+            detune: -13
+        }
 
     ];
 
 
-    frequencies.forEach(
-    (frequency,index) => {
+    voices.forEach(
+        voice => {
 
-        const oscillator =
-            audioContext
-            .createOscillator();
-
-
-        oscillator.type =
-            index < 2
-            ?
-            "sine"
-            :
-            "triangle";
+            const oscillator =
+                audioContext
+                    .createOscillator();
 
 
-        oscillator.frequency.value =
-            frequency;
+            oscillator.type =
+                voice.type;
 
 
-        oscillator.detune.value =
-            (
-                Math.random() *
-                8
-            )
-            -
-            4;
+            oscillator.frequency.value =
+                ROOT *
+                voice.ratio;
 
 
-        const gain =
-            audioContext
-            .createGain();
+            oscillator.detune.value =
+                voice.detune;
 
 
-        gain.gain.value =
-            index === 0
-            ?
-            .45
-            :
-            .12;
+            const gain =
+                audioContext
+                    .createGain();
 
 
-        oscillator.connect(
-            gain
-        );
+            gain.gain.value =
+                voice.gain;
 
 
-        gain.connect(
-            ambientFilter
-        );
+            oscillator.connect(
+                gain
+            );
 
 
-        oscillator.start();
+            gain.connect(
+                droneFilter
+            );
 
 
-        droneOscillators.push({
-            oscillator,
-            gain
-        });
-
-    });
+            oscillator.start();
 
 
-    ambientFilter.connect(
-        ambientPanner
+            droneVoices.push({
+
+                oscillator,
+                gain,
+                baseDetune:
+                    voice.detune
+
+            });
+
+        }
     );
 
 
-    ambientPanner.connect(
-        ambientGain
+    droneFilter.connect(
+        dronePanner
     );
 
 
-    ambientGain.connect(
+    dronePanner.connect(
+        droneGain
+    );
+
+
+    droneGain.connect(
         masterGain
     );
 
 }
 
 
-/* ==========================================================
-   ELECTRONIC TEXTURE
-========================================================== */
 
-function createNoiseTexture() {
+/* =========================================================
+   CRACKLE / NOISE FIELD
+========================================================= */
+
+function createNoiseField() {
+
+    const seconds =
+        3;
+
 
     const length =
         audioContext.sampleRate *
-        2;
+        seconds;
 
 
     const buffer =
         audioContext.createBuffer(
 
             1,
+
             length,
+
             audioContext.sampleRate
 
         );
@@ -1209,9 +1434,13 @@ function createNoiseTexture() {
         buffer.getChannelData(0);
 
 
+    let previous =
+        0;
+
+
     /*
-       완전한 white noise보다
-       듬성듬성한 digital texture.
+       단순 white noise보다
+       거칠고 불규칙한 texture.
     */
 
     for(
@@ -1220,33 +1449,56 @@ function createNoiseTexture() {
         i++
     ) {
 
+        const white =
+            Math.random() *
+            2 -
+            1;
+
+
+        previous =
+            previous *
+            .94
+            +
+            white *
+            .06;
+
+
+        let value =
+            previous *
+            .5;
+
+
+        /*
+           드문 crack.
+        */
+
         if(
-            Math.random() >
-            .91
+            Math.random()
+            <
+            .002
         ) {
 
-            data[i] =
+            value +=
                 (
                     Math.random() *
                     2 -
                     1
-                );
+                )
+                *
+                .9;
 
         }
 
-        else {
 
-            data[i] =
-                0;
-
-        }
+        data[i] =
+            value;
 
     }
 
 
     noiseSource =
         audioContext
-        .createBufferSource();
+            .createBufferSource();
 
 
     noiseSource.buffer =
@@ -1259,7 +1511,7 @@ function createNoiseTexture() {
 
     noiseFilter =
         audioContext
-        .createBiquadFilter();
+            .createBiquadFilter();
 
 
     noiseFilter.type =
@@ -1267,19 +1519,19 @@ function createNoiseTexture() {
 
 
     noiseFilter.frequency.value =
-        2400;
+        1800;
 
 
     noiseFilter.Q.value =
-        5;
+        1.7;
 
 
-    textureGain =
+    noiseGain =
         audioContext
-        .createGain();
+            .createGain();
 
 
-    textureGain.gain.value =
+    noiseGain.gain.value =
         0;
 
 
@@ -1289,17 +1541,17 @@ function createNoiseTexture() {
 
 
     noiseFilter.connect(
-        textureGain
+        noiseGain
     );
 
 
-    textureGain.connect(
+    noiseGain.connect(
         masterGain
     );
 
 
-    textureGain.connect(
-        delay
+    noiseGain.connect(
+        delayNode
     );
 
 
@@ -1308,16 +1560,27 @@ function createNoiseTexture() {
 }
 
 
-/* ==========================================================
-   TING
-========================================================== */
 
-function createTing(
-    position,
-    energy
+/* =========================================================
+   ELECTRONIC HIT
+========================================================= */
+
+/*
+   객체가 튀어나올 때의
+
+   "툭 / 둑"
+
+   피아노처럼 명확한 음높이 대신
+   짧은 filtered electronic impulse.
+*/
+
+function electronicHit(
+    x,
+    strength = .5
 ) {
 
-    if(!audioContext) return;
+    if(!audioContext)
+        return;
 
 
     const now =
@@ -1325,184 +1588,229 @@ function createTing(
 
 
     /*
-       화면 위치에 따라
-       pentatonic harmonic 선택.
+       너무 연속으로 난사되는 것 방지.
     */
 
-    const index =
+    if(
+        now -
+        lastHitTime
+        <
+        .11
+    ) {
 
-        Math.floor(
+        return;
 
-            position *
-            SCALE.length
-
-        )
-
-        %
-
-        SCALE.length;
+    }
 
 
-    const semitone =
-        SCALE[index];
-
-
-    const frequency =
-
-        ROOT *
-        4 *
-        Math.pow(
-            2,
-            semitone / 12
-        );
+    lastHitTime =
+        now;
 
 
     const oscillator =
         audioContext
-        .createOscillator();
+            .createOscillator();
 
 
     oscillator.type =
-        "sine";
+        "triangle";
 
 
-    oscillator.frequency.value =
-        frequency;
+    const frequency =
+
+        85 +
+
+        x *
+        230;
 
 
-    const overtone =
+    oscillator.frequency
+        .setValueAtTime(
+
+            frequency *
+            2.5,
+
+            now
+
+        );
+
+
+    oscillator.frequency
+        .exponentialRampToValueAtTime(
+
+            frequency,
+
+            now +
+            .08
+
+        );
+
+
+    const filter =
         audioContext
-        .createOscillator();
+            .createBiquadFilter();
 
 
-    overtone.type =
-        "sine";
+    filter.type =
+        "lowpass";
 
 
-    overtone.frequency.value =
-        frequency *
-        2.01;
+    filter.frequency.value =
+        1100 +
+        strength *
+        3500;
+
+
+    filter.Q.value =
+        4;
 
 
     const gain =
         audioContext
-        .createGain();
-
-
-    const pan =
-        audioContext
-        .createStereoPanner();
-
-
-    pan.pan.value =
-        position * 2 - 1;
-
-
-    const volume =
-
-        .015 +
-
-        Math.min(
-            .06,
-            energy * .08
-        );
+            .createGain();
 
 
     gain.gain.setValueAtTime(
 
-        volume,
+        .025 +
+        strength *
+        .07,
+
         now
 
     );
 
 
-    gain.gain.exponentialRampToValueAtTime(
+    gain.gain
+        .exponentialRampToValueAtTime(
 
-        .0001,
+            .0001,
 
-        now +
-        1.8
+            now +
+            .18
 
-    );
+        );
+
+
+    const panner =
+        audioContext
+            .createStereoPanner();
+
+
+    panner.pan.value =
+        x * 2 - 1;
 
 
     oscillator.connect(
-        gain
+        filter
     );
 
 
-    overtone.connect(
+    filter.connect(
         gain
     );
 
 
     gain.connect(
-        pan
+        panner
     );
 
 
-    pan.connect(
+    panner.connect(
         masterGain
     );
 
 
-    pan.connect(
-        delay
+    panner.connect(
+        delayNode
     );
 
 
     oscillator.start(now);
 
-    overtone.start(now);
-
 
     oscillator.stop(
-        now + 2
-    );
-
-    overtone.stop(
-        now + 2
+        now +
+        .2
     );
 
 }
 
 
-/* ==========================================================
-   GLITCH
-========================================================== */
 
-function createGlitch(
-    position,
-    energy
+/* =========================================================
+   DIGITAL TICK
+========================================================= */
+
+/*
+   작은 움직임에 가끔
+
+   틱 / 찌직 / 지글
+*/
+
+function digitalTick(
+    x,
+    strength
 ) {
 
-    if(!audioContext) return;
+    if(!audioContext)
+        return;
 
 
     const now =
         audioContext.currentTime;
 
 
+    if(
+        now -
+        lastGlitchTime
+        <
+        .08
+    ) {
+
+        return;
+
+    }
+
+
+    lastGlitchTime =
+        now;
+
+
     const oscillator =
         audioContext
-        .createOscillator();
+            .createOscillator();
 
+
+    /*
+       sine 대신 square/sawtooth 계열.
+    */
 
     oscillator.type =
-        "square";
+
+        Math.random() >
+        .5
+
+        ?
+
+        "square"
+
+        :
+
+        "sawtooth";
 
 
     oscillator.frequency.value =
 
-        180 +
+        350 +
 
         Math.random() *
-        1500;
+        3500;
 
 
     const filter =
         audioContext
-        .createBiquadFilter();
+            .createBiquadFilter();
 
 
     filter.type =
@@ -1514,50 +1822,57 @@ function createGlitch(
         800 +
 
         Math.random() *
-        5000;
+        6000;
 
 
     filter.Q.value =
-        8;
+        7 +
+        Math.random() *
+        10;
 
 
     const gain =
         audioContext
-        .createGain();
+            .createGain();
+
+
+    const volume =
+
+        .002 +
+
+        strength *
+        .022;
 
 
     gain.gain.setValueAtTime(
 
-        Math.min(
-            .025,
-            .004 +
-            energy * .03
-        ),
+        volume,
 
         now
 
     );
 
 
-    gain.gain.exponentialRampToValueAtTime(
+    gain.gain
+        .exponentialRampToValueAtTime(
 
-        .0001,
+            .0001,
 
-        now +
-        .05 +
-        Math.random() *
-        .12
+            now +
+            .025 +
+            Math.random() *
+            .08
 
-    );
+        );
 
 
     const panner =
         audioContext
-        .createStereoPanner();
+            .createStereoPanner();
 
 
     panner.pan.value =
-        position * 2 - 1;
+        x * 2 - 1;
 
 
     oscillator.connect(
@@ -1584,29 +1899,282 @@ function createGlitch(
 
 
     oscillator.stop(
-        now + .2
+        now +
+        .12
     );
 
 }
 
 
-/* ==========================================================
-   OBJECT ANALYSIS
-========================================================== */
 
-function analyseObjects(
+/* =========================================================
+   SUB PULSE
+========================================================= */
+
+function subPulse(
+    strength
+) {
+
+    if(!audioContext)
+        return;
+
+
+    const now =
+        audioContext.currentTime;
+
+
+    if(
+        now -
+        lastPulseTime
+        <
+        .7
+    ) {
+
+        return;
+
+    }
+
+
+    lastPulseTime =
+        now;
+
+
+    const oscillator =
+        audioContext
+            .createOscillator();
+
+
+    oscillator.type =
+        "sine";
+
+
+    oscillator.frequency
+        .setValueAtTime(
+
+            58,
+
+            now
+
+        );
+
+
+    oscillator.frequency
+        .exponentialRampToValueAtTime(
+
+            42,
+
+            now +
+            .45
+
+        );
+
+
+    const gain =
+        audioContext
+            .createGain();
+
+
+    gain.gain.setValueAtTime(
+
+        .025 +
+        strength *
+        .045,
+
+        now
+
+    );
+
+
+    gain.gain
+        .exponentialRampToValueAtTime(
+
+            .0001,
+
+            now +
+            .7
+
+        );
+
+
+    oscillator.connect(
+        gain
+    );
+
+
+    gain.connect(
+        masterGain
+    );
+
+
+    oscillator.start(now);
+
+
+    oscillator.stop(
+        now +
+        .75
+    );
+
+}
+
+
+
+/* =========================================================
+   OBJECT MATCHING
+========================================================= */
+
+/*
+   이전 버전의 class_index보다 조금 낫다.
+
+   같은 종류의 객체 중
+   가장 가까운 이전 중심점을 찾는다.
+*/
+
+function findPreviousObject(
+    object,
+    usedIndexes
+) {
+
+    let bestIndex =
+        -1;
+
+
+    let bestDistance =
+        Infinity;
+
+
+    previousObjects.forEach(
+        (previous, index) => {
+
+            if(
+                usedIndexes.has(index)
+            )
+                return;
+
+
+            if(
+                previous.className
+                !==
+                object.className
+            )
+                return;
+
+
+            const dx =
+                previous.x -
+                object.x;
+
+
+            const dy =
+                previous.y -
+                object.y;
+
+
+            const distance =
+                Math.sqrt(
+                    dx * dx +
+                    dy * dy
+                );
+
+
+            if(
+                distance <
+                bestDistance
+            ) {
+
+                bestDistance =
+                    distance;
+
+
+                bestIndex =
+                    index;
+
+            }
+
+        }
+    );
+
+
+    return {
+
+        index:
+            bestIndex,
+
+        distance:
+            bestDistance
+
+    };
+
+}
+
+
+
+/* =========================================================
+   ANALYSE OBJECTS
+========================================================= */
+
+function analysePredictions(
     predictions
 ) {
 
+    const objects =
+
+        predictions.map(
+            prediction => {
+
+                const [
+                    x,
+                    y,
+                    width,
+                    height
+                ] =
+                prediction.bbox;
+
+
+                return {
+
+                    className:
+                        prediction.class,
+
+                    x:
+                        (
+                            x +
+                            width / 2
+                        )
+                        /
+                        analysisCanvas.width,
+
+                    y:
+                        (
+                            y +
+                            height / 2
+                        )
+                        /
+                        analysisCanvas.height,
+
+                    area:
+                        (
+                            width *
+                            height
+                        )
+                        /
+                        (
+                            analysisCanvas.width *
+                            analysisCanvas.height
+                        ),
+
+                    prediction
+
+                };
+
+            }
+        );
+
+
+    const usedIndexes =
+        new Set();
+
+
     let totalMotion =
-        0;
-
-
-    let averageX =
-        0;
-
-
-    let totalArea =
         0;
 
 
@@ -1618,213 +2186,264 @@ function analyseObjects(
         .5;
 
 
-    const newObjects =
-        {};
+    let totalX =
+        0;
 
 
-    predictions.forEach(
-    (prediction,index) => {
-
-        const [
-            x,
-            y,
-            width,
-            height
-        ] =
-        prediction.bbox;
+    let totalArea =
+        0;
 
 
-        const centerX =
-            x +
-            width / 2;
+    let newObjectCount =
+        0;
 
 
-        const centerY =
-            y +
-            height / 2;
+    objects.forEach(
+        object => {
+
+            const match =
+                findPreviousObject(
+
+                    object,
+
+                    usedIndexes
+
+                );
 
 
-        const nx =
-            centerX /
-            video.videoWidth;
+            let motion =
+                0;
 
 
-        const ny =
-            centerY /
-            video.videoHeight;
+            let isNew =
+                false;
 
 
-        const area =
+            if(
+                match.index
+                >=
+                0
+                &&
+                match.distance
+                <
+                .30
+            ) {
 
-            (
-                width *
-                height
-            )
-
-            /
-
-            (
-                video.videoWidth *
-                video.videoHeight
-            );
-
-
-        const key =
-
-            prediction.class
-            +
-            "_"
-            +
-            index;
+                usedIndexes.add(
+                    match.index
+                );
 
 
-        let motion =
-            0;
+                motion =
+                    match.distance;
+
+            }
+
+            else {
+
+                isNew =
+                    true;
+
+                newObjectCount++;
+
+            }
 
 
-        if(
-            previousObjects[key]
-        ) {
+            /*
+               sensitivity
+            */
 
-            const old =
-                previousObjects[key];
+            motion *=
 
+                7 *
 
-            const dx =
-                centerX -
-                old.x;
-
-
-            const dy =
-                centerY -
-                old.y;
+                Number(
+                    reactionAmount.value
+                );
 
 
             motion =
-
-                Math.sqrt(
-                    dx * dx +
-                    dy * dy
-                )
-
-                /
-
-                Math.max(
-                    video.videoWidth,
-                    video.videoHeight
+                Math.min(
+                    1,
+                    motion
                 );
 
-        }
 
-
-        motion *=
-
-            Number(
-                motionResponse.value
-            );
-
-
-        motion =
-            Math.min(
-                1,
-                motion * 12
-            );
-
-
-        newObjects[key] = {
-
-            x: centerX,
-            y: centerY
-
-        };
-
-
-        totalMotion +=
-            motion;
-
-
-        averageX +=
-            nx;
-
-
-        totalArea +=
-            area;
-
-
-        if(
-            motion >
-            strongestMotion
-        ) {
-
-            strongestMotion =
+            object.motion =
                 motion;
 
 
-            strongestX =
-                nx;
+            object.isNew =
+                isNew;
+
+
+            totalMotion +=
+                motion;
+
+
+            totalX +=
+                object.x;
+
+
+            totalArea +=
+                object.area;
+
+
+            if(
+                motion >
+                strongestMotion
+            ) {
+
+                strongestMotion =
+                    motion;
+
+                strongestX =
+                    object.x;
+
+            }
+
+
+            /*
+               새 객체 등장.
+
+               확실하게 "툭".
+            */
+
+            if(
+                isNew
+                &&
+                running
+            ) {
+
+                electronicHit(
+
+                    object.x,
+
+                    .45 +
+                    object.area *
+                    2
+
+                );
+
+            }
+
+
+            /*
+               중간 정도 움직임.
+
+               확률적으로 digital tick.
+            */
+
+            if(
+                motion >
+                .08
+                &&
+                Math.random()
+                <
+                .30
+            ) {
+
+                digitalTick(
+
+                    object.x,
+
+                    motion
+
+                );
+
+            }
+
+
+            /*
+               큰 움직임.
+
+               저역 pulse.
+            */
+
+            if(
+                motion >
+                .30
+            ) {
+
+                subPulse(
+                    motion
+                );
+
+            }
 
         }
-
-    });
+    );
 
 
     previousObjects =
-        newObjects;
+        objects.map(
+            object => ({
 
+                className:
+                    object.className,
 
-    const count =
-        Math.max(
-            1,
-            predictions.length
+                x:
+                    object.x,
+
+                y:
+                    object.y
+
+            })
         );
 
 
-    const avgMotion =
-        totalMotion /
-        count;
-
-
-    const avgX =
-        predictions.length
-        ?
-        averageX /
-        predictions.length
-        :
-        .5;
+    const divisor =
+        Math.max(
+            1,
+            objects.length
+        );
 
 
     return {
 
+        count:
+            objects.length,
+
         motion:
-            avgMotion,
+            totalMotion /
+            divisor,
 
         strongestMotion,
 
         strongestX,
 
         averageX:
-            avgX,
+            objects.length
+            ?
+            totalX /
+            objects.length
+            :
+            .5,
 
         area:
             totalArea,
 
-        count:
-            predictions.length
+        newObjects:
+            newObjectCount
 
     };
 
 }
 
 
-/* ==========================================================
-   UPDATE AMBIENT MUSIC
-========================================================== */
 
-function updateAmbient(
+/* =========================================================
+   SOUND FIELD UPDATE
+========================================================= */
+
+function updateSoundField(
     analysis
 ) {
 
-    if(!audioContext)
+    if(
+        !audioContext ||
+        !droneGain
+    )
         return;
 
 
@@ -1832,43 +2451,144 @@ function updateAmbient(
         audioContext.currentTime;
 
 
-    const ambient =
+    const drone =
         Number(
-            ambientAmount.value
+            droneAmount.value
         );
 
 
-    const texture =
+    const crackle =
         Number(
-            textureAmount.value
+            crackleAmount.value
         );
 
 
     /*
-       기본 drone은 항상 존재.
-       객체가 많아지면 약간 커짐.
+       지속적인 Drone.
+
+       객체가 없어도 존재.
     */
 
     const droneLevel =
 
-        .055 *
+        .045 *
 
-        ambient *
+        drone *
 
         (
-            .65 +
+            .8 +
             Math.min(
-                .7,
+                .5,
                 analysis.count *
-                .08
+                .06
             )
         );
 
 
-    ambientGain.gain
+    droneGain.gain
         .setTargetAtTime(
 
             droneLevel,
+
+            now,
+
+            1.3
+
+        );
+
+
+
+    /*
+       움직임은 음을 새로 치기보다
+       장 전체를 연다.
+    */
+
+    const filterFrequency =
+
+        260 +
+
+        analysis.motion *
+        3500 +
+
+        Math.min(
+            1500,
+            analysis.area *
+            2500
+        );
+
+
+    droneFilter.frequency
+        .setTargetAtTime(
+
+            filterFrequency,
+
+            now,
+
+            .7
+
+        );
+
+
+
+    /*
+       객체의 무게중심에 따라
+       Drone 전체가 아주 천천히 이동.
+    */
+
+    dronePanner.pan
+        .setTargetAtTime(
+
+            (
+                analysis.averageX *
+                2 -
+                1
+            )
+            *
+            .45,
+
+            now,
+
+            1.5
+
+        );
+
+
+
+    /*
+       Crackle은 완전히 사라지지 않는다.
+
+       움직임이 많으면 표면으로 올라온다.
+    */
+
+    const noiseLevel =
+
+        crackle *
+
+        (
+            .0015 +
+            analysis.motion *
+            .027
+        );
+
+
+    noiseGain.gain
+        .setTargetAtTime(
+
+            noiseLevel,
+
+            now,
+
+            .18
+
+        );
+
+
+    noiseFilter.frequency
+        .setTargetAtTime(
+
+            1200 +
+            analysis.motion *
+            5000,
 
             now,
 
@@ -1877,383 +2597,413 @@ function updateAmbient(
         );
 
 
-    /*
-       움직임 → filter opening.
-    */
-
-    const cutoff =
-
-        350 +
-
-        analysis.motion *
-        6000 +
-
-        analysis.area *
-        1500;
-
-
-    ambientFilter.frequency
-        .setTargetAtTime(
-
-            cutoff,
-
-            now,
-
-            .12
-
-        );
-
 
     /*
-       객체 평균 위치에 따라
-       ambient 공간 위치도 이동.
+       Drone 자체도 움직임 때문에
+       아주 조금 불안정해짐.
     */
 
-    ambientPanner.pan
-        .setTargetAtTime(
+    droneVoices.forEach(
+        (voice, index) => {
 
-            analysis.averageX *
-            1.4 -
-            .7,
+            const wobble =
 
-            now,
-
-            .25
-
-        );
-
-
-    /*
-       움직임 → digital noise.
-    */
-
-    const noiseLevel =
-
-        texture *
-
-        (
-            .001 +
-
-            analysis.motion *
-            .035
-        );
-
-
-    textureGain.gain
-        .setTargetAtTime(
-
-            noiseLevel,
-
-            now,
-
-            .05
-
-        );
-
-
-    /*
-       움직임에 따라
-       noise 중심 주파수 변화.
-    */
-
-    noiseFilter.frequency
-        .setTargetAtTime(
-
-            1200 +
-
-            analysis.motion *
-            6000,
-
-            now,
-
-            .08
-
-        );
-
-
-    /*
-       Drone harmonic도 아주 미세하게 흔들림.
-    */
-
-    droneOscillators.forEach(
-    (voice,index) => {
-
-        const detune =
-
-            (
                 analysis.motion *
-                12
-            )
 
-            *
+                (
+                    8 +
+                    index *
+                    5
+                );
 
-            (
+
+            const direction =
+
                 index % 2
                 ?
                 1
                 :
-                -1
-            );
+                -1;
 
 
-        voice.oscillator.detune
-            .setTargetAtTime(
+            voice.oscillator.detune
+                .setTargetAtTime(
 
-                detune,
+                    voice.baseDetune
+                    +
+                    wobble *
+                    direction,
 
-                now,
+                    now,
 
-                .3
+                    1
 
-            );
+                );
 
-    });
-
-
-    /*
-       큰 움직임 → TING
-
-       매번 발생하면 시끄러우므로
-       확률적으로 발생.
-    */
-
-    if(
-        analysis.strongestMotion >
-        .22
-        &&
-        Math.random() <
-        .30
-    ) {
-
-        createTing(
-
-            analysis.strongestX,
-
-            analysis.strongestMotion
-
-        );
-
-    }
+        }
+    );
 
 
-    /*
-       조금 더 강한 움직임 →
-       digital glitch.
-    */
-
-    if(
-        analysis.strongestMotion >
-        .38
-        &&
-        Math.random() <
-        .22
-    ) {
-
-        createGlitch(
-
-            analysis.strongestX,
-
-            analysis.strongestMotion
-
-        );
-
-    }
+    objectMeter.textContent =
+        analysis.count;
 
 
     motionMeter.textContent =
-
         analysis.motion
-        .toFixed(2);
+            .toFixed(2);
 
 
-    ambienceMeter.textContent =
+    fieldMeter.textContent =
 
-        cutoff
-        .toFixed(0)
+        Math.round(
+            filterFrequency
+        )
         +
-        "Hz";
+        " Hz";
 
 }
 
 
-/* ==========================================================
-   DRAW BOXES
-========================================================== */
 
-function drawPredictions(
-    predictions
-) {
+/* =========================================================
+   VISUAL RENDERING
+========================================================= */
 
-    ctx.clearRect(
+function renderVideo() {
+
+    if(
+        !running ||
+        video.paused ||
+        video.ended
+    ) {
+
+        return;
+
+    }
+
+
+    const width =
+        visualCanvas.width;
+
+
+    const height =
+        visualCanvas.height;
+
+
+    /*
+       1.
+       전체 영상 = 흑백.
+    */
+
+    visualCtx.save();
+
+
+    visualCtx.filter =
+        "grayscale(1) contrast(1.08)";
+
+
+    visualCtx.drawImage(
+
+        video,
 
         0,
         0,
 
-        canvas.width,
-        canvas.height
+        width,
+        height
 
     );
 
 
-    ctx.lineWidth =
-        Math.max(
-            2,
-            canvas.width /
-            550
+    visualCtx.restore();
+
+
+
+    /*
+       2.
+       Detection 영역만
+       원본 색상 + saturation.
+    */
+
+    const scaleX =
+
+        width /
+        analysisCanvas.width;
+
+
+    const scaleY =
+
+        height /
+        analysisCanvas.height;
+
+
+    const saturation =
+
+        Number(
+            saturationAmount.value
         );
 
 
-    const fontSize =
-        Math.max(
-            12,
-            canvas.width /
-            70
-        );
+    currentPredictions.forEach(
+        prediction => {
+
+            const [
+                x,
+                y,
+                boxWidth,
+                boxHeight
+            ] =
+            prediction.bbox;
 
 
-    ctx.font =
-        fontSize +
-        "px monospace";
+            /*
+               박스 주변에 약간의 margin.
+
+               너무 딱 잘린 사각형 느낌을
+               조금 완화한다.
+            */
+
+            const margin =
+                4;
 
 
-    predictions.forEach(
-    prediction => {
-
-        const [
-            x,
-            y,
-            width,
-            height
-        ] =
-        prediction.bbox;
+            const sx =
+                Math.max(
+                    0,
+                    x -
+                    margin
+                );
 
 
-        /*
-           BOX
-        */
-
-        ctx.strokeStyle =
-            "rgba(255,255,255,.95)";
-
-
-        ctx.strokeRect(
-
-            x,
-            y,
-            width,
-            height
-
-        );
+            const sy =
+                Math.max(
+                    0,
+                    y -
+                    margin
+                );
 
 
-        /*
-           작은 중심점
-        */
+            const sw =
+                Math.min(
 
-        ctx.fillStyle =
-            "white";
+                    analysisCanvas.width -
+                    sx,
 
+                    boxWidth +
+                    margin * 2
 
-        ctx.beginPath();
-
-
-        ctx.arc(
-
-            x +
-            width / 2,
-
-            y +
-            height / 2,
-
-            3,
-
-            0,
-
-            Math.PI * 2
-
-        );
+                );
 
 
-        ctx.fill();
+            const sh =
+                Math.min(
+
+                    analysisCanvas.height -
+                    sy,
+
+                    boxHeight +
+                    margin * 2
+
+                );
 
 
-        /*
-           LABEL
-        */
-
-        const label =
-
-            prediction.class
-            +
-            " "
-            +
-            Math.round(
-                prediction.score *
-                100
-            )
-            +
-            "%";
+            const dx =
+                sx *
+                scaleX;
 
 
-        const textWidth =
-            ctx.measureText(
-                label
-            ).width;
+            const dy =
+                sy *
+                scaleY;
 
 
-        const labelHeight =
-            fontSize +
-            8;
+            const dw =
+                sw *
+                scaleX;
 
 
-        const labelY =
-            Math.max(
-                labelHeight,
-                y
+            const dh =
+                sh *
+                scaleY;
+
+
+            /*
+               원본 VIDEO의 좌표로 변환.
+            */
+
+            const videoScaleX =
+
+                video.videoWidth /
+                analysisCanvas.width;
+
+
+            const videoScaleY =
+
+                video.videoHeight /
+                analysisCanvas.height;
+
+
+            visualCtx.save();
+
+
+            visualCtx.filter =
+
+                `saturate(${saturation}) contrast(1.08)`;
+
+
+            visualCtx.drawImage(
+
+                video,
+
+                sx *
+                videoScaleX,
+
+                sy *
+                videoScaleY,
+
+                sw *
+                videoScaleX,
+
+                sh *
+                videoScaleY,
+
+                dx,
+                dy,
+                dw,
+                dh
+
             );
 
 
-        ctx.fillStyle =
-            "rgba(0,0,0,.75)";
+            visualCtx.restore();
 
 
-        ctx.fillRect(
 
-            x,
+            /*
+               BOX
+            */
 
-            labelY -
-            labelHeight,
-
-            textWidth +
-            10,
-
-            labelHeight
-
-        );
+            visualCtx.strokeStyle =
+                "rgba(255,255,255,.88)";
 
 
-        ctx.fillStyle =
-            "white";
+            visualCtx.lineWidth =
+
+                Math.max(
+                    1.5,
+                    width /
+                    800
+                );
 
 
-        ctx.fillText(
+            visualCtx.strokeRect(
 
-            label,
+                dx,
+                dy,
+                dw,
+                dh
 
-            x + 5,
+            );
 
-            labelY - 5
 
-        );
 
-    });
+            /*
+               LABEL
+            */
+
+            const fontSize =
+
+                Math.max(
+                    11,
+                    width /
+                    90
+                );
+
+
+            visualCtx.font =
+
+                `${fontSize}px monospace`;
+
+
+            const label =
+
+                prediction.class
+                +
+                " "
+                +
+                Math.round(
+                    prediction.score *
+                    100
+                )
+                +
+                "%";
+
+
+            const labelWidth =
+
+                visualCtx
+                .measureText(
+                    label
+                )
+                .width;
+
+
+            visualCtx.fillStyle =
+                "rgba(0,0,0,.8)";
+
+
+            visualCtx.fillRect(
+
+                dx,
+
+                Math.max(
+                    0,
+                    dy -
+                    fontSize -
+                    7
+                ),
+
+                labelWidth +
+                10,
+
+                fontSize +
+                7
+
+            );
+
+
+            visualCtx.fillStyle =
+                "white";
+
+
+            visualCtx.fillText(
+
+                label,
+
+                dx + 5,
+
+                Math.max(
+                    fontSize,
+                    dy - 5
+                )
+
+            );
+
+        }
+    );
+
+
+    requestAnimationFrame(
+        renderVideo
+    );
 
 }
 
 
-/* ==========================================================
+
+/* =========================================================
    DETECTION LOOP
-========================================================== */
+========================================================= */
 
 async function detectionLoop(
     timestamp
@@ -2271,18 +3021,12 @@ async function detectionLoop(
 
 
     if(
-
         !detectionBusy
-
         &&
-
         timestamp -
         lastDetectionTime
-
         >=
-
         DETECTION_INTERVAL
-
     ) {
 
         detectionBusy =
@@ -2295,10 +3039,32 @@ async function detectionLoop(
 
         try {
 
+            /*
+               먼저 작은 Canvas에 영상 복사.
+
+               Detection을 작은 이미지로 돌려
+               속도를 높인다.
+            */
+
+            analysisCtx.drawImage(
+
+                video,
+
+                0,
+                0,
+
+                analysisCanvas.width,
+                analysisCanvas.height
+
+            );
+
+
             let predictions =
 
                 await model.detect(
-                    video
+                    analysisCanvas,
+                    10,
+                    .32
                 );
 
 
@@ -2308,53 +3074,55 @@ async function detectionLoop(
 
                 .filter(
                     prediction =>
-                    prediction.score >
-                    .38
+                        prediction.score
+                        >=
+                        .32
                 )
 
                 .sort(
-                    (a,b) =>
+                    (a,b) => {
 
-                    (
-                        b.bbox[2] *
-                        b.bbox[3]
-                    )
+                        const areaA =
+                            a.bbox[2] *
+                            a.bbox[3];
 
-                    -
 
-                    (
-                        a.bbox[2] *
-                        a.bbox[3]
-                    )
+                        const areaB =
+                            b.bbox[2] *
+                            b.bbox[3];
+
+
+                        return (
+                            areaB -
+                            areaA
+                        );
+
+                    }
                 )
 
                 .slice(
                     0,
-                    8
+                    10
                 );
 
 
-            drawPredictions(
-                predictions
-            );
+            currentPredictions =
+                predictions;
 
 
             const analysis =
-                analyseObjects(
+
+                analysePredictions(
                     predictions
                 );
 
 
-            updateAmbient(
+            updateSoundField(
                 analysis
             );
 
 
-            objectCount.textContent =
-                predictions.length;
-
-
-            objectsDisplay.textContent =
+            objectsElement.textContent =
 
                 predictions.length
 
@@ -2362,32 +3130,31 @@ async function detectionLoop(
 
                 predictions
                 .map(
-                    p =>
+                    prediction =>
 
-                    p.class
-                    +
-                    " "
-                    +
-                    Math.round(
-                        p.score *
-                        100
-                    )
-                    +
-                    "%"
+                        prediction.class
+                        +
+                        " "
+                        +
+                        Math.round(
+                            prediction.score *
+                            100
+                        )
+                        +
+                        "%"
 
                 )
                 .join(
-                    " · "
+                    "  ·  "
                 )
 
                 :
 
-                "NO OBJECTS";
+                "NO DETECTED PRESENCE";
 
 
-            /*
-               실제 Detection Hz 표시.
-            */
+
+            /* Detection Hz */
 
             detectionCounter++;
 
@@ -2398,14 +3165,30 @@ async function detectionLoop(
 
             if(
                 now -
-                detectionFPSStart
-                >
+                detectionCounterStart
+                >=
                 1000
             ) {
 
-                fpsMeter.textContent =
+                const elapsed =
 
-                    detectionCounter
+                    (
+                        now -
+                        detectionCounterStart
+                    )
+                    /
+                    1000;
+
+
+                const hz =
+
+                    detectionCounter /
+                    elapsed;
+
+
+                detectionMeter.textContent =
+
+                    hz.toFixed(1)
                     +
                     " Hz";
 
@@ -2414,7 +3197,7 @@ async function detectionLoop(
                     0;
 
 
-                detectionFPSStart =
+                detectionCounterStart =
                     now;
 
             }
@@ -2424,6 +3207,7 @@ async function detectionLoop(
         catch(error) {
 
             console.error(
+                "Detection:",
                 error
             );
 
@@ -2443,113 +3227,144 @@ async function detectionLoop(
 }
 
 
-/* ==========================================================
+
+/* =========================================================
    PLAY
-========================================================== */
+========================================================= */
 
 playButton.addEventListener(
-"click",
-async () => {
+    "click",
+    async () => {
 
-    if(
-        !modelReady ||
-        !videoReady
-    )
-        return;
-
-
-    createAudioEngine();
+        if(
+            !modelReady ||
+            !videoReady
+        )
+            return;
 
 
-    if(
-        audioContext.state
-        ===
-        "suspended"
-    ) {
+        /*
+           iPhone Safari 때문에
+           클릭 안에서 AudioContext 시작.
+        */
 
-        await audioContext.resume();
-
-    }
+        createAudioEngine();
 
 
-    video.volume =
-        Number(
-            videoVolume.value
+        if(
+            audioContext.state
+            ===
+            "suspended"
+        ) {
+
+            await audioContext.resume();
+
+        }
+
+
+        updateVideoVolume();
+
+
+        /*
+           처음부터.
+        */
+
+        video.currentTime =
+            0;
+
+
+        currentPredictions =
+            [];
+
+
+        previousObjects =
+            [];
+
+
+        lastDetectionTime =
+            0;
+
+
+        detectionCounter =
+            0;
+
+
+        detectionCounterStart =
+            performance.now();
+
+
+        try {
+
+            await video.play();
+
+        }
+
+        catch(error) {
+
+            console.error(error);
+
+
+            statusElement.textContent =
+                "VIDEO PLAYBACK ERROR";
+
+
+            return;
+
+        }
+
+
+        running =
+            true;
+
+
+        playButton.disabled =
+            true;
+
+
+        stopButton.disabled =
+            false;
+
+
+        statusElement.textContent =
+            "GENERATING";
+
+
+        /*
+           Drone fade in.
+        */
+
+        droneGain.gain
+            .setTargetAtTime(
+
+                .035 *
+                Number(
+                    droneAmount.value
+                ),
+
+                audioContext.currentTime,
+
+                1.5
+
+            );
+
+
+        requestAnimationFrame(
+            renderVideo
         );
 
 
-    canvas.width =
-        video.videoWidth;
-
-
-    canvas.height =
-        video.videoHeight;
-
-
-    previousObjects =
-        {};
-
-
-    lastDetectionTime =
-        0;
-
-
-    detectionCounter =
-        0;
-
-
-    detectionFPSStart =
-        performance.now();
-
-
-    video.currentTime =
-        0;
-
-
-    try {
-
-        await video.play();
+        requestAnimationFrame(
+            detectionLoop
+        );
 
     }
-
-    catch(error) {
-
-        console.error(error);
-
-        statusElement.textContent =
-            "Playback failed.";
-
-        return;
-
-    }
+);
 
 
-    running =
-        true;
 
-
-    playButton.disabled =
-        true;
-
-
-    stopButton.disabled =
-        false;
-
-
-    statusElement.textContent =
-        "LISTENING TO THE IMAGE";
-
-
-    requestAnimationFrame(
-        detectionLoop
-    );
-
-});
-
-
-/* ==========================================================
+/* =========================================================
    STOP
-========================================================== */
+========================================================= */
 
 function stopEverything() {
 
@@ -2560,34 +3375,38 @@ function stopEverything() {
     video.pause();
 
 
-    if(
-        audioContext
-        &&
-        ambientGain
-    ) {
+    if(audioContext) {
 
-        ambientGain.gain
-        .setTargetAtTime(
+        if(droneGain) {
 
-            0,
+            droneGain.gain
+                .setTargetAtTime(
 
-            audioContext.currentTime,
+                    0,
 
-            .15
+                    audioContext.currentTime,
 
-        );
+                    .2
+
+                );
+
+        }
 
 
-        textureGain.gain
-        .setTargetAtTime(
+        if(noiseGain) {
 
-            0,
+            noiseGain.gain
+                .setTargetAtTime(
 
-            audioContext.currentTime,
+                    0,
 
-            .1
+                    audioContext.currentTime,
 
-        );
+                    .1
+
+                );
+
+        }
 
     }
 
@@ -2600,89 +3419,91 @@ function stopEverything() {
 
 
     statusElement.textContent =
-        "Stopped.";
+        "STOPPED";
 
 }
 
 
-stopButton.onclick =
-    stopEverything;
+stopButton.addEventListener(
+    "click",
+    stopEverything
+);
 
 
-/* ==========================================================
-   VIDEO END
-========================================================== */
+
+/* =========================================================
+   END
+========================================================= */
 
 video.addEventListener(
-"ended",
-() => {
+    "ended",
+    () => {
 
-    running =
-        false;
-
-
-    if(
-        audioContext
-        &&
-        ambientGain
-    ) {
-
-        ambientGain.gain
-        .setTargetAtTime(
-
-            0,
-
-            audioContext.currentTime,
-
-            .3
-
-        );
+        running =
+            false;
 
 
-        textureGain.gain
-        .setTargetAtTime(
+        if(audioContext) {
 
-            0,
+            droneGain.gain
+                .setTargetAtTime(
 
-            audioContext.currentTime,
+                    0,
 
-            .2
+                    audioContext.currentTime,
 
-        );
+                    1
+
+                );
+
+
+            noiseGain.gain
+                .setTargetAtTime(
+
+                    0,
+
+                    audioContext.currentTime,
+
+                    .5
+
+                );
+
+        }
+
+
+        stopButton.disabled =
+            true;
+
+
+        updatePlayButton();
+
+
+        statusElement.textContent =
+            "FINISHED";
 
     }
+);
 
 
-    stopButton.disabled =
-        true;
 
-
-    updatePlayButton();
-
-
-    statusElement.textContent =
-        "Finished.";
-
-});
-
-
-/* ==========================================================
+/* =========================================================
    CLEANUP
-========================================================== */
+========================================================= */
 
 window.addEventListener(
-"beforeunload",
-() => {
+    "beforeunload",
+    () => {
 
-    if(objectURL) {
+        if(objectURL) {
 
-        URL.revokeObjectURL(
-            objectURL
-        );
+            URL.revokeObjectURL(
+                objectURL
+            );
+
+        }
 
     }
-
-});
+);
 
 </script>
 
