@@ -1,556 +1,1076 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>RF & Sound Decoder Simulator V2 (Real-time Mic Reactive)</title>
-    <style>
-        :root {
-            --bg-color: #0b0d10;
-            --panel-border: #282f3c;
-            --screen-bg: #030806;
-            --screen-cyan: #00ffcc;
-            --screen-green: #39ff14;
-            --screen-amber: #ffaa00;
-            --screen-red: #ff3366;
-            --text-muted: #7e8b9b;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        * { box-sizing: border-box; user-select: none; margin: 0; padding: 0; }
-        body {
-            background-color: var(--bg-color);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            color: #e1e7ed;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px 10px;
-        }
+<title>OBJECT → SOUND</title>
 
-        .device-container {
-            background: linear-gradient(145deg, #1f242b, #121518);
-            border: 2px solid var(--panel-border);
-            border-radius: 28px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 1px 2px rgba(255,255,255,0.1);
-            width: 100%;
-            max-width: 440px;
-            padding: 22px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+<!-- TensorFlow.js -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
 
-        .device-header {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 14px;
-        }
+<!-- COCO SSD Object Detection -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
 
-        .device-title {
-            font-size: 13px;
-            font-weight: 700;
-            letter-spacing: 2px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-        }
+<style>
+* {
+    box-sizing: border-box;
+}
 
-        .badge-rf {
-            font-size: 11px;
-            background: #232c37;
-            color: var(--screen-cyan);
-            padding: 4px 10px;
-            border-radius: 6px;
-            border: 1px solid rgba(0,255,204,0.3);
-            font-family: monospace;
-            font-weight: 700;
-        }
+body {
+    margin: 0;
+    background: #080808;
+    color: #f5f5f5;
+    font-family: Arial, Helvetica, sans-serif;
+}
 
-        .screen-bezel {
-            width: 100%;
-            background: #000;
-            border: 4px solid #111417;
-            border-radius: 20px;
-            padding: 8px;
-            margin-bottom: 20px;
-            box-shadow: inset 0 0 15px rgba(0,0,0,0.9);
-        }
+main {
+    width: min(1100px, 94vw);
+    margin: 0 auto;
+    padding: 60px 0 100px;
+}
 
-        .screen-glass {
-            background: var(--screen-bg);
-            border-radius: 12px;
-            overflow: hidden;
-            border: 1px solid #162f22;
-        }
+h1 {
+    font-size: clamp(42px, 8vw, 100px);
+    line-height: 0.9;
+    margin: 0 0 18px;
+    letter-spacing: -0.06em;
+}
 
-        canvas {
-            display: block;
-            width: 100%;
-            height: 220px;
-        }
+.subtitle {
+    color: #888;
+    margin-bottom: 45px;
+}
 
-        .controls-grid {
-            width: 100%;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 18px;
-        }
+.panel {
+    border-top: 1px solid #333;
+    padding-top: 24px;
+}
 
-        .knob-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 12px 4px;
-            border-radius: 14px;
-            border: 1px solid rgba(255, 255, 255, 0.04);
-        }
+.upload {
+    display: inline-block;
+    border: 1px solid #777;
+    padding: 13px 20px;
+    cursor: pointer;
+    margin-right: 8px;
+}
 
-        .knob-label {
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            color: var(--text-muted);
-            margin-bottom: 8px;
-            text-align: center;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+.upload:hover,
+button:hover {
+    background: white;
+    color: black;
+}
 
-        .knob-outer {
-            width: 68px;
-            height: 68px;
-            border-radius: 50%;
-            background: conic-gradient(from 180deg at 50% 50%, #1f242d 0deg, #3d4656 120deg, #1f242d 240deg, #3d4656 360deg);
-            box-shadow: 0 6px 14px rgba(0,0,0,0.6), inset 0 2px 3px rgba(255,255,255,0.2);
-            position: relative;
-            cursor: pointer;
-            touch-action: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+input[type=file] {
+    display: none;
+}
 
-        .knob-inner {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: radial-gradient(circle, #2c323e 0%, #171a20 100%);
-            position: relative;
-        }
+button {
+    border: 1px solid #777;
+    background: transparent;
+    color: white;
+    padding: 13px 20px;
+    cursor: pointer;
+    font-size: 14px;
+}
 
-        .knob-indicator {
-            position: absolute;
-            top: 4px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 4px;
-            height: 12px;
-            background: var(--screen-cyan);
-            border-radius: 2px;
-            box-shadow: 0 0 8px var(--screen-cyan);
-        }
+button:disabled {
+    opacity: .3;
+    cursor: default;
+}
 
-        .knob-val {
-            font-size: 11px;
-            font-family: monospace;
-            font-weight: 600;
-            color: #d1d9e2;
-            margin-top: 8px;
-        }
+#status {
+    margin: 20px 0;
+    color: #999;
+    min-height: 24px;
+}
 
-        .action-bar {
-            width: 100%;
-            display: flex;
-            gap: 10px;
-        }
+.stage {
+    position: relative;
+    width: 100%;
+    background: #111;
+    display: none;
+}
 
-        .btn {
-            flex: 1;
-            padding: 12px;
-            background: #252c38;
-            border: 1px solid #3d4658;
-            border-radius: 12px;
-            color: #fff;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            transition: all 0.15s ease;
-        }
+video {
+    display: block;
+    width: 100%;
+    height: auto;
+}
 
-        .btn.active {
-            background: #11382f;
-            border-color: var(--screen-cyan);
-            color: var(--screen-cyan);
-            box-shadow: 0 0 12px rgba(0, 255, 204, 0.4);
-        }
+canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
 
-        .instructions {
-            margin-top: 20px;
-            max-width: 440px;
-            font-size: 12px;
-            line-height: 1.6;
-            color: #788696;
-            background: #121519;
-            padding: 16px;
-            border-radius: 16px;
-            border: 1px solid #1e242e;
-        }
-    </style>
+.info {
+    margin-top: 20px;
+    display: flex;
+    gap: 30px;
+    color: #777;
+    font-size: 12px;
+}
+
+#objects {
+    margin-top: 20px;
+    font-family: monospace;
+    color: #aaa;
+    min-height: 50px;
+}
+</style>
 </head>
+
 <body>
 
-    <div class="device-container">
-        <div class="device-header">
-            <div class="device-title">RESONANCE DECODER V2</div>
-            <div class="badge-rf" id="rfBadge">2.450 GHz TARGET</div>
-        </div>
+<main>
 
-        <div class="screen-bezel">
-            <div class="screen-glass">
-                <canvas id="screenCanvas" width="400" height="240"></canvas>
-            </div>
-        </div>
+    <h1>OBJECT<br>→ SOUND</h1>
 
-        <div class="controls-grid">
-            <div class="knob-wrapper">
-                <div class="knob-label">CARRIER<br>TUNING</div>
-                <div class="knob-outer" id="knob1" data-val="0.25">
-                    <div class="knob-inner"><div class="knob-indicator"></div></div>
-                </div>
-                <div class="knob-val" id="val1">2.420G</div>
-            </div>
-
-            <div class="knob-wrapper">
-                <div class="knob-label">BITCRUSH<br>GLITCH</div>
-                <div class="knob-outer" id="knob2" data-val="0.30">
-                    <div class="knob-inner"><div class="knob-indicator"></div></div>
-                </div>
-                <div class="knob-val" id="val2">4 BIT</div>
-            </div>
-
-            <div class="knob-wrapper">
-                <div class="knob-label">RESONANCE<br>& PITCH</div>
-                <div class="knob-outer" id="knob3" data-val="0.20">
-                    <div class="knob-inner"><div class="knob-indicator"></div></div>
-                </div>
-                <div class="knob-val" id="val3">480 Hz</div>
-            </div>
-        </div>
-
-        <div class="action-bar">
-            <button class="btn active" id="micToggleBtn">
-                🎙️ 마이크 켜짐 (말해보세요)
-            </button>
-            <button class="btn" id="randomDriftBtn">
-                🎲 주파수 교란
-            </button>
-        </div>
+    <div class="subtitle">
+        Objects in the image become sound.
     </div>
 
-    <div class="instructions">
-        <strong>🎙️ 실시간 마이크 반응형 테스트 방법:</strong><br>
-        1. <strong>마이크를 켠 상태에서 아- 하고 소리를 내거나 말을 해보세요.</strong><br>
-        2. 목소리가 들어올 때만 <strong>글리치 노이즈와 링 모듈레이션(외계인/로봇 음성)</strong>이 폭발적으로 터져 나옵니다.<br>
-        3. 노브 3개를 돌려 <span style="color:var(--screen-green)">[LOCKED 100%]</span>로 맞추면, 왜곡되던 내 목소리가 <strong>완벽하고 깨끗한 원음 목소리</strong>로 복원됩니다.
+    <div class="panel">
+
+        <label class="upload">
+            SELECT VIDEO
+            <input
+                id="fileInput"
+                type="file"
+                accept="video/*"
+            >
+        </label>
+
+        <button id="playButton" disabled>
+            PLAY / GENERATE
+        </button>
+
+        <button id="stopButton" disabled>
+            STOP
+        </button>
+
+        <div id="status">
+            Loading object detection model...
+        </div>
+
+        <div class="stage" id="stage">
+
+            <video
+                id="video"
+                playsinline
+                crossorigin="anonymous"
+            ></video>
+
+            <canvas id="canvas"></canvas>
+
+        </div>
+
+        <div id="objects"></div>
+
+        <div class="info">
+            <span>X → PAN</span>
+            <span>Y → PITCH</span>
+            <span>SIZE → VOLUME</span>
+            <span>MOTION → TIMBRE</span>
+        </div>
+
     </div>
 
-    <script>
-        let targetK1 = 0.72; // ~2.458 GHz
-        let targetK2 = 0.80; // 16-bit
-        let targetK3 = 0.60; // 3.5 kHz
+</main>
 
-        let k1 = 0.25, k2 = 0.30, k3 = 0.20;
-        let isMicActive = false;
+<script>
 
-        let audioCtx, analyser, timeData, freqData;
-        let micStream, micSource, micGain;
-        let ringModCarrier, ringModGain;
-        let filterNode, waveshaperNode, delayNode, delayGain, masterGain;
-        let liveMicLevel = 0.0;
+/* ==========================================================
+   ELEMENTS
+========================================================== */
 
-        async function initMicAudio() {
-            if (!audioCtx) {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                audioCtx = new AudioContext();
-            }
-            if (audioCtx.state === 'suspended') {
-                await audioCtx.resume();
-            }
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
 
-            try {
-                micStream = await navigator.mediaDevices.getUserMedia({ 
-                    audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } 
-                });
+const fileInput = document.getElementById("fileInput");
 
-                analyser = audioCtx.createAnalyser();
-                analyser.fftSize = 512;
-                analyser.smoothingTimeConstant = 0.3;
-                timeData = new Uint8Array(analyser.frequencyBinCount);
-                freqData = new Uint8Array(analyser.frequencyBinCount);
+const playButton =
+    document.getElementById("playButton");
 
-                masterGain = audioCtx.createGain();
-                masterGain.gain.value = 1.0;
+const stopButton =
+    document.getElementById("stopButton");
 
-                // 1. Mic Input Preamp
-                micSource = audioCtx.createMediaStreamSource(micStream);
-                micGain = audioCtx.createGain();
-                micGain.gain.value = 2.5; // Strong mic boost
-                micSource.connect(micGain);
+const status =
+    document.getElementById("status");
 
-                // 2. Resonant Synth Filter
-                filterNode = audioCtx.createBiquadFilter();
-                filterNode.type = 'lowpass';
-                filterNode.Q.value = 6.0;
+const stage =
+    document.getElementById("stage");
 
-                // 3. Ring Modulator (Heterodyne RF Carrier Modulation)
-                ringModCarrier = audioCtx.createOscillator();
-                ringModCarrier.type = 'sine';
-                ringModCarrier.start();
+const objectsDisplay =
+    document.getElementById("objects");
 
-                ringModGain = audioCtx.createGain();
-                ringModCarrier.connect(ringModGain);
 
-                // 4. Glitch Delay Tap
-                delayNode = audioCtx.createDelay();
-                delayNode.delayTime.value = 0.14; // 140ms IDM stutter
-                delayGain = audioCtx.createGain();
-                delayGain.gain.value = 0.4;
-                delayNode.connect(delayGain);
-                delayGain.connect(delayNode);
-                delayNode.connect(filterNode);
+/* ==========================================================
+   GLOBAL
+========================================================== */
 
-                // 5. Bitcrusher Waveshaper
-                waveshaperNode = audioCtx.createWaveShaper();
-                updateBitcrushCurve(4);
+let model = null;
 
-                // Signal Chain
-                micGain.connect(filterNode);
-                micGain.connect(delayNode);
+let audioContext = null;
 
-                filterNode.connect(waveshaperNode);
-                ringModGain.connect(waveshaperNode);
+let masterGain = null;
+let delay = null;
+let delayFeedback = null;
 
-                waveshaperNode.connect(masterGain);
-                masterGain.connect(analyser);
-                analyser.connect(audioCtx.destination);
+let running = false;
 
-                isMicActive = true;
-                document.getElementById('micToggleBtn').classList.add('active');
-                document.getElementById('micToggleBtn').innerHTML = '🎙️ 마이크 켜짐 (말해보세요)';
+let previousObjects = {};
 
-                updateAudioParameters();
-            } catch (err) {
-                alert('마이크 접근 오류: ' + err.message);
-            }
-        }
+let lastDetection = 0;
 
-        function updateBitcrushCurve(bits) {
-            const steps = Math.pow(2, bits);
-            const n_samples = 44100;
-            const curve = new Float32Array(n_samples);
-            for (let i = 0; i < n_samples; ++i) {
-                let x = (i * 2) / n_samples - 1;
-                curve[i] = Math.round(x * steps) / steps;
-            }
-            if (waveshaperNode) waveshaperNode.curve = curve;
-        }
+const DETECTION_INTERVAL = 180;
 
-        function updateAudioParameters() {
-            if (!audioCtx || !isMicActive) return;
 
-            const err1 = Math.abs(k1 - targetK1);
-            const err2 = Math.abs(k2 - targetK2);
-            const err3 = Math.abs(k3 - targetK3);
-            const totalError = (err1 + err2 + err3) / 3.0;
-            const syncRate = Math.max(0, 1.0 - totalError * 2.2);
+/* ==========================================================
+   MUSICAL SCALE
+   D minor pentatonic-ish
+========================================================== */
 
-            const now = audioCtx.currentTime;
+const SCALE = [
 
-            // 1. Knob 1 -> Heterodyne Ring Mod Carrier Freq
-            const carrierFreq = 200 + Math.pow(k1, 2) * 2400;
-            ringModCarrier.frequency.setTargetAtTime(carrierFreq, now, 0.03);
+    38, 41, 43, 45, 48,
+    50, 53, 55, 57, 60,
+    62, 65, 67, 69, 72,
+    74, 77, 79
 
-            // Carrier gain is tied to MIC INPUT LEVEL and SYNC RATE
-            const carrierLevel = (1.0 - syncRate) * liveMicLevel * 0.8;
-            ringModGain.gain.setTargetAtTime(carrierLevel, now, 0.03);
+];
 
-            // 2. Knob 2 -> Resolution Bit Depth
-            const bits = Math.round(2 + k2 * 14);
-            updateBitcrushCurve(bits);
 
-            // 3. Knob 3 -> Filter Cutoff
-            const cutoffFreq = 250 + Math.pow(k3, 2) * 10000;
-            filterNode.frequency.setTargetAtTime(cutoffFreq, now, 0.03);
-            filterNode.Q.setTargetAtTime(1.0 + (1.0 - syncRate) * 8.0, now, 0.03);
+function midiToFrequency(midi) {
 
-            // Delay feedback drops when locked
-            delayGain.gain.setTargetAtTime((1.0 - syncRate) * 0.5, now, 0.03);
+    return 440 *
+        Math.pow(
+            2,
+            (midi - 69) / 12
+        );
 
-            // UI
-            document.getElementById('val1').innerText = (2.400 + k1 * 0.080).toFixed(3) + 'G';
-            document.getElementById('val2').innerText = bits + ' BIT';
-            document.getElementById('val3').innerText = cutoffFreq < 1000 ? Math.round(cutoffFreq) + ' Hz' : (cutoffFreq / 1000).toFixed(1) + ' kHz';
-        }
+}
 
-        // --- ROTARY KNOBS ---
-        function setupKnobs() {
-            const knobs = [
-                { el: document.getElementById('knob1'), get: () => k1, set: (v) => { k1 = v; } },
-                { el: document.getElementById('knob2'), get: () => k2, set: (v) => { k2 = v; } },
-                { el: document.getElementById('knob3'), get: () => k3, set: (v) => { k3 = v; } }
-            ];
 
-            knobs.forEach(k => {
-                let startY = 0, startVal = 0;
-                const updateRotation = (val) => {
-                    k.el.style.transform = `rotate(${-135 + val * 270}deg)`;
-                };
-                updateRotation(k.get());
+/* ==========================================================
+   LOAD MODEL
+========================================================== */
 
-                const onMove = (clientY) => {
-                    const delta = (startY - clientY) / 160;
-                    let nextVal = Math.min(1.0, Math.max(0.0, startVal + delta));
-                    k.set(nextVal);
-                    updateRotation(nextVal);
-                    updateAudioParameters();
-                };
+async function loadModel() {
 
-                k.el.addEventListener('mousedown', (e) => {
-                    startY = e.clientY; startVal = k.get();
-                    if (!isMicActive) initMicAudio();
-                    const mm = (ev) => onMove(ev.clientY);
-                    const mu = () => { window.removeEventListener('mousemove', mm); window.removeEventListener('mouseup', mu); };
-                    window.addEventListener('mousemove', mm); window.addEventListener('mouseup', mu);
-                });
+    try {
 
-                k.el.addEventListener('touchstart', (e) => {
-                    startY = e.touches[0].clientY; startVal = k.get();
-                    if (!isMicActive) initMicAudio();
-                    const tm = (ev) => onMove(ev.touches[0].clientY);
-                    const te = () => { window.removeEventListener('touchmove', tm); window.removeEventListener('touchend', te); };
-                    window.addEventListener('touchmove', tm); window.addEventListener('touchend', te);
-                });
-            });
-        }
+        status.textContent =
+            "Loading object detection model...";
 
-        // --- CANVAS RENDERER ---
-        const canvas = document.getElementById('screenCanvas');
-        const ctx = canvas.getContext('2d');
-
-        function drawScreen() {
-            requestAnimationFrame(drawScreen);
-            const w = canvas.width, h = canvas.height;
-
-            ctx.fillStyle = '#030806';
-            ctx.fillRect(0, 0, w, h);
-
-            // Compute Live Mic RMS Volume
-            if (analyser && timeData) {
-                analyser.getByteTimeDomainData(timeData);
-                let sum = 0;
-                for (let i = 0; i < timeData.length; i++) {
-                    let v = (timeData[i] - 128) / 128;
-                    sum += v * v;
-                }
-                liveMicLevel = Math.sqrt(sum / timeData.length) * 3.0;
-                updateAudioParameters();
-            }
-
-            const err1 = Math.abs(k1 - targetK1);
-            const err2 = Math.abs(k2 - targetK2);
-            const err3 = Math.abs(k3 - targetK3);
-            const syncRate = Math.max(0, 1.0 - (err1 + err2 + err3) / 3.0 * 2.2);
-            const syncPercent = Math.round(syncRate * 100);
-            const isLocked = syncPercent >= 95;
-
-            // 1. Top Bar
-            ctx.font = '12px monospace';
-            ctx.fillStyle = isLocked ? '#39ff14' : '#00ffcc';
-            ctx.fillText(`RF: ${(2.400 + k1 * 0.080).toFixed(3)} GHz`, 16, 24);
-
-            ctx.fillStyle = isLocked ? '#39ff14' : (syncPercent > 50 ? '#ffaa00' : '#ff3366');
-            ctx.fillText(isLocked ? '● LOCKED 100%' : `SYNC: ${syncPercent}%`, 270, 24);
-
-            // 2. Real-time Mic Waveform
-            ctx.lineWidth = isLocked ? 2.5 : 2.0;
-            ctx.strokeStyle = isLocked ? '#39ff14' : (liveMicLevel > 0.05 ? '#00ffcc' : '#1b5042');
-            ctx.shadowBlur = liveMicLevel > 0.05 ? 12 : 2;
-            ctx.shadowColor = ctx.strokeStyle;
-
-            ctx.beginPath();
-            const sliceWidth = (w - 32) / (timeData ? timeData.length : 256);
-            let x = 16;
-
-            for (let i = 0; i < (timeData ? timeData.length : 256); i++) {
-                let v = timeData ? (timeData[i] / 128.0) : 1.0;
-                
-                if (!isLocked && liveMicLevel > 0.03) {
-                    v += (Math.random() - 0.5) * (1.0 - syncRate) * 0.8;
-                }
-
-                const y = (v * (h / 3.2)) + (h / 2) - 15;
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-                x += sliceWidth;
-            }
-            ctx.stroke();
-            ctx.shadowBlur = 0;
-
-            // 3. Center Locked Alert
-            if (isLocked) {
-                ctx.fillStyle = 'rgba(57, 255, 20, 0.15)';
-                ctx.fillRect(40, h / 2 - 25, w - 80, 44);
-                ctx.strokeStyle = '#39ff14';
-                ctx.strokeRect(40, h / 2 - 25, w - 80, 44);
-
-                ctx.font = 'bold 15px monospace';
-                ctx.fillStyle = '#39ff14';
-                ctx.textAlign = 'center';
-                ctx.fillText('★ CARRIER LOCKED ★', w / 2, h / 2 + 2);
-                ctx.textAlign = 'left';
-            }
-
-            // 4. Bottom Info
-            ctx.font = '10px monospace';
-            ctx.fillStyle = '#4e6258';
-            ctx.fillText(`MIC IN: ${isMicActive ? (liveMicLevel > 0.05 ? '● LIVE VOICE' : 'WAITING...') : 'OFF'}`, 16, h - 16);
-            ctx.fillText(`RSSI: -${Math.round(50 + (1 - syncRate) * 45)}dBm`, 290, h - 16);
-        }
-
-        // --- BUTTONS ---
-        document.getElementById('micToggleBtn').addEventListener('click', () => {
-            if (!isMicActive) {
-                initMicAudio();
-            } else {
-                if (micStream) micStream.getTracks().forEach(t => t.stop());
-                isMicActive = false;
-                document.getElementById('micToggleBtn').classList.remove('active');
-                document.getElementById('micToggleBtn').innerHTML = '🎙️ 마이크 켜기';
-            }
+        model = await cocoSsd.load({
+            base: "lite_mobilenet_v2"
         });
 
-        document.getElementById('randomDriftBtn').addEventListener('click', () => {
-            targetK1 = Math.random() * 0.8 + 0.1;
-            targetK2 = Math.random() * 0.8 + 0.1;
-            targetK3 = Math.random() * 0.8 + 0.1;
-            const badge = document.getElementById('rfBadge');
-            badge.innerText = `${(2.400 + targetK1 * 0.080).toFixed(3)} GHz TARGET`;
-            updateAudioParameters();
-        });
+        status.textContent =
+            "Ready. Select a video.";
 
-        setupKnobs();
-        drawScreen();
-    </script>
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+        status.textContent =
+            "Model loading failed.";
+
+    }
+
+}
+
+loadModel();
+
+
+/* ==========================================================
+   VIDEO UPLOAD
+========================================================== */
+
+fileInput.addEventListener(
+    "change",
+    event => {
+
+        const file =
+            event.target.files[0];
+
+        if (!file)
+            return;
+
+        const url =
+            URL.createObjectURL(file);
+
+        video.src = url;
+
+        video.load();
+
+        stage.style.display =
+            "block";
+
+        playButton.disabled =
+            false;
+
+        status.textContent =
+            file.name;
+
+    }
+);
+
+
+/* ==========================================================
+   AUDIO ENGINE
+========================================================== */
+
+function createAudioEngine() {
+
+    if (audioContext)
+        return;
+
+    audioContext =
+        new (
+            window.AudioContext ||
+            window.webkitAudioContext
+        )();
+
+
+    /* MASTER */
+
+    masterGain =
+        audioContext.createGain();
+
+    masterGain.gain.value =
+        0.45;
+
+
+    /* DELAY */
+
+    delay =
+        audioContext.createDelay(2);
+
+    delay.delayTime.value =
+        0.32;
+
+
+    delayFeedback =
+        audioContext.createGain();
+
+    delayFeedback.gain.value =
+        0.27;
+
+
+    delay.connect(
+        delayFeedback
+    );
+
+    delayFeedback.connect(
+        delay
+    );
+
+
+    masterGain.connect(
+        audioContext.destination
+    );
+
+    masterGain.connect(
+        delay
+    );
+
+    delay.connect(
+        audioContext.destination
+    );
+
+}
+
+
+/* ==========================================================
+   PLAY NOTE
+========================================================== */
+
+function playNote({
+
+    frequency,
+    volume,
+    pan,
+    movement,
+    duration
+
+}) {
+
+    if (!audioContext)
+        return;
+
+
+    const now =
+        audioContext.currentTime;
+
+
+    /* OSC 1 */
+
+    const osc1 =
+        audioContext.createOscillator();
+
+    osc1.type =
+        "sine";
+
+    osc1.frequency.value =
+        frequency;
+
+
+    /* OSC 2 */
+
+    const osc2 =
+        audioContext.createOscillator();
+
+    osc2.type =
+        "triangle";
+
+    osc2.frequency.value =
+        frequency * 1.5;
+
+
+    /* FILTER */
+
+    const filter =
+        audioContext.createBiquadFilter();
+
+    filter.type =
+        "lowpass";
+
+    filter.frequency.value =
+        700 +
+        movement * 9000;
+
+
+    /* GAIN */
+
+    const gain =
+        audioContext.createGain();
+
+    gain.gain.setValueAtTime(
+        0,
+        now
+    );
+
+    gain.gain.linearRampToValueAtTime(
+        volume,
+        now + 0.04
+    );
+
+    gain.gain.exponentialRampToValueAtTime(
+        0.001,
+        now + duration
+    );
+
+
+    /* PAN */
+
+    const panner =
+        audioContext.createStereoPanner();
+
+    panner.pan.value =
+        Math.max(
+            -1,
+            Math.min(1, pan)
+        );
+
+
+    /* CONNECTION */
+
+    osc1.connect(filter);
+    osc2.connect(filter);
+
+    filter.connect(gain);
+
+    gain.connect(panner);
+
+    panner.connect(
+        masterGain
+    );
+
+
+    /* START */
+
+    osc1.start(now);
+    osc2.start(now);
+
+    osc1.stop(
+        now + duration + 0.1
+    );
+
+    osc2.stop(
+        now + duration + 0.1
+    );
+
+}
+
+
+/* ==========================================================
+   CLASS HASH
+
+   Different object classes receive slightly different
+   musical offsets.
+========================================================== */
+
+function classHash(name) {
+
+    let hash = 0;
+
+    for (
+        let i = 0;
+        i < name.length;
+        i++
+    ) {
+
+        hash +=
+            name.charCodeAt(i);
+
+    }
+
+    return hash;
+
+}
+
+
+/* ==========================================================
+   SOUND FROM OBJECT
+========================================================== */
+
+function objectToSound(
+    prediction,
+    index
+) {
+
+    const [
+        x,
+        y,
+        width,
+        height
+    ] = prediction.bbox;
+
+
+    const cx =
+        x + width / 2;
+
+    const cy =
+        y + height / 2;
+
+
+    const xNorm =
+        cx / video.videoWidth;
+
+    const yNorm =
+        cy / video.videoHeight;
+
+
+    const area =
+        (
+            width *
+            height
+        )
+        /
+        (
+            video.videoWidth *
+            video.videoHeight
+        );
+
+
+    /* -----------------------------------------
+       POSITION → PITCH
+    ----------------------------------------- */
+
+    let scaleIndex =
+        Math.floor(
+            (1 - yNorm) *
+            (SCALE.length - 1)
+        );
+
+    scaleIndex =
+        Math.max(
+            0,
+            Math.min(
+                SCALE.length - 1,
+                scaleIndex
+            )
+        );
+
+
+    let midi =
+        SCALE[scaleIndex];
+
+
+    /* object class variation */
+
+    midi +=
+        classHash(
+            prediction.class
+        ) % 5;
+
+
+    const frequency =
+        midiToFrequency(midi);
+
+
+    /* -----------------------------------------
+       X → STEREO PAN
+    ----------------------------------------- */
+
+    const pan =
+        xNorm * 2 - 1;
+
+
+    /* -----------------------------------------
+       SIZE → VOLUME
+    ----------------------------------------- */
+
+    const volume =
+        Math.min(
+            0.16,
+            0.025 +
+            area * 0.5
+        );
+
+
+    /* -----------------------------------------
+       MOTION
+    ----------------------------------------- */
+
+    const key =
+        prediction.class +
+        "_" +
+        index;
+
+
+    let movement = 0;
+
+
+    if (previousObjects[key]) {
+
+        const previous =
+            previousObjects[key];
+
+        const dx =
+            cx - previous.x;
+
+        const dy =
+            cy - previous.y;
+
+        movement =
+            Math.sqrt(
+                dx * dx +
+                dy * dy
+            )
+            /
+            Math.max(
+                video.videoWidth,
+                video.videoHeight
+            );
+
+    }
+
+
+    previousObjects[key] = {
+        x: cx,
+        y: cy
+    };
+
+
+    movement =
+        Math.min(
+            1,
+            movement * 15
+        );
+
+
+    /* -----------------------------------------
+       NOTE LENGTH
+    ----------------------------------------- */
+
+    const duration =
+        0.35 +
+        Math.min(
+            1.8,
+            area * 6
+        );
+
+
+    playNote({
+
+        frequency,
+        volume,
+        pan,
+        movement,
+        duration
+
+    });
+
+}
+
+
+/* ==========================================================
+   DRAW DETECTIONS
+========================================================== */
+
+function drawPredictions(
+    predictions
+) {
+
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    ctx.lineWidth = 2;
+
+    ctx.font =
+        "14px monospace";
+
+
+    predictions.forEach(
+        prediction => {
+
+            const [
+                x,
+                y,
+                width,
+                height
+            ] = prediction.bbox;
+
+
+            /* BOX */
+
+            ctx.strokeStyle =
+                "rgba(255,255,255,.9)";
+
+            ctx.strokeRect(
+                x,
+                y,
+                width,
+                height
+            );
+
+
+            /* LABEL */
+
+            const label =
+                prediction.class +
+                " " +
+                prediction.score
+                    .toFixed(2);
+
+
+            const metrics =
+                ctx.measureText(label);
+
+
+            ctx.fillStyle =
+                "rgba(0,0,0,.75)";
+
+            ctx.fillRect(
+                x,
+                Math.max(
+                    0,
+                    y - 22
+                ),
+                metrics.width + 10,
+                22
+            );
+
+
+            ctx.fillStyle =
+                "white";
+
+            ctx.fillText(
+                label,
+                x + 5,
+                Math.max(
+                    15,
+                    y - 6
+                )
+            );
+
+        }
+    );
+
+}
+
+
+/* ==========================================================
+   DETECTION LOOP
+========================================================== */
+
+async function detectionLoop(
+    timestamp
+) {
+
+    if (!running)
+        return;
+
+
+    if (
+        video.paused ||
+        video.ended
+    ) {
+
+        running = false;
+
+        return;
+
+    }
+
+
+    if (
+        timestamp -
+        lastDetection
+        >
+        DETECTION_INTERVAL
+    ) {
+
+        lastDetection =
+            timestamp;
+
+
+        try {
+
+            let predictions =
+                await model.detect(
+                    video
+                );
+
+
+            predictions =
+                predictions
+                    .filter(
+                        p =>
+                            p.score >
+                            0.45
+                    )
+                    .sort(
+                        (a, b) => {
+
+                            const areaA =
+                                a.bbox[2] *
+                                a.bbox[3];
+
+                            const areaB =
+                                b.bbox[2] *
+                                b.bbox[3];
+
+                            return (
+                                areaB -
+                                areaA
+                            );
+
+                        }
+                    )
+                    .slice(
+                        0,
+                        6
+                    );
+
+
+            drawPredictions(
+                predictions
+            );
+
+
+            objectsDisplay.innerHTML =
+                predictions.length
+                ?
+                predictions
+                    .map(
+                        p =>
+                            p.class
+                            +
+                            " "
+                            +
+                            Math.round(
+                                p.score *
+                                100
+                            )
+                            +
+                            "%"
+                    )
+                    .join(
+                        " · "
+                    )
+                :
+                "No objects";
+
+
+            predictions.forEach(
+                (
+                    prediction,
+                    index
+                ) => {
+
+                    objectToSound(
+                        prediction,
+                        index
+                    );
+
+                }
+            );
+
+
+        }
+
+        catch (error) {
+
+            console.error(
+                error
+            );
+
+        }
+
+    }
+
+
+    requestAnimationFrame(
+        detectionLoop
+    );
+
+}
+
+
+/* ==========================================================
+   START
+========================================================== */
+
+playButton.addEventListener(
+    "click",
+    async () => {
+
+        if (!model) {
+
+            status.textContent =
+                "Model is still loading.";
+
+            return;
+
+        }
+
+
+        createAudioEngine();
+
+
+        if (
+            audioContext.state
+            ===
+            "suspended"
+        ) {
+
+            await audioContext.resume();
+
+        }
+
+
+        canvas.width =
+            video.videoWidth;
+
+        canvas.height =
+            video.videoHeight;
+
+
+        previousObjects = {};
+
+        lastDetection = 0;
+
+
+        video.currentTime = 0;
+
+
+        await video.play();
+
+
+        running = true;
+
+
+        playButton.disabled =
+            true;
+
+        stopButton.disabled =
+            false;
+
+
+        status.textContent =
+            "Detecting objects → generating sound";
+
+
+        requestAnimationFrame(
+            detectionLoop
+        );
+
+    }
+);
+
+
+/* ==========================================================
+   STOP
+========================================================== */
+
+function stopEverything() {
+
+    running = false;
+
+    video.pause();
+
+
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    playButton.disabled =
+        false;
+
+    stopButton.disabled =
+        true;
+
+
+    status.textContent =
+        "Stopped.";
+
+}
+
+
+stopButton.addEventListener(
+    "click",
+    stopEverything
+);
+
+
+video.addEventListener(
+    "ended",
+    () => {
+
+        running = false;
+
+        playButton.disabled =
+            false;
+
+        stopButton.disabled =
+            true;
+
+        status.textContent =
+            "Finished.";
+
+    }
+);
+
+</script>
+
 </body>
 </html>
