@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 
 <title>PRESENCE SYNTH</title>
 
@@ -11,290 +11,208 @@
 
 <style>
 
-* {
-    box-sizing: border-box;
+*{box-sizing:border-box}
+
+html,body{
+    margin:0;
+    background:#050505;
+    color:#eee;
+    font-family:Arial,Helvetica,sans-serif;
 }
 
-html,
-body {
-    margin: 0;
-    background: #050505;
-    color: #eee;
-    font-family: Arial, Helvetica, sans-serif;
+main{
+    width:min(1200px,94vw);
+    margin:auto;
+    padding:40px 0 100px;
 }
 
-body {
-    min-height: 100vh;
+h1{
+    margin:0;
+    font-size:clamp(50px,8vw,105px);
+    line-height:.83;
+    letter-spacing:-.07em;
 }
 
-main {
-    width: min(1200px, 94vw);
-    margin: auto;
-    padding: 40px 0 100px;
+.subtitle{
+    margin:22px 0 38px;
+    color:#555;
+    font:11px monospace;
 }
 
-h1 {
-    margin: 0;
-    font-size: clamp(50px, 8vw, 105px);
-    line-height: .83;
-    letter-spacing: -.07em;
+.buttons{
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+    border-top:1px solid #292929;
+    padding-top:18px;
 }
 
-.subtitle {
-    margin: 22px 0 38px;
-    color: #555;
-    font: 11px monospace;
+button,.fileButton{
+    position:relative;
+    min-height:48px;
+    padding:14px 20px;
+    border:1px solid #555;
+    border-radius:0;
+    background:transparent;
+    color:white;
+    font-size:11px;
+    font-weight:bold;
+    cursor:pointer;
+    overflow:hidden;
+    appearance:none;
+    -webkit-appearance:none;
 }
 
-
-/* =========================================================
-   BUTTONS
-========================================================= */
-
-.buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 7px;
-
-    border-top: 1px solid #292929;
-    padding-top: 18px;
+button:hover,.fileButton:hover{
+    background:white;
+    color:black;
 }
 
-button,
-.fileButton {
-    position: relative;
+button:disabled{opacity:.25}
 
-    min-height: 48px;
-    padding: 14px 20px;
-
-    border: 1px solid #555;
-    border-radius: 0;
-
-    background: transparent;
-    color: white;
-
-    font-size: 11px;
-    font-weight: bold;
-
-    cursor: pointer;
-    overflow: hidden;
-
-    appearance: none;
-    -webkit-appearance: none;
+#fileInput{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    opacity:0;
+    cursor:pointer;
+    font-size:100px;
 }
 
-button:hover,
-.fileButton:hover {
-    background: white;
-    color: black;
+.sectionTitle{
+    margin-top:35px;
+    margin-bottom:10px;
+    color:#444;
+    font:10px monospace;
+    letter-spacing:.15em;
 }
 
-button:disabled {
-    opacity: .25;
+.mixer{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+    gap:1px;
+    background:#222;
+    border:1px solid #222;
 }
 
-#fileInput {
-    position: absolute;
-    inset: 0;
-
-    width: 100%;
-    height: 100%;
-
-    opacity: 0;
-    cursor: pointer;
-    font-size: 100px;
+.channel{
+    background:#080808;
+    padding:18px;
 }
 
-
-/* =========================================================
-   MIXER
-========================================================= */
-
-.sectionTitle {
-    margin-top: 35px;
-    margin-bottom: 10px;
-
-    color: #444;
-
-    font: 10px monospace;
-    letter-spacing: .15em;
+.channelName{
+    margin-bottom:18px;
+    color:#aaa;
+    font:11px monospace;
 }
 
-.mixer {
-    display: grid;
-
-    grid-template-columns:
-        repeat(
-            auto-fit,
-            minmax(170px, 1fr)
-        );
-
-    gap: 1px;
-
-    background: #222;
-
-    border: 1px solid #222;
+.control{
+    margin-bottom:17px;
 }
 
-.channel {
-    background: #080808;
-    padding: 18px;
+.control:last-child{
+    margin-bottom:0;
 }
 
-.channelName {
-    margin-bottom: 18px;
-
-    color: #aaa;
-
-    font: 11px monospace;
+.control label{
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:8px;
+    color:#555;
+    font:9px monospace;
 }
 
-.control {
-    margin-bottom: 17px;
+input[type=range]{
+    width:100%;
+    accent-color:white;
 }
 
-.control:last-child {
-    margin-bottom: 0;
+.stage{
+    display:none;
+    position:relative;
+    width:100%;
+    margin-top:30px;
+    background:black;
 }
 
-.control label {
-    display: flex;
-    justify-content: space-between;
-
-    margin-bottom: 8px;
-
-    color: #555;
-
-    font: 9px monospace;
+#video{
+    display:none;
 }
 
-input[type="range"] {
-    width: 100%;
-    accent-color: white;
+#visualCanvas{
+    display:block;
+    width:100%;
+    height:auto;
+    background:black;
 }
 
-
-/* =========================================================
-   VIDEO
-========================================================= */
-
-.stage {
-    display: none;
-
-    position: relative;
-
-    width: 100%;
-
-    margin-top: 30px;
-
-    background: black;
+#analysisCanvas{
+    display:none;
 }
 
-#video {
-    display: none;
+#status{
+    margin-top:15px;
+    color:#777;
+    font:10px monospace;
 }
 
-#visualCanvas {
-    display: block;
-
-    width: 100%;
-    height: auto;
-
-    background: black;
+#filename{
+    margin-top:5px;
+    color:#444;
+    font:9px monospace;
 }
 
-#analysisCanvas {
-    display: none;
+#objects{
+    min-height:18px;
+    margin-top:12px;
+    color:#777;
+    font:10px monospace;
 }
 
-
-/* =========================================================
-   INFO
-========================================================= */
-
-#status {
-    margin-top: 15px;
-    color: #777;
-    font: 10px monospace;
+.meters{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(110px,1fr));
+    gap:1px;
+    margin-top:20px;
+    background:#222;
 }
 
-#filename {
-    margin-top: 5px;
-    color: #444;
-    font: 9px monospace;
+.meter{
+    padding:13px;
+    background:#050505;
+    color:#444;
+    font:9px monospace;
 }
 
-#objects {
-    min-height: 18px;
-
-    margin-top: 12px;
-
-    color: #777;
-
-    font: 10px monospace;
+.meter strong{
+    display:block;
+    margin-top:5px;
+    color:#aaa;
+    font-size:15px;
+    font-weight:normal;
 }
 
-.meters {
-    display: grid;
-
-    grid-template-columns:
-        repeat(
-            auto-fit,
-            minmax(110px, 1fr)
-        );
-
-    gap: 1px;
-
-    margin-top: 20px;
-
-    background: #222;
+#modelState{
+    margin-top:25px;
+    color:#333;
+    font:9px monospace;
 }
 
-.meter {
-    padding: 13px;
-
-    background: #050505;
-
-    color: #444;
-
-    font: 9px monospace;
+.busInfo{
+    margin-top:12px;
+    color:#444;
+    font:9px monospace;
+    line-height:1.7;
 }
 
-.meter strong {
-    display: block;
-
-    margin-top: 5px;
-
-    color: #aaa;
-
-    font-size: 15px;
-    font-weight: normal;
-}
-
-#modelState {
-    margin-top: 25px;
-
-    color: #333;
-
-    font: 9px monospace;
-}
-
-@media(max-width:600px) {
-
-    h1 {
-        font-size: 58px;
-    }
-
-    button,
-    .fileButton {
-        flex: 1;
-    }
-
+@media(max-width:600px){
+    h1{font-size:58px}
+    button,.fileButton{flex:1}
 }
 
 </style>
 </head>
-
 
 <body>
 
@@ -306,22 +224,15 @@ SYNTH
 </h1>
 
 <div class="subtitle">
-VIDEO / AMBIENT / RADIO / GLITCH / PIANO
+INDEPENDENT VIDEO + GENERATED AUDIO ENGINE
 </div>
 
 
 <div class="buttons">
 
 <div class="fileButton">
-
 SELECT VIDEO
-
-<input
-    id="fileInput"
-    type="file"
-    accept="video/*"
->
-
+<input id="fileInput" type="file" accept="video/*">
 </div>
 
 <button id="playButton" disabled>
@@ -335,15 +246,16 @@ STOP
 </div>
 
 
-<!-- ======================================================
-     ORIGINAL VIDEO
-====================================================== -->
+<!-- =====================================================
+     TWO MAIN OUTPUTS
+===================================================== -->
 
 <div class="sectionTitle">
-ORIGINAL VIDEO
+OUTPUT MIXER
 </div>
 
 <div class="mixer">
+
 
 <div class="channel">
 
@@ -354,8 +266,8 @@ VIDEO AUDIO
 <div class="control">
 
 <label>
-<span>VOLUME</span>
-<span id="videoVolumeValue">50%</span>
+<span>ORIGINAL SOUND</span>
+<span id="videoValue">50%</span>
 </label>
 
 <input
@@ -369,70 +281,59 @@ VIDEO AUDIO
 
 </div>
 
+<div class="busInfo">
+ONLY ORIGINAL VIDEO AUDIO
 </div>
 
 </div>
 
 
-
-<!-- ======================================================
-     SYNTH MIXER
-====================================================== -->
-
-<div class="sectionTitle">
-GENERATED SOUND
-</div>
-
-<div class="mixer">
-
-
-<!-- MASTER -->
 
 <div class="channel">
 
 <div class="channelName">
-MASTER
+GENERATED AUDIO
 </div>
 
 <div class="control">
 
 <label>
-<span>VOLUME</span>
-<span id="masterValue">75%</span>
+<span>SYNTH MASTER</span>
+<span id="masterValue">100%</span>
 </label>
 
 <input
     id="masterVolume"
     type="range"
     min="0"
-    max="1"
+    max="2"
     step=".01"
-    value=".75"
+    value="1"
 >
 
 </div>
 
-
-<div class="control">
-
-<label>
-<span>REVERB</span>
-<span id="reverbValue">65%</span>
-</label>
-
-<input
-    id="reverbAmount"
-    type="range"
-    min="0"
-    max="1"
-    step=".01"
-    value=".65"
->
-
+<div class="busInfo">
+INDEPENDENT SYNTH OUTPUT<br>
+MAX +200%
 </div>
 
 </div>
 
+
+</div>
+
+
+
+<!-- =====================================================
+     GENERATED SOUND MIXER
+===================================================== -->
+
+<div class="sectionTitle">
+GENERATED SOUND DESIGN
+</div>
+
+<div class="mixer">
 
 
 <!-- AMBIENT -->
@@ -440,23 +341,23 @@ MASTER
 <div class="channel">
 
 <div class="channelName">
-AMBIENT FIELD
+AMBIENT
 </div>
 
 <div class="control">
 
 <label>
 <span>LEVEL</span>
-<span id="ambientValue">70%</span>
+<span id="ambientValue">75%</span>
 </label>
 
 <input
     id="ambientLevel"
     type="range"
     min="0"
-    max="1"
+    max="1.5"
     step=".01"
-    value=".7"
+    value=".75"
 >
 
 </div>
@@ -475,7 +376,7 @@ AMBIENT FIELD
     min="0"
     max="1"
     step=".01"
-    value=".3"
+    value=".30"
 >
 
 </div>
@@ -515,16 +416,16 @@ RADIO
 
 <label>
 <span>LEVEL</span>
-<span id="radioValue">22%</span>
+<span id="radioValue">25%</span>
 </label>
 
 <input
     id="radioLevel"
     type="range"
     min="0"
-    max="1"
+    max="1.5"
     step=".01"
-    value=".22"
+    value=".25"
 >
 
 </div>
@@ -533,7 +434,7 @@ RADIO
 <div class="control">
 
 <label>
-<span>FREQUENCY</span>
+<span>TUNING</span>
 <span id="radioFreqValue">45%</span>
 </label>
 
@@ -590,7 +491,7 @@ GLITCH
     id="glitchLevel"
     type="range"
     min="0"
-    max="1"
+    max="1.5"
     step=".01"
     value=".35"
 >
@@ -611,7 +512,7 @@ GLITCH
     min="0"
     max="1"
     step=".01"
-    value=".4"
+    value=".40"
 >
 
 </div>
@@ -620,7 +521,7 @@ GLITCH
 
 
 
-<!-- PIANO -->
+<!-- KEYS -->
 
 <div class="channel">
 
@@ -632,16 +533,16 @@ SOFT KEYS
 
 <label>
 <span>LEVEL</span>
-<span id="pianoValue">28%</span>
+<span id="keyValue">25%</span>
 </label>
 
 <input
-    id="pianoLevel"
+    id="keyLevel"
     type="range"
     min="0"
-    max="1"
+    max="1.5"
     step=".01"
-    value=".28"
+    value=".25"
 >
 
 </div>
@@ -651,16 +552,46 @@ SOFT KEYS
 
 <label>
 <span>SOFTNESS</span>
-<span id="softnessValue">75%</span>
+<span id="softValue">80%</span>
 </label>
 
 <input
-    id="pianoSoftness"
+    id="keySoftness"
     type="range"
     min="0"
     max="1"
     step=".01"
-    value=".75"
+    value=".8"
+>
+
+</div>
+
+</div>
+
+
+
+<!-- SPACE -->
+
+<div class="channel">
+
+<div class="channelName">
+SPACE
+</div>
+
+<div class="control">
+
+<label>
+<span>DELAY / SPACE</span>
+<span id="spaceValue">65%</span>
+</label>
+
+<input
+    id="spaceAmount"
+    type="range"
+    min="0"
+    max="1"
+    step=".01"
+    value=".65"
 >
 
 </div>
@@ -680,12 +611,12 @@ INTERACTION
 <div class="control">
 
 <label>
-<span>RESPONSE</span>
-<span id="responseValue">100%</span>
+<span>MOTION</span>
+<span id="motionValue">100%</span>
 </label>
 
 <input
-    id="responseAmount"
+    id="motionResponse"
     type="range"
     min="0"
     max="2"
@@ -699,7 +630,7 @@ INTERACTION
 <div class="control">
 
 <label>
-<span>COLOR</span>
+<span>COLOR SATURATION</span>
 <span id="colorValue">220%</span>
 </label>
 
@@ -729,14 +660,7 @@ LOADING AI...
 
 
 
-<!-- ======================================================
-     VIDEO
-====================================================== -->
-
-<div
-    id="stage"
-    class="stage"
->
+<div id="stage" class="stage">
 
 <video
     id="video"
@@ -783,14 +707,14 @@ EVENT
 AI MODEL: LOADING
 </div>
 
-
 </main>
+
 
 
 <script>
 
 /* =========================================================
-   ELEMENTS
+   DOM
 ========================================================= */
 
 const video =
@@ -854,66 +778,62 @@ document.getElementById("eventMeter");
    SLIDERS
 ========================================================= */
 
-const sliders = {
+const videoVolume =
+document.getElementById("videoVolume");
 
-videoVolume:
-document.getElementById("videoVolume"),
+const masterVolume =
+document.getElementById("masterVolume");
 
-master:
-document.getElementById("masterVolume"),
+const ambientLevel =
+document.getElementById("ambientLevel");
 
-reverb:
-document.getElementById("reverbAmount"),
+const ambientTone =
+document.getElementById("ambientTone");
 
-ambient:
-document.getElementById("ambientLevel"),
+const ambientDrift =
+document.getElementById("ambientDrift");
 
-tone:
-document.getElementById("ambientTone"),
+const radioLevel =
+document.getElementById("radioLevel");
 
-drift:
-document.getElementById("ambientDrift"),
+const radioFrequency =
+document.getElementById("radioFrequency");
 
-radio:
-document.getElementById("radioLevel"),
+const radioStatic =
+document.getElementById("radioStatic");
 
-radioFrequency:
-document.getElementById("radioFrequency"),
+const glitchLevel =
+document.getElementById("glitchLevel");
 
-radioStatic:
-document.getElementById("radioStatic"),
+const glitchDensity =
+document.getElementById("glitchDensity");
 
-glitch:
-document.getElementById("glitchLevel"),
+const keyLevel =
+document.getElementById("keyLevel");
 
-glitchDensity:
-document.getElementById("glitchDensity"),
+const keySoftness =
+document.getElementById("keySoftness");
 
-piano:
-document.getElementById("pianoLevel"),
+const spaceAmount =
+document.getElementById("spaceAmount");
 
-softness:
-document.getElementById("pianoSoftness"),
+const motionResponse =
+document.getElementById("motionResponse");
 
-response:
-document.getElementById("responseAmount"),
-
-color:
-document.getElementById("colorAmount")
-
-};
+const colorAmount =
+document.getElementById("colorAmount");
 
 
 
 /* =========================================================
-   VALUE LABELS
+   LABELS
 ========================================================= */
 
-function setupSlider(
+function sliderLabel(
     slider,
     labelID,
-    multiplier = 100
-) {
+    scale = 100
+){
 
     const label =
     document.getElementById(
@@ -921,23 +841,21 @@ function setupSlider(
     );
 
 
-    const update = () => {
+    function update(){
 
         label.textContent =
 
         Math.round(
-            Number(
-                slider.value
-            )
+            Number(slider.value)
             *
-            multiplier
+            scale
         )
 
         +
 
         "%";
 
-    };
+    }
 
 
     slider.addEventListener(
@@ -951,85 +869,85 @@ function setupSlider(
 }
 
 
-setupSlider(
-    sliders.videoVolume,
-    "videoVolumeValue"
+sliderLabel(
+    videoVolume,
+    "videoValue"
 );
 
-setupSlider(
-    sliders.master,
+sliderLabel(
+    masterVolume,
     "masterValue"
 );
 
-setupSlider(
-    sliders.reverb,
-    "reverbValue"
-);
-
-setupSlider(
-    sliders.ambient,
+sliderLabel(
+    ambientLevel,
     "ambientValue"
 );
 
-setupSlider(
-    sliders.tone,
+sliderLabel(
+    ambientTone,
     "toneValue"
 );
 
-setupSlider(
-    sliders.drift,
+sliderLabel(
+    ambientDrift,
     "driftValue"
 );
 
-setupSlider(
-    sliders.radio,
+sliderLabel(
+    radioLevel,
     "radioValue"
 );
 
-setupSlider(
-    sliders.radioFrequency,
+sliderLabel(
+    radioFrequency,
     "radioFreqValue"
 );
 
-setupSlider(
-    sliders.radioStatic,
+sliderLabel(
+    radioStatic,
     "staticValue"
 );
 
-setupSlider(
-    sliders.glitch,
+sliderLabel(
+    glitchLevel,
     "glitchValue"
 );
 
-setupSlider(
-    sliders.glitchDensity,
+sliderLabel(
+    glitchDensity,
     "densityValue"
 );
 
-setupSlider(
-    sliders.piano,
-    "pianoValue"
+sliderLabel(
+    keyLevel,
+    "keyValue"
 );
 
-setupSlider(
-    sliders.softness,
-    "softnessValue"
+sliderLabel(
+    keySoftness,
+    "softValue"
 );
 
-setupSlider(
-    sliders.response,
-    "responseValue"
+sliderLabel(
+    spaceAmount,
+    "spaceValue"
 );
 
-setupSlider(
-    sliders.color,
+sliderLabel(
+    motionResponse,
+    "motionValue"
+);
+
+sliderLabel(
+    colorAmount,
     "colorValue"
 );
 
 
 
 /* =========================================================
-   STATE
+   APP STATE
 ========================================================= */
 
 let model = null;
@@ -1051,84 +969,71 @@ let detectionBusy = false;
 
 let lastDetection = 0;
 
-
-/*
-   빠른 detection.
-*/
-
-const DETECTION_INTERVAL = 45;
-
-
 let detectionCount = 0;
 
 let detectionStart =
 performance.now();
 
 
-
-/* =========================================================
-   VIDEO AUDIO
-
-   원본 영상 소리는 이 video element에서만 나온다.
-   GENERATED SOUND와 완전히 별개다.
-========================================================= */
-
-function updateVideoAudio() {
-
-    const volume =
-    Number(
-        sliders.videoVolume.value
-    );
-
-
-    /*
-       0이면 강제 mute.
-    */
-
-    if(volume <= .001) {
-
-        video.volume = 0;
-
-        video.muted = true;
-
-    }
-
-    else {
-
-        video.muted = false;
-
-        video.volume = volume;
-
-    }
-
-}
-
-
-sliders.videoVolume.addEventListener(
-    "input",
-    updateVideoAudio
-);
+const DETECTION_INTERVAL =
+45;
 
 
 
 /* =========================================================
-   AUDIO ENGINE
+   AUDIO GRAPH
+
+   IMPORTANT:
+
+   VIDEO BUS
+       video element
+           ↓
+       videoSource
+           ↓
+       videoGain
+           ↓
+       destination
+
+
+   SYNTH BUS
+       synth layers
+           ↓
+       synthMaster
+           ↓
+       synthCompressor
+           ↓
+       destination
+
+
+   NO SHARED MASTER GAIN.
 ========================================================= */
 
 let AC = null;
 
-let masterGain = null;
 
-let dryGain = null;
+/* VIDEO BUS */
 
-let reverbGain = null;
+let videoSource = null;
 
-let delay = null;
+let videoGain = null;
 
-let delayFeedback = null;
 
-let compressor = null;
+/* SYNTH BUS */
 
+let synthMaster = null;
+
+let synthCompressor = null;
+
+let synthDry = null;
+
+let synthDelay = null;
+
+let synthDelayGain = null;
+
+let synthFeedback = null;
+
+
+/* AMBIENT */
 
 let ambientGain = null;
 
@@ -1137,31 +1042,38 @@ let ambientFilter = null;
 let ambientVoices = [];
 
 
-let radioGain = null;
-
-let radioFilter = null;
+/* RADIO */
 
 let radioNoise = null;
 
-let radioOscillator = null;
+let radioCarrier = null;
 
+let radioCarrierGain = null;
+
+let radioFilter = null;
+
+let radioGain = null;
+
+
+/* EVENT TIMERS */
 
 let lastGlitch = 0;
 
 let lastKey = 0;
 
-let lastObjectHit = 0;
+let lastImpact = 0;
 
 
 const ROOT =
 73.416;
 
 
+
 /* =========================================================
-   CREATE AUDIO
+   CREATE AUDIO ENGINE
 ========================================================= */
 
-function createAudioEngine() {
+function createAudioEngine(){
 
     if(AC)
         return;
@@ -1179,115 +1091,164 @@ function createAudioEngine() {
 
 
 
-    /* MASTER */
+    /* =====================================================
+       VIDEO BUS
 
-    masterGain =
+       HTML video sound is routed INTO Web Audio.
+
+       Important:
+       video element itself does NOT separately output audio.
+    ===================================================== */
+
+    videoSource =
+
+    AC.createMediaElementSource(
+        video
+    );
+
+
+    videoGain =
     AC.createGain();
 
 
-    masterGain.gain.value =
+    videoGain.gain.value =
     Number(
-        sliders.master.value
+        videoVolume.value
+    );
+
+
+    videoSource.connect(
+        videoGain
+    );
+
+
+    videoGain.connect(
+        AC.destination
     );
 
 
 
-    /* DRY */
+    /* =====================================================
+       SYNTH BUS
+    ===================================================== */
 
-    dryGain =
+    synthMaster =
     AC.createGain();
 
 
-    dryGain.gain.value =
-    .75;
+    /*
+       This can go to 2.0 = 200%.
+    */
 
-
-
-    /* DELAY / SPACE */
-
-    delay =
-    AC.createDelay(4);
-
-
-    delay.delayTime.value =
-    .67;
-
-
-    delayFeedback =
-    AC.createGain();
-
-
-    delayFeedback.gain.value =
-    .34;
-
-
-    reverbGain =
-    AC.createGain();
-
-
-    reverbGain.gain.value =
+    synthMaster.gain.value =
     Number(
-        sliders.reverb.value
-    )
-    *
-    .45;
-
-
-    delay.connect(
-        delayFeedback
-    );
-
-
-    delayFeedback.connect(
-        delay
-    );
-
-
-    delay.connect(
-        reverbGain
+        masterVolume.value
     );
 
 
 
-    /* COMPRESS */
-
-    compressor =
+    synthCompressor =
     AC.createDynamicsCompressor();
 
 
-    compressor.threshold.value =
-    -18;
+    synthCompressor.threshold.value =
+    -12;
 
-    compressor.knee.value =
-    12;
+    synthCompressor.knee.value =
+    15;
 
-    compressor.ratio.value =
-    5;
+    synthCompressor.ratio.value =
+    4;
 
-    compressor.attack.value =
-    .02;
+    synthCompressor.attack.value =
+    .015;
 
-    compressor.release.value =
-    .8;
+    synthCompressor.release.value =
+    .45;
 
 
 
-    dryGain.connect(
-        compressor
+    synthDry =
+    AC.createGain();
+
+
+    synthDry.gain.value =
+    1;
+
+
+
+    synthDelay =
+    AC.createDelay(4);
+
+
+    synthDelay.delayTime.value =
+    .58;
+
+
+
+    synthFeedback =
+    AC.createGain();
+
+
+    synthFeedback.gain.value =
+    .32;
+
+
+
+    synthDelayGain =
+    AC.createGain();
+
+
+    synthDelayGain.gain.value =
+
+    Number(
+        spaceAmount.value
+    )
+
+    *
+
+    .65;
+
+
+
+    synthDelay.connect(
+        synthFeedback
     );
 
 
-    reverbGain.connect(
-        compressor
+    synthFeedback.connect(
+        synthDelay
     );
 
 
-    compressor.connect(
-        masterGain
+    synthDelay.connect(
+        synthDelayGain
     );
 
 
-    masterGain.connect(
+    synthDry.connect(
+        synthCompressor
+    );
+
+
+    synthDelayGain.connect(
+        synthCompressor
+    );
+
+
+    synthCompressor.connect(
+        synthMaster
+    );
+
+
+    /*
+       GENERATED AUDIO GOES DIRECTLY
+       TO SPEAKER.
+
+       It never passes through videoGain.
+    */
+
+    synthMaster.connect(
         AC.destination
     );
 
@@ -1301,27 +1262,68 @@ function createAudioEngine() {
 
 
 /* =========================================================
-   MASTER CONTROLS
+   VIDEO VOLUME
+
+   ONLY videoGain changes.
 ========================================================= */
 
-sliders.master.addEventListener(
+function updateVideoVolume(){
+
+    if(!AC || !videoGain)
+        return;
+
+
+    const value =
+    Number(
+        videoVolume.value
+    );
+
+
+    videoGain.gain
+    .setTargetAtTime(
+
+        value,
+
+        AC.currentTime,
+
+        .02
+
+    );
+
+}
+
+
+videoVolume.addEventListener(
+    "input",
+    updateVideoVolume
+);
+
+
+
+/* =========================================================
+   SYNTH MASTER
+
+   ONLY synthMaster changes.
+========================================================= */
+
+masterVolume.addEventListener(
     "input",
     () => {
 
-        if(!AC)
+        if(!AC || !synthMaster)
             return;
 
 
-        masterGain.gain
+        synthMaster.gain
         .setTargetAtTime(
 
             Number(
-                sliders.master.value
+                masterVolume.value
             ),
 
             AC.currentTime,
 
-            .05
+            .03
 
         );
 
@@ -1329,7 +1331,8 @@ sliders.master.addEventListener(
 );
 
 
-sliders.reverb.addEventListener(
+
+spaceAmount.addEventListener(
     "input",
     () => {
 
@@ -1337,14 +1340,16 @@ sliders.reverb.addEventListener(
             return;
 
 
-        reverbGain.gain
+        synthDelayGain.gain
         .setTargetAtTime(
 
             Number(
-                sliders.reverb.value
+                spaceAmount.value
             )
+
             *
-            .5,
+
+            .7,
 
             AC.currentTime,
 
@@ -1358,10 +1363,10 @@ sliders.reverb.addEventListener(
 
 
 /* =========================================================
-   AMBIENT FIELD
+   AMBIENT
 ========================================================= */
 
-function createAmbient() {
+function createAmbient(){
 
     ambientGain =
     AC.createGain();
@@ -1384,52 +1389,45 @@ function createAmbient() {
 
 
     ambientFilter.Q.value =
-    .7;
+    .8;
 
 
-
-    /*
-       불완전한 harmonic cluster.
-
-       피아노 코드가 아니라
-       흐릿한 전자적 장.
-    */
 
     const voices = [
 
         {
-            ratio: .5,
-            type: "sine",
-            gain: .45,
-            detune: -8
+            ratio:.5,
+            type:"sine",
+            gain:.55,
+            detune:-7
         },
 
         {
-            ratio: 1,
-            type: "sawtooth",
-            gain: .09,
-            detune: -13
+            ratio:1,
+            type:"sawtooth",
+            gain:.10,
+            detune:-11
         },
 
         {
-            ratio: 1.498,
-            type: "triangle",
-            gain: .08,
-            detune: 9
+            ratio:1.498,
+            type:"triangle",
+            gain:.09,
+            detune:8
         },
 
         {
-            ratio: 2.01,
-            type: "sawtooth",
-            gain: .035,
-            detune: -17
+            ratio:2.01,
+            type:"sawtooth",
+            gain:.035,
+            detune:-15
         },
 
         {
-            ratio: 2.37,
-            type: "triangle",
-            gain: .025,
-            detune: 15
+            ratio:2.37,
+            type:"triangle",
+            gain:.025,
+            detune:14
         }
 
     ];
@@ -1482,8 +1480,6 @@ function createAmbient() {
 
                 osc,
 
-                gain,
-
                 baseDetune:
                 voice.detune
 
@@ -1498,13 +1494,17 @@ function createAmbient() {
     );
 
 
+    /*
+       AMBIENT → SYNTH ONLY
+    */
+
     ambientGain.connect(
-        dryGain
+        synthDry
     );
 
 
     ambientGain.connect(
-        delay
+        synthDelay
     );
 
 }
@@ -1512,21 +1512,19 @@ function createAmbient() {
 
 
 /* =========================================================
-   RADIO TEXTURE
+   RADIO
 ========================================================= */
 
-function createRadio() {
-
-    /*
-       NOISE BUFFER
-    */
+function createRadio(){
 
     const length =
+
     AC.sampleRate *
     4;
 
 
     const buffer =
+
     AC.createBuffer(
 
         1,
@@ -1539,6 +1537,7 @@ function createRadio() {
 
 
     const data =
+
     buffer.getChannelData(0);
 
 
@@ -1550,7 +1549,7 @@ function createRadio() {
         let i = 0;
         i < length;
         i++
-    ) {
+    ){
 
         const white =
 
@@ -1562,30 +1561,31 @@ function createRadio() {
         brown =
 
         brown *
-        .965
+        .96
 
         +
 
         white *
-        .035;
+        .04;
 
 
-        let sample =
+        let value =
+
         brown *
-        2.2;
+        2;
 
 
         /*
-           라디오 crack.
+           random radio crackle
         */
 
         if(
             Math.random()
             <
-            .0018
-        ) {
+            .002
+        ){
 
-            sample +=
+            value +=
 
             (
                 Math.random() *
@@ -1595,13 +1595,13 @@ function createRadio() {
 
             *
 
-            2;
+            1.8;
 
         }
 
 
         data[i] =
-        sample;
+        value;
 
     }
 
@@ -1619,32 +1619,25 @@ function createRadio() {
 
 
 
-    /*
-       약한 carrier tone.
-
-       tuning frequency 같은
-       느낌을 더한다.
-    */
-
-    radioOscillator =
+    radioCarrier =
     AC.createOscillator();
 
 
-    radioOscillator.type =
+    radioCarrier.type =
     "sine";
 
 
-    radioOscillator.frequency.value =
-    1100;
+    radioCarrier.frequency.value =
+    1200;
 
 
 
-    const oscGain =
+    radioCarrierGain =
     AC.createGain();
 
 
-    oscGain.gain.value =
-    .007;
+    radioCarrierGain.gain.value =
+    .008;
 
 
 
@@ -1657,11 +1650,11 @@ function createRadio() {
 
 
     radioFilter.frequency.value =
-    1700;
+    1800;
 
 
     radioFilter.Q.value =
-    4;
+    5;
 
 
 
@@ -1679,12 +1672,12 @@ function createRadio() {
     );
 
 
-    radioOscillator.connect(
-        oscGain
+    radioCarrier.connect(
+        radioCarrierGain
     );
 
 
-    oscGain.connect(
+    radioCarrierGain.connect(
         radioFilter
     );
 
@@ -1694,19 +1687,222 @@ function createRadio() {
     );
 
 
+    /*
+       RADIO → SYNTH ONLY
+    */
+
     radioGain.connect(
-        dryGain
+        synthDry
     );
 
 
     radioGain.connect(
-        delay
+        synthDelay
     );
 
 
     radioNoise.start();
 
-    radioOscillator.start();
+    radioCarrier.start();
+
+}
+
+
+
+/* =========================================================
+   GLITCH
+========================================================= */
+
+function createGlitch(
+    x,
+    motion
+){
+
+    if(!AC)
+        return;
+
+
+    const now =
+    AC.currentTime;
+
+
+    if(
+        now -
+        lastGlitch
+        <
+        .055
+    )
+        return;
+
+
+    if(
+        Math.random()
+        >
+        Number(
+            glitchDensity.value
+        )
+    )
+        return;
+
+
+    lastGlitch =
+    now;
+
+
+
+    const osc =
+    AC.createOscillator();
+
+
+    osc.type =
+
+    Math.random() > .5
+
+    ?
+
+    "square"
+
+    :
+
+    "sawtooth";
+
+
+    osc.frequency.value =
+
+    180 +
+
+    Math.random() *
+    4500;
+
+
+
+    const filter =
+    AC.createBiquadFilter();
+
+
+    filter.type =
+    "bandpass";
+
+
+    filter.frequency.value =
+
+    600 +
+
+    Math.random() *
+    6500;
+
+
+    filter.Q.value =
+
+    5 +
+
+    Math.random() *
+    12;
+
+
+
+    const gain =
+    AC.createGain();
+
+
+    const amount =
+
+    Number(
+        glitchLevel.value
+    );
+
+
+    const level =
+
+    amount *
+
+    (
+        .008 +
+
+        motion *
+        .055
+    );
+
+
+    gain.gain
+    .setValueAtTime(
+
+        Math.max(
+            .0001,
+            level
+        ),
+
+        now
+
+    );
+
+
+    gain.gain
+    .exponentialRampToValueAtTime(
+
+        .0001,
+
+        now +
+
+        .025 +
+
+        Math.random() *
+        .1
+
+    );
+
+
+
+    const pan =
+    AC.createStereoPanner();
+
+
+    pan.pan.value =
+    x *
+    2 -
+    1;
+
+
+    osc.connect(
+        filter
+    );
+
+
+    filter.connect(
+        gain
+    );
+
+
+    gain.connect(
+        pan
+    );
+
+
+    /*
+       GLITCH → SYNTH ONLY
+    */
+
+    pan.connect(
+        synthDry
+    );
+
+
+    pan.connect(
+        synthDelay
+    );
+
+
+    osc.start(now);
+
+
+    osc.stop(
+        now +
+        .18
+    );
+
+
+    eventMeter.textContent =
+    "GLITCH";
 
 }
 
@@ -1714,19 +1910,13 @@ function createRadio() {
 
 /* =========================================================
    SOFT KEY
-
-   피아노 샘플을 쓰는 게 아니라
-   맑지만 눌린 전자 건반.
-
-   Attack을 죽이고
-   lowpass + 긴 decay.
 ========================================================= */
 
-function softKey(
+function createSoftKey(
     x,
     y,
     strength
-) {
+){
 
     if(!AC)
         return;
@@ -1740,7 +1930,7 @@ function softKey(
         now -
         lastKey
         <
-        .22
+        .20
     )
         return;
 
@@ -1748,11 +1938,6 @@ function softKey(
     lastKey =
     now;
 
-
-
-    /*
-       D minor / suspended 느낌.
-    */
 
     const intervals = [
 
@@ -1770,36 +1955,27 @@ function softKey(
 
     const index =
 
-    Math.floor(
+    Math.max(
 
-        (1 - y)
+        0,
 
-        *
+        Math.min(
 
-        intervals.length
+            intervals.length - 1,
 
-    );
+            Math.floor(
 
+                (1 - y)
 
-    const interval =
+                *
 
-    intervals[
-
-        Math.max(
-
-            0,
-
-            Math.min(
-
-                intervals.length - 1,
-
-                index
+                intervals.length
 
             )
 
         )
 
-    ];
+    );
 
 
     const frequency =
@@ -1811,9 +1987,11 @@ function softKey(
 
         2,
 
-        interval / 12
+        intervals[index] /
+        12
 
     );
+
 
 
     const osc =
@@ -1829,10 +2007,6 @@ function softKey(
 
 
 
-    /*
-       아주 작은 상음.
-    */
-
     const harmonic =
     AC.createOscillator();
 
@@ -1843,7 +2017,7 @@ function softKey(
 
     harmonic.frequency.value =
     frequency *
-    2.003;
+    2.002;
 
 
 
@@ -1852,7 +2026,7 @@ function softKey(
 
 
     harmonicGain.gain.value =
-    .13;
+    .10;
 
 
 
@@ -1865,14 +2039,15 @@ function softKey(
 
 
     const softness =
+
     Number(
-        sliders.softness.value
+        keySoftness.value
     );
 
 
     filter.frequency.value =
 
-    700 +
+    550 +
 
     (
         1 -
@@ -1881,7 +2056,7 @@ function softKey(
 
     *
 
-    4000;
+    4200;
 
 
 
@@ -1892,21 +2067,18 @@ function softKey(
     const level =
 
     Number(
-        sliders.piano.value
+        keyLevel.value
     )
 
     *
 
     (
-        .025 +
+        .02 +
+
         strength *
-        .055
+        .07
     );
 
-
-    /*
-       딱! 하는 attack을 없앰.
-    */
 
     gain.gain
     .setValueAtTime(
@@ -1918,6 +2090,10 @@ function softKey(
     );
 
 
+    /*
+       softer attack
+    */
+
     gain.gain
     .exponentialRampToValueAtTime(
 
@@ -1927,9 +2103,11 @@ function softKey(
         ),
 
         now +
-        .025 +
+
+        .04 +
+
         softness *
-        .12
+        .1
 
     );
 
@@ -1940,9 +2118,11 @@ function softKey(
         .0001,
 
         now +
+
         1.4 +
+
         softness *
-        2.5
+        3
 
     );
 
@@ -1956,7 +2136,6 @@ function softKey(
     x *
     2 -
     1;
-
 
 
     osc.connect(
@@ -1984,13 +2163,17 @@ function softKey(
     );
 
 
+    /*
+       KEYS → SYNTH ONLY
+    */
+
     pan.connect(
-        dryGain
+        synthDry
     );
 
 
     pan.connect(
-        delay
+        synthDelay
     );
 
 
@@ -2019,205 +2202,13 @@ function softKey(
 
 
 /* =========================================================
-   GLITCH
-========================================================= */
-
-function glitch(
-    x,
-    strength
-) {
-
-    if(!AC)
-        return;
-
-
-    const now =
-    AC.currentTime;
-
-
-    if(
-        now -
-        lastGlitch
-        <
-        .055
-    )
-        return;
-
-
-    lastGlitch =
-    now;
-
-
-    const density =
-    Number(
-        sliders.glitchDensity.value
-    );
-
-
-    if(
-        Math.random()
-        >
-        density
-    )
-        return;
-
-
-
-    const osc =
-    AC.createOscillator();
-
-
-    osc.type =
-
-    Math.random() > .5
-
-    ?
-
-    "square"
-
-    :
-
-    "sawtooth";
-
-
-    osc.frequency.value =
-
-    120 +
-
-    Math.random() *
-    4500;
-
-
-
-    const filter =
-    AC.createBiquadFilter();
-
-
-    filter.type =
-    "bandpass";
-
-
-    filter.frequency.value =
-
-    500 +
-
-    Math.random() *
-    7000;
-
-
-    filter.Q.value =
-
-    5 +
-
-    Math.random() *
-    15;
-
-
-
-    const gain =
-    AC.createGain();
-
-
-    const level =
-
-    Number(
-        sliders.glitch.value
-    )
-
-    *
-
-    (
-        .006 +
-        strength *
-        .04
-    );
-
-
-    gain.gain.setValueAtTime(
-
-        Math.max(
-            .0001,
-            level
-        ),
-
-        now
-
-    );
-
-
-    gain.gain
-    .exponentialRampToValueAtTime(
-
-        .0001,
-
-        now +
-
-        .015 +
-
-        Math.random() *
-        .12
-
-    );
-
-
-
-    const pan =
-    AC.createStereoPanner();
-
-
-    pan.pan.value =
-    x *
-    2 -
-    1;
-
-
-    osc.connect(
-        filter
-    );
-
-
-    filter.connect(
-        gain
-    );
-
-
-    gain.connect(
-        pan
-    );
-
-
-    pan.connect(
-        dryGain
-    );
-
-
-    osc.start(now);
-
-
-    osc.stop(
-        now +
-        .2
-    );
-
-
-    eventMeter.textContent =
-    "GLITCH";
-
-}
-
-
-
-/* =========================================================
    OBJECT IMPACT
-
-   새 객체가 등장할 때의
-   "툭".
 ========================================================= */
 
 function objectImpact(
     x,
     strength
-) {
+){
 
     if(!AC)
         return;
@@ -2229,14 +2220,14 @@ function objectImpact(
 
     if(
         now -
-        lastObjectHit
+        lastImpact
         <
-        .12
+        .13
     )
         return;
 
 
-    lastObjectHit =
+    lastImpact =
     now;
 
 
@@ -2251,10 +2242,7 @@ function objectImpact(
     osc.frequency
     .setValueAtTime(
 
-        190 +
-
-        x *
-        160,
+        260,
 
         now
 
@@ -2264,15 +2252,16 @@ function objectImpact(
     osc.frequency
     .exponentialRampToValueAtTime(
 
-        55 +
+        60 +
 
         x *
         30,
 
         now +
-        .12
+        .11
 
     );
+
 
 
     const gain =
@@ -2282,10 +2271,10 @@ function objectImpact(
     gain.gain
     .setValueAtTime(
 
-        .015 +
+        .018 +
 
         strength *
-        .035,
+        .05,
 
         now
 
@@ -2298,9 +2287,10 @@ function objectImpact(
         .0001,
 
         now +
-        .25
+        .24
 
     );
+
 
 
     const pan =
@@ -2323,13 +2313,17 @@ function objectImpact(
     );
 
 
+    /*
+       IMPACT → SYNTH ONLY
+    */
+
     pan.connect(
-        dryGain
+        synthDry
     );
 
 
     pan.connect(
-        delay
+        synthDelay
     );
 
 
@@ -2350,139 +2344,128 @@ function objectImpact(
 
 
 /* =========================================================
-   VIDEO LOAD
+   LOAD VIDEO
 ========================================================= */
 
 fileInput.addEventListener(
-    "change",
-    event => {
+"change",
+event => {
 
-        const file =
-        event.target.files[0];
-
-
-        if(!file)
-            return;
+    const file =
+    event.target.files[0];
 
 
-        if(objectURL) {
-
-            URL.revokeObjectURL(
-                objectURL
-            );
-
-        }
+    if(!file)
+        return;
 
 
-        objectURL =
-        URL.createObjectURL(
-            file
+    if(objectURL){
+
+        URL.revokeObjectURL(
+            objectURL
+        );
+
+    }
+
+
+    objectURL =
+
+    URL.createObjectURL(
+        file
+    );
+
+
+    video.src =
+    objectURL;
+
+
+    video.load();
+
+
+    filenameElement.textContent =
+    file.name;
+
+
+    stage.style.display =
+    "block";
+
+
+    videoReady =
+    false;
+
+
+    statusElement.textContent =
+    "LOADING VIDEO";
+
+
+    video.onloadedmetadata =
+    () => {
+
+        visualCanvas.width =
+        video.videoWidth;
+
+
+        visualCanvas.height =
+        video.videoHeight;
+
+
+        const width =
+
+        Math.min(
+
+            512,
+
+            video.videoWidth
+
         );
 
 
-        video.src =
-        objectURL;
+        const ratio =
+
+        video.videoHeight /
+
+        video.videoWidth;
 
 
-        video.load();
+        analysisCanvas.width =
+        width;
 
 
-        filenameElement.textContent =
-        file.name;
+        analysisCanvas.height =
 
+        Math.round(
 
-        stage.style.display =
-        "block";
+            width *
+            ratio
+
+        );
 
 
         videoReady =
-        false;
+        true;
 
 
         statusElement.textContent =
-        "LOADING VIDEO";
+        "READY";
 
 
-        video.onloadedmetadata =
-        () => {
+        updatePlayButton();
 
-            visualCanvas.width =
-            video.videoWidth;
+    };
 
-
-            visualCanvas.height =
-            video.videoHeight;
-
-
-
-            /*
-               Detection resolution.
-
-               512로 낮춰
-               속도를 우선한다.
-            */
-
-            const width =
-
-            Math.min(
-
-                512,
-
-                video.videoWidth
-
-            );
-
-
-            const ratio =
-
-            video.videoHeight /
-
-            video.videoWidth;
-
-
-            analysisCanvas.width =
-            width;
-
-
-            analysisCanvas.height =
-
-            Math.round(
-
-                width *
-                ratio
-
-            );
-
-
-            videoReady =
-            true;
-
-
-            updateVideoAudio();
-
-
-            statusElement.textContent =
-            "READY";
-
-
-            updatePlayButton();
-
-        };
-
-    }
-);
+});
 
 
 
 /* =========================================================
-   LOAD AI
+   AI
 ========================================================= */
 
-async function loadModel() {
+async function loadModel(){
 
-    try {
+    try{
 
-        try {
+        try{
 
             await tf.setBackend(
                 "webgl"
@@ -2490,7 +2473,7 @@ async function loadModel() {
 
         }
 
-        catch(e) {}
+        catch(e){}
 
 
         await tf.ready();
@@ -2531,7 +2514,7 @@ async function loadModel() {
 
     }
 
-    catch(error) {
+    catch(error){
 
         console.error(error);
 
@@ -2548,7 +2531,7 @@ loadModel();
 
 
 
-function updatePlayButton() {
+function updatePlayButton(){
 
     playButton.disabled =
 
@@ -2565,12 +2548,12 @@ function updatePlayButton() {
 
 
 /* =========================================================
-   TRACKING
+   OBJECT ANALYSIS
 ========================================================= */
 
 function analyseObjects(
     detections
-) {
+){
 
     const current =
 
@@ -2586,7 +2569,7 @@ function analyseObjects(
             detection.bbox;
 
 
-            return {
+            return{
 
                 className:
                 detection.class,
@@ -2618,9 +2601,9 @@ function analyseObjects(
                     analysisCanvas.height
                 ),
 
-                motion: 0,
+                motion:0,
 
-                isNew: false
+                isNew:false
 
             };
 
@@ -2635,16 +2618,16 @@ function analyseObjects(
     current.forEach(
         object => {
 
-            let closest =
+            let best =
             -1;
 
 
-            let closestDistance =
+            let bestDistance =
             Infinity;
 
 
             previousObjects.forEach(
-                (old, index) => {
+                (old,index) => {
 
                     if(
                         used.has(index)
@@ -2683,13 +2666,13 @@ function analyseObjects(
 
                     if(
                         distance <
-                        closestDistance
-                    ) {
+                        bestDistance
+                    ){
 
-                        closestDistance =
+                        bestDistance =
                         distance;
 
-                        closest =
+                        best =
                         index;
 
                     }
@@ -2699,12 +2682,12 @@ function analyseObjects(
 
 
             if(
-                closest >= 0 &&
-                closestDistance < .25
-            ) {
+                best >= 0 &&
+                bestDistance < .25
+            ){
 
                 used.add(
-                    closest
+                    best
                 );
 
 
@@ -2714,23 +2697,23 @@ function analyseObjects(
 
                     1,
 
-                    closestDistance
+                    bestDistance
 
                     *
 
-                    8
+                    9
 
                     *
 
                     Number(
-                        sliders.response.value
+                        motionResponse.value
                     )
 
                 );
 
             }
 
-            else {
+            else{
 
                 object.isNew =
                 true;
@@ -2760,12 +2743,11 @@ function analyseObjects(
             object.x;
 
 
-
             /*
                NEW OBJECT
             */
 
-            if(object.isNew) {
+            if(object.isNew){
 
                 objectImpact(
 
@@ -2780,18 +2762,13 @@ function analyseObjects(
                 );
 
 
-                /*
-                   새 객체가 들어왔을 때
-                   가끔 soft key.
-                */
-
                 if(
                     Math.random()
                     <
-                    .45
-                ) {
+                    .38
+                ){
 
-                    softKey(
+                    createSoftKey(
 
                         object.x,
 
@@ -2806,17 +2783,16 @@ function analyseObjects(
             }
 
 
-
             /*
-               움직임.
+               MOVEMENT → GLITCH
             */
 
             if(
                 object.motion >
-                .055
-            ) {
+                .045
+            ){
 
-                glitch(
+                createGlitch(
 
                     object.x,
 
@@ -2827,24 +2803,22 @@ function analyseObjects(
             }
 
 
-
             /*
-               중간 이상 움직임에서
-               아주 가끔 맑은 음.
+               OCCASIONAL CLEAR KEY
             */
 
             if(
                 object.motion >
-                .17
+                .16
 
                 &&
 
                 Math.random()
                 <
-                .12
-            ) {
+                .10
+            ){
 
-                softKey(
+                createSoftKey(
 
                     object.x,
 
@@ -2888,7 +2862,7 @@ function analyseObjects(
     current;
 
 
-    return {
+    return{
 
         count:
         current.length,
@@ -2906,12 +2880,12 @@ function analyseObjects(
 
 
 /* =========================================================
-   CONTINUOUS SOUND
+   CONTINUOUS GENERATED SOUND
 ========================================================= */
 
-function updateContinuousSound(
+function updateGeneratedSound(
     analysis
-) {
+){
 
     if(!AC)
         return;
@@ -2922,29 +2896,29 @@ function updateContinuousSound(
 
 
 
-    /* AMBIENT */
+    /* AMBIENT LEVEL */
 
-    const ambientLevel =
+    const ambient =
 
     Number(
-        sliders.ambient.value
+        ambientLevel.value
     );
 
 
     ambientGain.gain
     .setTargetAtTime(
 
-        .055 *
+        ambient *
 
-        ambientLevel *
+        .075 *
 
         (
             .8 +
 
             Math.min(
-                .4,
+                .5,
                 analysis.count *
-                .04
+                .05
             )
         ),
 
@@ -2956,19 +2930,18 @@ function updateContinuousSound(
 
 
 
-    /*
-       TONE knob.
-    */
+    /* AMBIENT TONE */
 
     const tone =
+
     Number(
-        sliders.tone.value
+        ambientTone.value
     );
 
 
-    const baseCutoff =
+    const cutoff =
 
-    180 +
+    170 +
 
     Math.pow(
         tone,
@@ -2977,54 +2950,51 @@ function updateContinuousSound(
 
     *
 
-    4200;
+    5000
 
+    +
 
-    /*
-       움직임이 생기면
-       장이 살짝 열림.
-    */
+    analysis.motion *
+    2800;
+
 
     ambientFilter.frequency
     .setTargetAtTime(
 
-        baseCutoff
-
-        +
-
-        analysis.motion *
-        2600,
+        cutoff,
 
         now,
 
-        .7
+        .6
 
     );
 
 
 
-    /*
-       DRIFT
-    */
+    /* DRIFT */
 
     const drift =
+
     Number(
-        sliders.drift.value
+        ambientDrift.value
     );
 
 
     ambientVoices.forEach(
         (voice,index) => {
 
-            const movement =
+            const wobble =
 
             Math.sin(
 
-                performance.now() /
+                performance.now()
+
+                /
+
                 (
-                    2400 +
+                    2100 +
                     index *
-                    600
+                    650
                 )
 
             )
@@ -3033,7 +3003,7 @@ function updateContinuousSound(
 
             drift *
 
-            14;
+            16;
 
 
             voice.osc.detune
@@ -3043,12 +3013,12 @@ function updateContinuousSound(
 
                 +
 
-                movement
+                wobble
 
                 +
 
                 analysis.motion *
-                8 *
+                10 *
                 (
                     index % 2
                     ?
@@ -3059,7 +3029,7 @@ function updateContinuousSound(
 
                 now,
 
-                .5
+                .4
 
             );
 
@@ -3070,35 +3040,35 @@ function updateContinuousSound(
 
     /* RADIO */
 
-    const radio =
+    const radioAmount =
+
     Number(
-        sliders.radio.value
+        radioLevel.value
     );
 
 
     const staticAmount =
+
     Number(
-        sliders.radioStatic.value
+        radioStatic.value
     );
 
 
     radioGain.gain
     .setTargetAtTime(
 
-        radio *
+        radioAmount
+
+        *
 
         (
-            .006
-
-            +
+            .009 +
 
             staticAmount *
-            .025
-
-            +
+            .04 +
 
             analysis.motion *
-            .018
+            .025
         ),
 
         now,
@@ -3109,10 +3079,10 @@ function updateContinuousSound(
 
 
 
-    const radioFrequency =
+    const tuning =
 
     Number(
-        sliders.radioFrequency.value
+        radioFrequency.value
     );
 
 
@@ -3121,7 +3091,7 @@ function updateContinuousSound(
     350 +
 
     Math.pow(
-        radioFrequency,
+        tuning,
         2
     )
 
@@ -3129,11 +3099,6 @@ function updateContinuousSound(
 
     6500;
 
-
-    /*
-       움직임이 radio tuning을
-       미세하게 흔듦.
-    */
 
     radioFilter.frequency
     .setTargetAtTime(
@@ -3143,33 +3108,29 @@ function updateContinuousSound(
         +
 
         analysis.motion *
-        1800,
+        2200,
 
         now,
 
-        .2
+        .15
 
     );
 
 
-    radioOscillator.frequency
+    radioCarrier.frequency
     .setTargetAtTime(
 
-        600
+        500 +
 
-        +
-
-        radioFrequency *
-        1800
-
-        +
+        tuning *
+        2200 +
 
         analysis.motion *
-        300,
+        400,
 
         now,
 
-        .25
+        .15
 
     );
 
@@ -3191,7 +3152,7 @@ function updateContinuousSound(
 
 async function detectionLoop(
     timestamp
-) {
+){
 
     if(!running)
         return;
@@ -3215,7 +3176,7 @@ async function detectionLoop(
         >=
 
         DETECTION_INTERVAL
-    ) {
+    ){
 
         detectionBusy =
         true;
@@ -3225,7 +3186,7 @@ async function detectionLoop(
         timestamp;
 
 
-        try {
+        try{
 
             analysisCtx.drawImage(
 
@@ -3259,8 +3220,8 @@ async function detectionLoop(
             result
 
             .filter(
-                object =>
-                object.score >= .30
+                item =>
+                item.score >= .30
             )
 
             .sort(
@@ -3296,7 +3257,7 @@ async function detectionLoop(
             );
 
 
-            updateContinuousSound(
+            updateGeneratedSound(
                 analysis
             );
 
@@ -3350,13 +3311,15 @@ async function detectionLoop(
                 detectionStart
                 >
                 1000
-            ) {
+            ){
 
                 detectionMeter.textContent =
 
                 (
 
-                    detectionCount /
+                    detectionCount
+
+                    /
 
                     (
                         (
@@ -3385,7 +3348,7 @@ async function detectionLoop(
 
         }
 
-        catch(error) {
+        catch(error){
 
             console.error(error);
 
@@ -3407,17 +3370,14 @@ async function detectionLoop(
 
 
 /* =========================================================
-   VIDEO RENDER
+   VISUAL
 
-   핵심:
-
-   1. 전체 영상 흑백
-   2. detection box 내부만 원본 컬러
-   3. 컬러 부분 saturation 증가
-   4. box border
+   B/W BACKGROUND
+   +
+   SATURATED DETECTION BOX
 ========================================================= */
 
-function renderVideo() {
+function renderVideo(){
 
     if(!running)
         return;
@@ -3439,17 +3399,12 @@ function renderVideo() {
 
 
 
-    /*
-       --------------------------------
-       BACKGROUND = BLACK & WHITE
-       --------------------------------
-    */
+    /* BLACK & WHITE BASE */
 
     visualCtx.save();
 
 
     visualCtx.filter =
-
     "grayscale(100%) contrast(110%)";
 
 
@@ -3470,11 +3425,6 @@ function renderVideo() {
 
 
 
-    /*
-       analysis 좌표 →
-       원본 영상 좌표
-    */
-
     const scaleX =
 
     W /
@@ -3490,7 +3440,7 @@ function renderVideo() {
     const saturation =
 
     Number(
-        sliders.color.value
+        colorAmount.value
     );
 
 
@@ -3506,11 +3456,6 @@ function renderVideo() {
             ] =
             object.bbox;
 
-
-
-            /*
-               실제 출력 Canvas 좌표.
-            */
 
             const dx =
             x *
@@ -3533,62 +3478,37 @@ function renderVideo() {
 
 
 
-            /*
-               원본 VIDEO 좌표.
-
-               이것이 이전 버전에서
-               중요한 부분.
-            */
-
             const sx =
 
             x /
-
-            analysisCanvas.width
-
-            *
-
+            analysisCanvas.width *
             video.videoWidth;
 
 
             const sy =
 
             y /
-
-            analysisCanvas.height
-
-            *
-
+            analysisCanvas.height *
             video.videoHeight;
 
 
             const sw =
 
             width /
-
-            analysisCanvas.width
-
-            *
-
+            analysisCanvas.width *
             video.videoWidth;
 
 
             const sh =
 
             height /
-
-            analysisCanvas.height
-
-            *
-
+            analysisCanvas.height *
             video.videoHeight;
 
 
 
             /*
-               --------------------------------
-               DETECTED AREA = COLOR
-               --------------------------------
+               COLOR BOX
             */
 
             visualCtx.save();
@@ -3610,13 +3530,9 @@ function renderVideo() {
             visualCtx.clip();
 
 
-            /*
-               높은 채도.
-            */
-
             visualCtx.filter =
 
-            `saturate(${saturation}) contrast(115%)`;
+            `saturate(${saturation}) contrast(120%)`;
 
 
             visualCtx.drawImage(
@@ -3641,9 +3557,7 @@ function renderVideo() {
 
 
             /*
-               --------------------------------
-               BOX
-               --------------------------------
+               BORDER
             */
 
             visualCtx.strokeStyle =
@@ -3670,62 +3584,6 @@ function renderVideo() {
                 dh
 
             );
-
-
-
-            /*
-               corner marks
-            */
-
-            const corner =
-
-            Math.min(
-
-                18,
-
-                dw *
-                .12,
-
-                dh *
-                .12
-
-            );
-
-
-            visualCtx.lineWidth =
-
-            Math.max(
-
-                2,
-
-                W /
-                600
-
-            );
-
-
-            /*
-               TOP LEFT
-            */
-
-            visualCtx.beginPath();
-
-            visualCtx.moveTo(
-                dx,
-                dy + corner
-            );
-
-            visualCtx.lineTo(
-                dx,
-                dy
-            );
-
-            visualCtx.lineTo(
-                dx + corner,
-                dy
-            );
-
-            visualCtx.stroke();
 
 
 
@@ -3779,10 +3637,6 @@ function renderVideo() {
             .width;
 
 
-            visualCtx.fillStyle =
-            "rgba(0,0,0,.85)";
-
-
             const labelY =
 
             Math.max(
@@ -3792,6 +3646,10 @@ function renderVideo() {
                 dy
 
             );
+
+
+            visualCtx.fillStyle =
+            "rgba(0,0,0,.8)";
 
 
             visualCtx.fillRect(
@@ -3842,122 +3700,140 @@ function renderVideo() {
 ========================================================= */
 
 playButton.addEventListener(
-    "click",
-    async () => {
+"click",
+async () => {
 
-        if(
-            !videoReady ||
-            !modelReady
-        )
-            return;
-
-
-        createAudioEngine();
+    if(
+        !videoReady ||
+        !modelReady
+    )
+        return;
 
 
-        if(
-            AC.state
-            ===
-            "suspended"
-        ) {
+    /*
+       AudioContext created by user gesture.
+    */
 
-            await AC.resume();
-
-        }
+    createAudioEngine();
 
 
-        updateVideoAudio();
+    if(
+        AC.state
+        ===
+        "suspended"
+    ){
+
+        await AC.resume();
+
+    }
 
 
-        video.currentTime =
-        0;
+
+    /*
+       IMPORTANT
+
+       Once MediaElementSource is used,
+       do NOT use video.muted / video.volume
+       as the mixer.
+
+       videoGain controls video audio.
+    */
+
+    video.muted =
+    false;
 
 
-        predictions =
-        [];
+    video.volume =
+    1;
 
 
-        previousObjects =
-        [];
+    updateVideoVolume();
 
 
-        detectionCount =
-        0;
+
+    synthMaster.gain
+    .setValueAtTime(
+
+        Number(
+            masterVolume.value
+        ),
+
+        AC.currentTime
+
+    );
 
 
-        detectionStart =
-        performance.now();
+
+    video.currentTime =
+    0;
 
 
-        lastDetection =
-        0;
+    predictions =
+    [];
 
 
-        try {
-
-            await video.play();
-
-        }
-
-        catch(error) {
-
-            console.error(error);
-
-            statusElement.textContent =
-            "PLAYBACK ERROR";
-
-            return;
-
-        }
+    previousObjects =
+    [];
 
 
-        running =
-        true;
+    detectionCount =
+    0;
 
 
-        playButton.disabled =
-        true;
+    detectionStart =
+    performance.now();
 
 
-        stopButton.disabled =
-        false;
+    lastDetection =
+    0;
+
+
+    try{
+
+        await video.play();
+
+    }
+
+    catch(error){
+
+        console.error(error);
 
 
         statusElement.textContent =
-        "GENERATING";
+        "PLAYBACK ERROR";
 
 
-        /*
-           Ambient fade in.
-        */
-
-        ambientGain.gain
-        .setTargetAtTime(
-
-            .04 *
-
-            Number(
-                sliders.ambient.value
-            ),
-
-            AC.currentTime,
-
-            1.5
-
-        );
-
-
-        requestAnimationFrame(
-            renderVideo
-        );
-
-
-        requestAnimationFrame(
-            detectionLoop
-        );
+        return;
 
     }
-);
+
+
+    running =
+    true;
+
+
+    playButton.disabled =
+    true;
+
+
+    stopButton.disabled =
+    false;
+
+
+    statusElement.textContent =
+    "GENERATING";
+
+
+    requestAnimationFrame(
+        renderVideo
+    );
+
+
+    requestAnimationFrame(
+        detectionLoop
+    );
+
+});
 
 
 
@@ -3965,7 +3841,7 @@ playButton.addEventListener(
    STOP
 ========================================================= */
 
-function stopEverything() {
+function stopEverything(){
 
     running =
     false;
@@ -3974,7 +3850,7 @@ function stopEverything() {
     video.pause();
 
 
-    if(AC) {
+    if(AC){
 
         ambientGain.gain
         .setTargetAtTime(
@@ -3983,7 +3859,7 @@ function stopEverything() {
 
             AC.currentTime,
 
-            .2
+            .15
 
         );
 
@@ -4023,57 +3899,56 @@ stopButton.addEventListener(
 
 
 /* =========================================================
-   END
+   VIDEO END
 ========================================================= */
 
 video.addEventListener(
-    "ended",
-    () => {
+"ended",
+() => {
 
-        running =
-        false;
-
-
-        if(AC) {
-
-            ambientGain.gain
-            .setTargetAtTime(
-
-                0,
-
-                AC.currentTime,
-
-                1
-
-            );
+    running =
+    false;
 
 
-            radioGain.gain
-            .setTargetAtTime(
+    if(AC){
 
-                0,
+        ambientGain.gain
+        .setTargetAtTime(
 
-                AC.currentTime,
+            0,
 
-                .5
+            AC.currentTime,
 
-            );
+            .8
 
-        }
-
-
-        stopButton.disabled =
-        true;
+        );
 
 
-        updatePlayButton();
+        radioGain.gain
+        .setTargetAtTime(
 
+            0,
 
-        statusElement.textContent =
-        "FINISHED";
+            AC.currentTime,
+
+            .4
+
+        );
 
     }
-);
+
+
+    stopButton.disabled =
+    true;
+
+
+    updatePlayButton();
+
+
+    statusElement.textContent =
+    "FINISHED";
+
+});
 
 
 
@@ -4082,19 +3957,18 @@ video.addEventListener(
 ========================================================= */
 
 window.addEventListener(
-    "beforeunload",
-    () => {
+"beforeunload",
+() => {
 
-        if(objectURL) {
+    if(objectURL){
 
-            URL.revokeObjectURL(
-                objectURL
-            );
-
-        }
+        URL.revokeObjectURL(
+            objectURL
+        );
 
     }
-);
+
+});
 
 </script>
 
