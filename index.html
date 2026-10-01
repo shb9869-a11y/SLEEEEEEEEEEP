@@ -11,9 +11,12 @@
 
 <style>
 
-*{box-sizing:border-box}
+*{
+    box-sizing:border-box;
+}
 
-html,body{
+html,
+body{
     margin:0;
     background:#050505;
     color:#eee;
@@ -47,7 +50,8 @@ h1{
     padding-top:18px;
 }
 
-button,.fileButton{
+button,
+.fileButton{
     position:relative;
     min-height:48px;
     padding:14px 20px;
@@ -63,12 +67,16 @@ button,.fileButton{
     -webkit-appearance:none;
 }
 
-button:hover,.fileButton:hover{
+button:hover,
+.fileButton:hover{
     background:white;
     color:black;
 }
 
-button:disabled{opacity:.25}
+button:disabled{
+    opacity:.25;
+    cursor:default;
+}
 
 #fileInput{
     position:absolute;
@@ -78,6 +86,15 @@ button:disabled{opacity:.25}
     opacity:0;
     cursor:pointer;
     font-size:100px;
+}
+
+.exportButton{
+    border-color:#888;
+}
+
+.recording{
+    background:#fff !important;
+    color:#000 !important;
 }
 
 .sectionTitle{
@@ -164,11 +181,15 @@ input[type=range]{
 }
 
 #objects{
-    min-height:18px;
     margin-top:12px;
     color:#777;
     font:10px monospace;
 }
+
+/*
+HTML에도 현재 detection을 보여주지만,
+EXPORT 영상에는 Canvas 안에 별도로 직접 그린다.
+*/
 
 .meters{
     display:grid;
@@ -206,9 +227,30 @@ input[type=range]{
     line-height:1.7;
 }
 
+.exportInfo{
+    margin-top:20px;
+    padding:14px;
+    border:1px solid #1e1e1e;
+    color:#555;
+    font:10px monospace;
+    line-height:1.7;
+}
+
+#exportProgress{
+    color:#aaa;
+}
+
 @media(max-width:600px){
-    h1{font-size:58px}
-    button,.fileButton{flex:1}
+
+    h1{
+        font-size:58px;
+    }
+
+    button,
+    .fileButton{
+        flex:1;
+    }
+
 }
 
 </style>
@@ -224,9 +266,13 @@ SYNTH
 </h1>
 
 <div class="subtitle">
-VIDEO / STATIC / GLITCH / RESONANCE / PRESENCE
+VIDEO / DETECTION / STATIC / GLITCH / RESONANCE
 </div>
 
+
+<!-- =====================================================
+BUTTONS
+===================================================== -->
 
 <div class="buttons">
 
@@ -243,11 +289,24 @@ GENERATE
 STOP
 </button>
 
+<button
+id="exportButton"
+class="exportButton"
+disabled>
+EXPORT VIDEO
+</button>
+
+<button
+id="downloadButton"
+disabled>
+DOWNLOAD VIDEO
+</button>
+
 </div>
 
 
 <!-- =====================================================
-     OUTPUT
+OUTPUT MIXER
 ===================================================== -->
 
 <div class="sectionTitle">
@@ -263,6 +322,7 @@ VIDEO AUDIO
 </div>
 
 <div class="control">
+
 <label>
 <span>ORIGINAL SOUND</span>
 <span id="videoValue">50%</span>
@@ -275,6 +335,7 @@ min="0"
 max="1"
 step=".01"
 value=".5">
+
 </div>
 
 <div class="busInfo">
@@ -291,6 +352,7 @@ GENERATED AUDIO
 </div>
 
 <div class="control">
+
 <label>
 <span>MASTER</span>
 <span id="masterValue">100%</span>
@@ -303,6 +365,7 @@ min="0"
 max="2"
 step=".01"
 value="1">
+
 </div>
 
 <div class="busInfo">
@@ -315,7 +378,7 @@ RADIO / GLITCH / IMPACT / KEYS
 
 
 <!-- =====================================================
-     SOUND DESIGN
+GENERATED SOUND
 ===================================================== -->
 
 <div class="sectionTitle">
@@ -334,6 +397,7 @@ RADIO / STATIC
 </div>
 
 <div class="control">
+
 <label>
 <span>LEVEL</span>
 <span id="radioValue">35%</span>
@@ -346,9 +410,11 @@ min="0"
 max="1.5"
 step=".01"
 value=".35">
+
 </div>
 
 <div class="control">
+
 <label>
 <span>TUNING</span>
 <span id="radioFreqValue">45%</span>
@@ -361,9 +427,11 @@ min="0"
 max="1"
 step=".01"
 value=".45">
+
 </div>
 
 <div class="control">
+
 <label>
 <span>STATIC</span>
 <span id="staticValue">60%</span>
@@ -376,6 +444,7 @@ min="0"
 max="1"
 step=".01"
 value=".60">
+
 </div>
 
 </div>
@@ -390,6 +459,7 @@ GLITCH
 </div>
 
 <div class="control">
+
 <label>
 <span>LEVEL</span>
 <span id="glitchValue">35%</span>
@@ -402,9 +472,11 @@ min="0"
 max="1.5"
 step=".01"
 value=".35">
+
 </div>
 
 <div class="control">
+
 <label>
 <span>DENSITY</span>
 <span id="densityValue">45%</span>
@@ -417,12 +489,13 @@ min="0"
 max="1"
 step=".01"
 value=".45">
-</div>
 
 </div>
 
+</div>
 
-<!-- OBJECT IMPACT -->
+
+<!-- IMPACT -->
 
 <div class="channel">
 
@@ -431,6 +504,7 @@ OBJECT IMPACT
 </div>
 
 <div class="control">
+
 <label>
 <span>LEVEL</span>
 <span id="impactValue">30%</span>
@@ -443,9 +517,11 @@ min="0"
 max="1.5"
 step=".01"
 value=".30">
+
 </div>
 
 <div class="control">
+
 <label>
 <span>RESONANCE</span>
 <span id="impactResonanceValue">88%</span>
@@ -458,12 +534,13 @@ min="0"
 max="1"
 step=".01"
 value=".88">
-</div>
 
 </div>
 
+</div>
 
-<!-- SOFT KEYS -->
+
+<!-- KEYS -->
 
 <div class="channel">
 
@@ -472,6 +549,7 @@ SOFT KEYS
 </div>
 
 <div class="control">
+
 <label>
 <span>LEVEL</span>
 <span id="keyValue">15%</span>
@@ -484,9 +562,11 @@ min="0"
 max="1.5"
 step=".01"
 value=".15">
+
 </div>
 
 <div class="control">
+
 <label>
 <span>SOFTNESS</span>
 <span id="softValue">85%</span>
@@ -499,6 +579,7 @@ min="0"
 max="1"
 step=".01"
 value=".85">
+
 </div>
 
 </div>
@@ -513,6 +594,7 @@ SPACE
 </div>
 
 <div class="control">
+
 <label>
 <span>DELAY</span>
 <span id="spaceValue">65%</span>
@@ -525,6 +607,7 @@ min="0"
 max="1"
 step=".01"
 value=".65">
+
 </div>
 
 </div>
@@ -539,6 +622,7 @@ INTERACTION
 </div>
 
 <div class="control">
+
 <label>
 <span>MOTION</span>
 <span id="motionValue">100%</span>
@@ -551,9 +635,11 @@ min="0"
 max="2"
 step=".01"
 value="1">
+
 </div>
 
 <div class="control">
+
 <label>
 <span>COLOR</span>
 <span id="colorValue">220%</span>
@@ -566,12 +652,17 @@ min="1"
 max="4"
 step=".05"
 value="2.2">
-</div>
 
 </div>
 
 </div>
 
+</div>
+
+
+<!-- =====================================================
+STATUS
+===================================================== -->
 
 <div id="status">
 LOADING AI...
@@ -579,6 +670,10 @@ LOADING AI...
 
 <div id="filename"></div>
 
+
+<!-- =====================================================
+VIDEO STAGE
+===================================================== -->
 
 <div id="stage" class="stage">
 
@@ -589,12 +684,15 @@ preload="auto">
 </video>
 
 <canvas id="visualCanvas"></canvas>
+
 <canvas id="analysisCanvas"></canvas>
 
 </div>
 
 
-<div id="objects"></div>
+<div id="objects">
+NO OBJECTS
+</div>
 
 
 <div class="meters">
@@ -621,6 +719,20 @@ EVENT
 
 </div>
 
+
+<div class="exportInfo">
+
+EXPORT STATUS:
+<span id="exportProgress">IDLE</span>
+
+<br>
+
+EXPORT captures the processed canvas,
+detection line and final audio mix.
+
+</div>
+
+
 <div id="modelState">
 AI MODEL: LOADING
 </div>
@@ -631,7 +743,7 @@ AI MODEL: LOADING
 <script>
 
 /* =========================================================
-   DOM
+DOM
 ========================================================= */
 
 const video =
@@ -645,6 +757,12 @@ document.getElementById("playButton");
 
 const stopButton =
 document.getElementById("stopButton");
+
+const exportButton =
+document.getElementById("exportButton");
+
+const downloadButton =
+document.getElementById("downloadButton");
 
 const stage =
 document.getElementById("stage");
@@ -685,9 +803,12 @@ document.getElementById("detectionMeter");
 const eventMeter =
 document.getElementById("eventMeter");
 
+const exportProgress =
+document.getElementById("exportProgress");
+
 
 /* =========================================================
-   CONTROLS
+CONTROLS
 ========================================================= */
 
 const videoVolume =
@@ -734,7 +855,7 @@ document.getElementById("colorAmount");
 
 
 /* =========================================================
-   LABELS
+LABELS
 ========================================================= */
 
 function sliderLabel(
@@ -784,69 +905,202 @@ sliderLabel(colorAmount,"colorValue");
 
 
 /* =========================================================
-   APP STATE
+APP STATE
 ========================================================= */
 
 let model = null;
+
 let modelReady = false;
 let videoReady = false;
+
 let running = false;
+
+let exporting = false;
+
 let objectURL = null;
 
 let predictions = [];
+
 let previousObjects = [];
 
 let detectionBusy = false;
+
 let lastDetection = 0;
 
 let detectionCount = 0;
-let detectionStart = performance.now();
 
-const DETECTION_INTERVAL = 45;
+let detectionStart =
+performance.now();
+
+const DETECTION_INTERVAL =
+45;
 
 
 /* =========================================================
-   AUDIO
+EXPORT SETTINGS SNAPSHOT
+========================================================= */
+
+let exportSettings =
+null;
+
+
+function currentSettings(){
+
+    return{
+
+        videoVolume:
+        Number(videoVolume.value),
+
+        masterVolume:
+        Number(masterVolume.value),
+
+        radioLevel:
+        Number(radioLevel.value),
+
+        radioFrequency:
+        Number(radioFrequency.value),
+
+        radioStatic:
+        Number(radioStatic.value),
+
+        glitchLevel:
+        Number(glitchLevel.value),
+
+        glitchDensity:
+        Number(glitchDensity.value),
+
+        impactLevel:
+        Number(impactLevel.value),
+
+        impactResonance:
+        Number(impactResonance.value),
+
+        keyLevel:
+        Number(keyLevel.value),
+
+        keySoftness:
+        Number(keySoftness.value),
+
+        spaceAmount:
+        Number(spaceAmount.value),
+
+        motionResponse:
+        Number(motionResponse.value),
+
+        colorAmount:
+        Number(colorAmount.value)
+
+    };
+
+}
+
+
+/*
+실시간 재생이면 slider 값.
+
+EXPORT 중이면
+EXPORT를 누른 순간의 snapshot 값.
+*/
+
+function setting(
+name
+){
+
+    if(
+        exporting &&
+        exportSettings
+    ){
+
+        return
+        exportSettings[name];
+
+    }
+
+    return Number(
+        document
+        .getElementById(name)
+        ?.value
+        ?? 0
+    );
+
+}
+
+
+/* =========================================================
+AUDIO ENGINE
 ========================================================= */
 
 let AC = null;
 
-/* VIDEO BUS */
+
+/* VIDEO */
 
 let videoSource = null;
+
 let videoGain = null;
 
 
-/* GENERATED BUS */
+/* GENERATED */
 
 let synthMaster = null;
+
 let synthCompressor = null;
 
 let synthDry = null;
 
 let synthDelay = null;
+
 let synthDelayGain = null;
+
 let synthFeedback = null;
+
+
+/* FINAL RECORDING AUDIO BUS */
+
+let recordDestination = null;
+
+let finalAudioBus = null;
 
 
 /* RADIO */
 
 let radioNoise = null;
+
 let radioCarrier = null;
+
 let radioCarrierGain = null;
+
 let radioFilter = null;
+
 let radioGain = null;
 
 
 /* EVENTS */
 
 let lastGlitch = 0;
+
 let lastKey = 0;
+
 let lastImpact = 0;
 
 
 /* =========================================================
-   AUDIO ENGINE
+RECORDER
+========================================================= */
+
+let mediaRecorder = null;
+
+let recordedChunks = [];
+
+let recordedBlob = null;
+
+let recordedURL = null;
+
+let recordingStream = null;
+
+
+/* =========================================================
+CREATE AUDIO ENGINE
 ========================================================= */
 
 function createAudioEngine(){
@@ -854,32 +1108,76 @@ function createAudioEngine(){
     if(AC)
         return;
 
+
     const AudioContextClass =
 
     window.AudioContext ||
+
     window.webkitAudioContext;
+
 
     AC =
     new AudioContextClass();
 
 
     /* =====================================================
-       VIDEO BUS
+       FINAL RECORD BUS
+    ===================================================== */
+
+    finalAudioBus =
+    AC.createGain();
+
+    finalAudioBus.gain.value =
+    1;
+
+
+    recordDestination =
+    AC.createMediaStreamDestination();
+
+
+    finalAudioBus.connect(
+        recordDestination
+    );
+
+
+    /* =====================================================
+       VIDEO AUDIO
     ===================================================== */
 
     videoSource =
-    AC.createMediaElementSource(video);
+    AC.createMediaElementSource(
+        video
+    );
+
 
     videoGain =
     AC.createGain();
 
+
     videoGain.gain.value =
     Number(videoVolume.value);
 
-    videoSource.connect(videoGain);
+
+    videoSource.connect(
+        videoGain
+    );
+
+
+    /*
+    SPEAKER
+    */
 
     videoGain.connect(
         AC.destination
+    );
+
+
+    /*
+    RECORDER
+    */
+
+    videoGain.connect(
+        finalAudioBus
     );
 
 
@@ -890,6 +1188,7 @@ function createAudioEngine(){
     synthMaster =
     AC.createGain();
 
+
     synthMaster.gain.value =
     Number(masterVolume.value);
 
@@ -897,29 +1196,42 @@ function createAudioEngine(){
     synthCompressor =
     AC.createDynamicsCompressor();
 
-    synthCompressor.threshold.value = -10;
-    synthCompressor.knee.value = 14;
-    synthCompressor.ratio.value = 3;
-    synthCompressor.attack.value = .01;
-    synthCompressor.release.value = .45;
+
+    synthCompressor.threshold.value =
+    -10;
+
+    synthCompressor.knee.value =
+    14;
+
+    synthCompressor.ratio.value =
+    3;
+
+    synthCompressor.attack.value =
+    .01;
+
+    synthCompressor.release.value =
+    .45;
 
 
     synthDry =
     AC.createGain();
 
-    synthDry.gain.value = 1;
+    synthDry.gain.value =
+    1;
 
 
     synthDelay =
     AC.createDelay(4);
 
-    synthDelay.delayTime.value = .62;
+    synthDelay.delayTime.value =
+    .62;
 
 
     synthFeedback =
     AC.createGain();
 
-    synthFeedback.gain.value = .32;
+    synthFeedback.gain.value =
+    .32;
 
 
     synthDelayGain =
@@ -928,6 +1240,7 @@ function createAudioEngine(){
     synthDelayGain.gain.value =
 
     Number(spaceAmount.value) *
+
     .65;
 
 
@@ -943,6 +1256,7 @@ function createAudioEngine(){
         synthDelayGain
     );
 
+
     synthDry.connect(
         synthCompressor
     );
@@ -951,12 +1265,27 @@ function createAudioEngine(){
         synthCompressor
     );
 
+
     synthCompressor.connect(
         synthMaster
     );
 
+
+    /*
+    SPEAKER
+    */
+
     synthMaster.connect(
         AC.destination
+    );
+
+
+    /*
+    RECORDER
+    */
+
+    synthMaster.connect(
+        finalAudioBus
     );
 
 
@@ -966,19 +1295,27 @@ function createAudioEngine(){
 
 
 /* =========================================================
-   VIDEO LEVEL
+AUDIO CONTROLS
 ========================================================= */
 
 videoVolume.addEventListener(
 "input",
-() => {
+()=>{
 
-    if(!AC || !videoGain)
+    if(
+        !AC ||
+        !videoGain ||
+        exporting
+    )
         return;
 
-    videoGain.gain.setTargetAtTime(
 
-        Number(videoVolume.value),
+    videoGain.gain
+    .setTargetAtTime(
+
+        Number(
+            videoVolume.value
+        ),
 
         AC.currentTime,
 
@@ -989,20 +1326,24 @@ videoVolume.addEventListener(
 });
 
 
-/* =========================================================
-   GENERATED MASTER
-========================================================= */
-
 masterVolume.addEventListener(
 "input",
-() => {
+()=>{
 
-    if(!AC || !synthMaster)
+    if(
+        !AC ||
+        !synthMaster ||
+        exporting
+    )
         return;
 
-    synthMaster.gain.setTargetAtTime(
 
-        Number(masterVolume.value),
+    synthMaster.gain
+    .setTargetAtTime(
+
+        Number(
+            masterVolume.value
+        ),
 
         AC.currentTime,
 
@@ -1013,20 +1354,26 @@ masterVolume.addEventListener(
 });
 
 
-/* =========================================================
-   SPACE
-========================================================= */
-
 spaceAmount.addEventListener(
 "input",
-() => {
+()=>{
 
-    if(!AC)
+    if(
+        !AC ||
+        exporting
+    )
         return;
 
-    synthDelayGain.gain.setTargetAtTime(
 
-        Number(spaceAmount.value) *
+    synthDelayGain.gain
+    .setTargetAtTime(
+
+        Number(
+            spaceAmount.value
+        )
+
+        *
+
         .7,
 
         AC.currentTime,
@@ -1039,7 +1386,7 @@ spaceAmount.addEventListener(
 
 
 /* =========================================================
-   RADIO / STATIC
+RADIO
 ========================================================= */
 
 function createRadio(){
@@ -1047,22 +1394,30 @@ function createRadio(){
     const length =
     AC.sampleRate * 4;
 
+
     const buffer =
     AC.createBuffer(
+
         1,
+
         length,
+
         AC.sampleRate
+
     );
+
 
     const data =
     buffer.getChannelData(0);
 
-    let brown = 0;
+
+    let brown =
+    0;
 
 
     for(
-        let i = 0;
-        i < length;
+        let i=0;
+        i<length;
         i++
     ){
 
@@ -1071,6 +1426,7 @@ function createRadio(){
         Math.random() *
         2 -
         1;
+
 
         brown =
 
@@ -1084,7 +1440,7 @@ function createRadio(){
 
 
         /*
-           짜갈짜갈 crack
+        CRACKLE
         */
 
         if(
@@ -1106,6 +1462,7 @@ function createRadio(){
 
         }
 
+
         data[i] =
         value;
 
@@ -1115,8 +1472,10 @@ function createRadio(){
     radioNoise =
     AC.createBufferSource();
 
+
     radioNoise.buffer =
     buffer;
+
 
     radioNoise.loop =
     true;
@@ -1125,8 +1484,10 @@ function createRadio(){
     radioCarrier =
     AC.createOscillator();
 
+
     radioCarrier.type =
     "sine";
+
 
     radioCarrier.frequency.value =
     1300;
@@ -1135,6 +1496,7 @@ function createRadio(){
     radioCarrierGain =
     AC.createGain();
 
+
     radioCarrierGain.gain.value =
     .005;
 
@@ -1142,11 +1504,14 @@ function createRadio(){
     radioFilter =
     AC.createBiquadFilter();
 
+
     radioFilter.type =
     "bandpass";
 
+
     radioFilter.frequency.value =
     1800;
+
 
     radioFilter.Q.value =
     5;
@@ -1154,6 +1519,7 @@ function createRadio(){
 
     radioGain =
     AC.createGain();
+
 
     radioGain.gain.value =
     0;
@@ -1163,21 +1529,26 @@ function createRadio(){
         radioFilter
     );
 
+
     radioCarrier.connect(
         radioCarrierGain
     );
+
 
     radioCarrierGain.connect(
         radioFilter
     );
 
+
     radioFilter.connect(
         radioGain
     );
 
+
     radioGain.connect(
         synthDry
     );
+
 
     radioGain.connect(
         synthDelay
@@ -1185,15 +1556,14 @@ function createRadio(){
 
 
     radioNoise.start();
+
     radioCarrier.start();
 
 }
 
 
 /* =========================================================
-   OBJECT IMPACT
-
-   맑은 TING + 긴 RESONANCE
+OBJECT IMPACT
 ========================================================= */
 
 function objectImpact(
@@ -1209,13 +1579,8 @@ strength
     AC.currentTime;
 
 
-    /*
-       tracking 오류 때문에
-       연속으로 TING 난사되는 것 방지
-    */
-
     if(
-        now - lastImpact <
+        now-lastImpact <
         .32
     )
         return;
@@ -1226,27 +1591,39 @@ strength
 
 
     const level =
-    Number(impactLevel.value);
+    exporting
+
+    ?
+
+    exportSettings.impactLevel
+
+    :
+
+    Number(
+        impactLevel.value
+    );
 
 
-    /*
-       LEVEL 0 = OFF
-    */
-
-    if(level <= .001)
+    if(
+        level <= .001
+    )
         return;
 
 
     const resonance =
-    Number(impactResonance.value);
 
+    exporting
 
-    /*
-       화면 좌우에 따라
-       다른 음.
+    ?
 
-       D / F / A 계열
-    */
+    exportSettings.impactResonance
+
+    :
+
+    Number(
+        impactResonance.value
+    );
+
 
     const notes = [
 
@@ -1264,7 +1641,7 @@ strength
 
     Math.min(
 
-        notes.length - 1,
+        notes.length-1,
 
         Math.floor(
             x *
@@ -1278,29 +1655,25 @@ strength
     notes[noteIndex];
 
 
-    /*
-       FUNDAMENTAL
-    */
-
     const fundamental =
     AC.createOscillator();
 
+
     fundamental.type =
     "sine";
+
 
     fundamental.frequency.value =
     frequency;
 
 
-    /*
-       GLASS OVERTONES
-    */
-
     const overtone1 =
     AC.createOscillator();
 
+
     overtone1.type =
     "sine";
+
 
     overtone1.frequency.value =
     frequency * 2.01;
@@ -1309,8 +1682,10 @@ strength
     const overtone2 =
     AC.createOscillator();
 
+
     overtone2.type =
     "sine";
+
 
     overtone2.frequency.value =
     frequency * 3.92;
@@ -1319,16 +1694,14 @@ strength
     const overtone3 =
     AC.createOscillator();
 
+
     overtone3.type =
     "triangle";
+
 
     overtone3.frequency.value =
     frequency * 5.13;
 
-
-    /*
-       INDIVIDUAL GAINS
-    */
 
     const g1 =
     AC.createGain();
@@ -1343,36 +1716,43 @@ strength
     AC.createGain();
 
 
-    g1.gain.value = 1;
-    g2.gain.value = .28;
-    g3.gain.value = .10;
-    g4.gain.value = .035;
+    g1.gain.value =
+    1;
 
+    g2.gain.value =
+    .28;
 
-    /*
-       FILTER
-    */
+    g3.gain.value =
+    .10;
+
+    g4.gain.value =
+    .035;
+
 
     const filter =
     AC.createBiquadFilter();
 
+
     filter.type =
     "lowpass";
+
 
     filter.frequency.value =
 
     1800 +
 
-    (1 - resonance) *
+    (
+        1-resonance
+    )
+
+    *
+
     5000;
+
 
     filter.Q.value =
     .7;
 
-
-    /*
-       ENVELOPE
-    */
 
     const gain =
     AC.createGain();
@@ -1399,25 +1779,18 @@ strength
     );
 
 
-    /*
-       부드러운 첫 attack
-    */
-
-    gain.gain.exponentialRampToValueAtTime(
+    gain.gain
+    .exponentialRampToValueAtTime(
 
         Math.max(
             .001,
             peak
         ),
 
-        now + .018
+        now+.018
 
     );
 
-
-    /*
-       긴 잔향
-    */
 
     const decay =
 
@@ -1427,39 +1800,35 @@ strength
     7;
 
 
-    gain.gain.exponentialRampToValueAtTime(
+    gain.gain
+    .exponentialRampToValueAtTime(
 
         .0001,
 
-        now + decay
+        now+decay
 
     );
 
 
-    /*
-       PAN
-    */
-
     const pan =
     AC.createStereoPanner();
 
+
     pan.pan.value =
-    x * 2 - 1;
+    x*2-1;
 
-
-    /*
-       CONNECT OSCILLATORS
-    */
 
     fundamental.connect(g1);
     overtone1.connect(g2);
     overtone2.connect(g3);
     overtone3.connect(g4);
 
+
     g1.connect(filter);
     g2.connect(filter);
     g3.connect(filter);
     g4.connect(filter);
+
 
     filter.connect(gain);
 
@@ -1467,7 +1836,7 @@ strength
 
 
     /*
-       DRY TING
+    DRY
     */
 
     pan.connect(
@@ -1476,11 +1845,12 @@ strength
 
 
     /*
-       CUSTOM LONG RESONANCE
+    LONG RESONANCE
     */
 
     const impactDelay =
     AC.createDelay(3);
+
 
     impactDelay.delayTime.value =
 
@@ -1493,6 +1863,7 @@ strength
     const feedback =
     AC.createGain();
 
+
     feedback.gain.value =
 
     .22 +
@@ -1503,6 +1874,7 @@ strength
 
     const wet =
     AC.createGain();
+
 
     wet.gain.value =
 
@@ -1516,26 +1888,26 @@ strength
         impactDelay
     );
 
+
     impactDelay.connect(
         feedback
     );
+
 
     feedback.connect(
         impactDelay
     );
 
+
     impactDelay.connect(
         wet
     );
+
 
     wet.connect(
         synthDry
     );
 
-
-    /*
-       GLOBAL SPACE에도 조금
-    */
 
     pan.connect(
         synthDelay
@@ -1555,10 +1927,21 @@ strength
     2;
 
 
-    fundamental.stop(stopTime);
-    overtone1.stop(stopTime);
-    overtone2.stop(stopTime);
-    overtone3.stop(stopTime);
+    fundamental.stop(
+        stopTime
+    );
+
+    overtone1.stop(
+        stopTime
+    );
+
+    overtone2.stop(
+        stopTime
+    );
+
+    overtone3.stop(
+        stopTime
+    );
 
 
     eventMeter.textContent =
@@ -1568,7 +1951,7 @@ strength
 
 
 /* =========================================================
-   GLITCH
+GLITCH
 ========================================================= */
 
 function createGlitch(
@@ -1585,15 +1968,30 @@ motion
 
 
     if(
-        now - lastGlitch <
+        now-lastGlitch <
         .055
     )
         return;
 
 
+    const density =
+
+    exporting
+
+    ?
+
+    exportSettings.glitchDensity
+
+    :
+
+    Number(
+        glitchDensity.value
+    );
+
+
     if(
         Math.random() >
-        Number(glitchDensity.value)
+        density
     )
         return;
 
@@ -1602,13 +2000,34 @@ motion
     now;
 
 
+    const amount =
+
+    exporting
+
+    ?
+
+    exportSettings.glitchLevel
+
+    :
+
+    Number(
+        glitchLevel.value
+    );
+
+
+    if(
+        amount <= .001
+    )
+        return;
+
+
     const osc =
     AC.createOscillator();
 
 
     osc.type =
 
-    Math.random() > .5
+    Math.random()>.5
 
     ?
 
@@ -1630,8 +2049,10 @@ motion
     const filter =
     AC.createBiquadFilter();
 
+
     filter.type =
     "bandpass";
+
 
     filter.frequency.value =
 
@@ -1639,6 +2060,7 @@ motion
 
     Math.random() *
     7000;
+
 
     filter.Q.value =
 
@@ -1650,10 +2072,6 @@ motion
 
     const gain =
     AC.createGain();
-
-
-    const amount =
-    Number(glitchLevel.value);
 
 
     const level =
@@ -1680,7 +2098,8 @@ motion
     );
 
 
-    gain.gain.exponentialRampToValueAtTime(
+    gain.gain
+    .exponentialRampToValueAtTime(
 
         .0001,
 
@@ -1697,17 +2116,22 @@ motion
     const pan =
     AC.createStereoPanner();
 
+
     pan.pan.value =
-    x * 2 - 1;
+    x*2-1;
 
 
     osc.connect(filter);
+
     filter.connect(gain);
+
     gain.connect(pan);
+
 
     pan.connect(
         synthDry
     );
+
 
     pan.connect(
         synthDelay
@@ -1716,8 +2140,9 @@ motion
 
     osc.start(now);
 
+
     osc.stop(
-        now + .18
+        now+.18
     );
 
 
@@ -1728,7 +2153,7 @@ motion
 
 
 /* =========================================================
-   SOFT KEY
+SOFT KEYS
 ========================================================= */
 
 function createSoftKey(
@@ -1742,10 +2167,23 @@ strength
 
 
     const level =
-    Number(keyLevel.value);
+
+    exporting
+
+    ?
+
+    exportSettings.keyLevel
+
+    :
+
+    Number(
+        keyLevel.value
+    );
 
 
-    if(level <= .001)
+    if(
+        level <= .001
+    )
         return;
 
 
@@ -1754,7 +2192,7 @@ strength
 
 
     if(
-        now - lastKey <
+        now-lastKey <
         .25
     )
         return;
@@ -1786,11 +2224,12 @@ strength
 
         Math.min(
 
-            intervals.length - 1,
+            intervals.length-1,
 
             Math.floor(
 
                 (1-y) *
+
                 intervals.length
 
             )
@@ -1812,7 +2251,7 @@ strength
 
         2,
 
-        intervals[index] / 12
+        intervals[index]/12
 
     );
 
@@ -1820,8 +2259,10 @@ strength
     const osc =
     AC.createOscillator();
 
+
     osc.type =
     "sine";
+
 
     osc.frequency.value =
     frequency;
@@ -1830,8 +2271,10 @@ strength
     const harmonic =
     AC.createOscillator();
 
+
     harmonic.type =
     "triangle";
+
 
     harmonic.frequency.value =
     frequency * 2.002;
@@ -1840,6 +2283,7 @@ strength
     const harmonicGain =
     AC.createGain();
 
+
     harmonicGain.gain.value =
     .09;
 
@@ -1847,19 +2291,36 @@ strength
     const filter =
     AC.createBiquadFilter();
 
+
     filter.type =
     "lowpass";
 
 
     const softness =
-    Number(keySoftness.value);
+
+    exporting
+
+    ?
+
+    exportSettings.keySoftness
+
+    :
+
+    Number(
+        keySoftness.value
+    );
 
 
     filter.frequency.value =
 
     500 +
 
-    (1-softness) *
+    (
+        1-softness
+    )
+
+    *
+
     4500;
 
 
@@ -1880,12 +2341,16 @@ strength
 
 
     gain.gain.setValueAtTime(
+
         .0001,
+
         now
+
     );
 
 
-    gain.gain.exponentialRampToValueAtTime(
+    gain.gain
+    .exponentialRampToValueAtTime(
 
         Math.max(
             .001,
@@ -1893,19 +2358,26 @@ strength
         ),
 
         now +
+
         .05 +
-        softness * .1
+
+        softness *
+        .1
 
     );
 
 
-    gain.gain.exponentialRampToValueAtTime(
+    gain.gain
+    .exponentialRampToValueAtTime(
 
         .0001,
 
         now +
+
         1.5 +
-        softness * 3
+
+        softness *
+        3
 
     );
 
@@ -1913,27 +2385,40 @@ strength
     const pan =
     AC.createStereoPanner();
 
+
     pan.pan.value =
-    x * 2 - 1;
+    x*2-1;
 
 
-    osc.connect(filter);
+    osc.connect(
+        filter
+    );
+
 
     harmonic.connect(
         harmonicGain
     );
 
+
     harmonicGain.connect(
         filter
     );
 
-    filter.connect(gain);
 
-    gain.connect(pan);
+    filter.connect(
+        gain
+    );
+
+
+    gain.connect(
+        pan
+    );
+
 
     pan.connect(
         synthDry
     );
+
 
     pan.connect(
         synthDelay
@@ -1941,10 +2426,18 @@ strength
 
 
     osc.start(now);
+
     harmonic.start(now);
 
-    osc.stop(now+5);
-    harmonic.stop(now+5);
+
+    osc.stop(
+        now+5
+    );
+
+
+    harmonic.stop(
+        now+5
+    );
 
 
     eventMeter.textContent =
@@ -1954,7 +2447,7 @@ strength
 
 
 /* =========================================================
-   LOAD VIDEO
+LOAD VIDEO
 ========================================================= */
 
 fileInput.addEventListener(
@@ -1969,6 +2462,13 @@ event=>{
         return;
 
 
+    if(running){
+
+        stopEverything();
+
+    }
+
+
     if(objectURL){
 
         URL.revokeObjectURL(
@@ -1979,7 +2479,9 @@ event=>{
 
 
     objectURL =
-    URL.createObjectURL(file);
+    URL.createObjectURL(
+        file
+    );
 
 
     video.src =
@@ -2005,27 +2507,64 @@ event=>{
     "LOADING VIDEO";
 
 
+    downloadButton.disabled =
+    true;
+
+
+    exportButton.disabled =
+    true;
+
+
     video.onloadedmetadata =
     ()=>{
+
+        /*
+        EXPORT CANVAS는
+        영상 + 하단 detection bar.
+
+        하단 바 높이는 영상 높이의 약 7%.
+        */
+
+        const detectionBarHeight =
+
+        Math.max(
+
+            52,
+
+            Math.round(
+                video.videoHeight *
+                .07
+            )
+
+        );
+
 
         visualCanvas.width =
         video.videoWidth;
 
+
         visualCanvas.height =
-        video.videoHeight;
+
+        video.videoHeight +
+
+        detectionBarHeight;
 
 
         const width =
 
         Math.min(
+
             512,
+
             video.videoWidth
+
         );
 
 
         const ratio =
 
         video.videoHeight /
+
         video.videoWidth;
 
 
@@ -2036,7 +2575,8 @@ event=>{
         analysisCanvas.height =
 
         Math.round(
-            width * ratio
+            width *
+            ratio
         );
 
 
@@ -2048,7 +2588,15 @@ event=>{
         "READY";
 
 
-        updatePlayButton();
+        updateButtons();
+
+
+        /*
+        첫 프레임 그리기
+        */
+
+        video.currentTime =
+        0;
 
     };
 
@@ -2056,7 +2604,7 @@ event=>{
 
 
 /* =========================================================
-   LOAD MODEL
+MODEL
 ========================================================= */
 
 async function loadModel(){
@@ -2108,7 +2656,7 @@ async function loadModel(){
         "SELECT VIDEO";
 
 
-        updatePlayButton();
+        updateButtons();
 
     }
 
@@ -2116,8 +2664,13 @@ async function loadModel(){
 
         console.error(error);
 
+
         modelState.textContent =
         "AI MODEL: ERROR";
+
+
+        statusElement.textContent =
+        "AI LOAD ERROR";
 
     }
 
@@ -2127,17 +2680,39 @@ async function loadModel(){
 loadModel();
 
 
-function updatePlayButton(){
+/* =========================================================
+BUTTON STATE
+========================================================= */
+
+function updateButtons(){
+
+    const ready =
+
+    modelReady &&
+    videoReady;
+
 
     playButton.disabled =
 
-    !(modelReady && videoReady);
+    !ready ||
+    running;
+
+
+    exportButton.disabled =
+
+    !ready ||
+    running;
+
+
+    stopButton.disabled =
+
+    !running;
 
 }
 
 
 /* =========================================================
-   OBJECT ANALYSIS
+TRACKING / ANALYSIS
 ========================================================= */
 
 function analyseObjects(
@@ -2197,6 +2772,7 @@ detections
         let best =
         -1;
 
+
         let bestDistance =
         Infinity;
 
@@ -2204,8 +2780,11 @@ detections
         previousObjects.forEach(
         (old,index)=>{
 
-            if(used.has(index))
+            if(
+                used.has(index)
+            )
                 return;
+
 
             if(
                 old.className !==
@@ -2217,6 +2796,7 @@ detections
             const dx =
             old.x-object.x;
 
+
             const dy =
             old.y-object.y;
 
@@ -2224,8 +2804,11 @@ detections
             const distance =
 
             Math.sqrt(
+
                 dx*dx +
+
                 dy*dy
+
             );
 
 
@@ -2236,6 +2819,7 @@ detections
 
                 bestDistance =
                 distance;
+
 
                 best =
                 index;
@@ -2253,6 +2837,21 @@ detections
             used.add(best);
 
 
+            const response =
+
+            exporting
+
+            ?
+
+            exportSettings.motionResponse
+
+            :
+
+            Number(
+                motionResponse.value
+            );
+
+
             object.motion =
 
             Math.min(
@@ -2263,9 +2862,7 @@ detections
 
                 9 *
 
-                Number(
-                    motionResponse.value
-                )
+                response
 
             );
 
@@ -2293,28 +2890,31 @@ detections
 
 
         /*
-           NEW DETECTION
-           =
-           LONG TING
+        NEW OBJECT
         */
 
-        if(object.isNew){
+        if(
+            object.isNew
+        ){
 
             objectImpact(
 
                 object.x,
 
                 Math.min(
+
                     1,
-                    object.area * 5
+
+                    object.area *
+                    5
+
                 )
 
             );
 
 
             /*
-               별도의 Soft Key는
-               훨씬 드물게.
+            Rare key
             */
 
             if(
@@ -2338,9 +2938,7 @@ detections
 
 
         /*
-           MOTION
-           =
-           GLITCH
+        MOTION GLITCH
         */
 
         if(
@@ -2360,13 +2958,17 @@ detections
 
 
         /*
-           큰 움직임에서만
-           아주 가끔 맑은 음
+        Rare motion key
         */
 
         if(
-            object.motion > .20 &&
-            Math.random() < .055
+            object.motion >
+            .20
+
+            &&
+
+            Math.random() <
+            .055
         ){
 
             createSoftKey(
@@ -2412,7 +3014,7 @@ detections
 
 
 /* =========================================================
-   RADIO UPDATE
+RADIO UPDATE
 ========================================================= */
 
 function updateGeneratedSound(
@@ -2428,20 +3030,34 @@ analysis
 
 
     const radio =
+
+    exporting
+
+    ?
+
+    exportSettings.radioLevel
+
+    :
+
     Number(
         radioLevel.value
     );
 
 
     const staticAmount =
+
+    exporting
+
+    ?
+
+    exportSettings.radioStatic
+
+    :
+
     Number(
         radioStatic.value
     );
 
-
-    /*
-       지속되는 짜갈짜갈
-    */
 
     radioGain.gain
     .setTargetAtTime(
@@ -2466,6 +3082,15 @@ analysis
 
 
     const tuning =
+
+    exporting
+
+    ?
+
+    exportSettings.radioFrequency
+
+    :
+
     Number(
         radioFrequency.value
     );
@@ -2484,11 +3109,6 @@ analysis
 
     7000;
 
-
-    /*
-       움직임에 따라
-       라디오 튜닝이 흔들림
-    */
 
     radioFilter.frequency
     .setTargetAtTime(
@@ -2534,7 +3154,7 @@ analysis
 
 
 /* =========================================================
-   DETECTION
+DETECTION LOOP
 ========================================================= */
 
 async function detectionLoop(
@@ -2546,208 +3166,221 @@ timestamp
 
 
     if(
-        video.paused ||
-        video.ended
-    )
-        return;
-
-
-    if(
-        !detectionBusy &&
-        timestamp-lastDetection
-        >=
-        DETECTION_INTERVAL
+        !video.paused &&
+        !video.ended
     ){
 
-        detectionBusy =
-        true;
+        if(
+            !detectionBusy
+
+            &&
+
+            timestamp-lastDetection
+            >=
+            DETECTION_INTERVAL
+        ){
+
+            detectionBusy =
+            true;
 
 
-        lastDetection =
-        timestamp;
+            lastDetection =
+            timestamp;
 
 
-        try{
+            try{
 
-            analysisCtx.drawImage(
+                analysisCtx.drawImage(
 
-                video,
+                    video,
 
-                0,
-                0,
+                    0,
+                    0,
 
-                analysisCanvas.width,
-                analysisCanvas.height
+                    analysisCanvas.width,
+                    analysisCanvas.height
 
-            );
-
-
-            let result =
-
-            await model.detect(
-
-                analysisCanvas,
-
-                12,
-
-                .30
-
-            );
+                );
 
 
-            result =
+                let result =
 
-            result
+                await model.detect(
 
-            .filter(
-                item =>
-                item.score >= .30
-            )
+                    analysisCanvas,
 
-            .sort(
-                (a,b)=>
+                    12,
 
-                (
-                    b.bbox[2] *
-                    b.bbox[3]
-                )
+                    .30
 
-                -
-
-                (
-                    a.bbox[2] *
-                    a.bbox[3]
-                )
-            )
-
-            .slice(
-                0,
-                12
-            );
+                );
 
 
-            predictions =
-            result;
+                result =
 
-
-            const analysis =
-
-            analyseObjects(
                 result
-            );
 
-
-            updateGeneratedSound(
-                analysis
-            );
-
-
-            objectsElement.textContent =
-
-            result.length
-
-            ?
-
-            result
-            .map(
-                item=>
-
-                item.class
-
-                +
-
-                " "
-
-                +
-
-                Math.round(
-                    item.score*100
+                .filter(
+                    item =>
+                    item.score >= .30
                 )
 
-                +
-
-                "%"
-
-            )
-
-            .join(" · ")
-
-            :
-
-            "NO OBJECTS";
-
-
-            detectionCount++;
-
-
-            const now =
-            performance.now();
-
-
-            if(
-                now-detectionStart >
-                1000
-            ){
-
-                detectionMeter.textContent =
-
-                (
-
-                    detectionCount /
+                .sort(
+                    (a,b)=>
 
                     (
-                        (
-                            now-detectionStart
-                        )
-                        /
-                        1000
+                        b.bbox[2] *
+                        b.bbox[3]
                     )
 
-                ).toFixed(1)
+                    -
 
-                +
+                    (
+                        a.bbox[2] *
+                        a.bbox[3]
+                    )
+                )
 
-                " Hz";
+                .slice(
+                    0,
+                    12
+                );
 
 
-                detectionCount =
-                0;
+                predictions =
+                result;
 
 
-                detectionStart =
-                now;
+                const analysis =
+
+                analyseObjects(
+                    result
+                );
+
+
+                updateGeneratedSound(
+                    analysis
+                );
+
+
+                const detectionText =
+
+                result.length
+
+                ?
+
+                result
+                .map(
+                    item=>
+
+                    item.class
+                    .toUpperCase()
+
+                    +
+
+                    " "
+
+                    +
+
+                    Math.round(
+                        item.score *
+                        100
+                    )
+
+                    +
+
+                    "%"
+
+                )
+
+                .join(" · ")
+
+                :
+
+                "NO OBJECTS";
+
+
+                objectsElement.textContent =
+                detectionText;
+
+
+                detectionCount++;
+
+
+                const now =
+                performance.now();
+
+
+                if(
+                    now-detectionStart >
+                    1000
+                ){
+
+                    detectionMeter.textContent =
+
+                    (
+
+                        detectionCount /
+
+                        (
+                            (
+                                now -
+                                detectionStart
+                            )
+
+                            /
+
+                            1000
+                        )
+
+                    ).toFixed(1)
+
+                    +
+
+                    " Hz";
+
+
+                    detectionCount =
+                    0;
+
+
+                    detectionStart =
+                    now;
+
+                }
 
             }
 
+            catch(error){
+
+                console.error(
+                    error
+                );
+
+            }
+
+
+            detectionBusy =
+            false;
+
         }
-
-        catch(error){
-
-            console.error(error);
-
-        }
-
-
-        detectionBusy =
-        false;
 
     }
 
 
-    requestAnimationFrame(
-        detectionLoop
-    );
+    if(running){
+
+        requestAnimationFrame(
+            detectionLoop
+        );
+
+    }
 
 }
 
 
 /* =========================================================
-   VIDEO RENDER
-
-   BASE = B/W
-
-   DETECTED BOX =
-   ORIGINAL COLOR + HIGH SATURATION
+CANVAS RENDER
 ========================================================= */
 
 function renderVideo(){
@@ -2756,28 +3389,41 @@ function renderVideo(){
         return;
 
 
-    if(
-        video.paused ||
-        video.ended
-    )
-        return;
+    const videoWidth =
+    video.videoWidth;
 
 
-    const W =
+    const videoHeight =
+    video.videoHeight;
+
+
+    const canvasWidth =
     visualCanvas.width;
 
-    const H =
+
+    const canvasHeight =
     visualCanvas.height;
 
 
+    const barHeight =
+
+    canvasHeight -
+    videoHeight;
+
+
     /*
-       BLACK & WHITE
+    ========================================================
+    BASE VIDEO
+    ========================================================
     */
 
     visualCtx.save();
 
+
     visualCtx.filter =
+
     "grayscale(100%) contrast(110%)";
+
 
     visualCtx.drawImage(
 
@@ -2786,27 +3432,44 @@ function renderVideo(){
         0,
         0,
 
-        W,
-        H
+        videoWidth,
+        videoHeight
 
     );
+
 
     visualCtx.restore();
 
 
+    /*
+    ========================================================
+    DETECTED COLOR REGIONS
+    ========================================================
+    */
+
     const scaleX =
 
-    W /
+    videoWidth /
+
     analysisCanvas.width;
 
 
     const scaleY =
 
-    H /
+    videoHeight /
+
     analysisCanvas.height;
 
 
     const saturation =
+
+    exporting
+
+    ?
+
+    exportSettings.colorAmount
+
+    :
 
     Number(
         colorAmount.value
@@ -2826,60 +3489,76 @@ function renderVideo(){
 
 
         const dx =
-        x*scaleX;
+        x * scaleX;
+
 
         const dy =
-        y*scaleY;
+        y * scaleY;
+
 
         const dw =
-        width*scaleX;
+        width * scaleX;
+
 
         const dh =
-        height*scaleY;
+        height * scaleY;
 
 
         const sx =
 
         x /
+
         analysisCanvas.width *
+
         video.videoWidth;
 
 
         const sy =
 
         y /
+
         analysisCanvas.height *
+
         video.videoHeight;
 
 
         const sw =
 
         width /
+
         analysisCanvas.width *
+
         video.videoWidth;
 
 
         const sh =
 
         height /
+
         analysisCanvas.height *
+
         video.videoHeight;
 
 
         /*
-           COLOR DETECTION AREA
+        COLOR AREA
         */
 
         visualCtx.save();
 
+
         visualCtx.beginPath();
 
+
         visualCtx.rect(
+
             dx,
             dy,
             dw,
             dh
+
         );
+
 
         visualCtx.clip();
 
@@ -2910,46 +3589,60 @@ function renderVideo(){
 
 
         /*
-           BOX
+        BOUNDING BOX
         */
 
         visualCtx.strokeStyle =
         "rgba(255,255,255,.95)";
 
+
         visualCtx.lineWidth =
 
         Math.max(
+
             1.5,
-            W/800
+
+            videoWidth /
+            800
+
         );
 
+
         visualCtx.strokeRect(
+
             dx,
             dy,
             dw,
             dh
+
         );
 
 
         /*
-           LABEL
+        OBJECT LABEL
         */
 
         const fontSize =
 
         Math.max(
+
             11,
-            W/90
+
+            videoWidth /
+            90
+
         );
 
 
         visualCtx.font =
+
         `${fontSize}px monospace`;
 
 
         const label =
 
         object.class
+        .toUpperCase()
 
         +
 
@@ -2958,7 +3651,8 @@ function renderVideo(){
         +
 
         Math.round(
-            object.score*100
+            object.score *
+            100
         )
 
         +
@@ -2976,24 +3670,31 @@ function renderVideo(){
         const labelY =
 
         Math.max(
+
             fontSize+8,
+
             dy
+
         );
 
 
         visualCtx.fillStyle =
-        "rgba(0,0,0,.8)";
+        "rgba(0,0,0,.80)";
 
 
         visualCtx.fillRect(
 
             dx,
 
-            labelY-fontSize-8,
+            labelY -
+            fontSize -
+            8,
 
-            textWidth+12,
+            textWidth +
+            12,
 
-            fontSize+8
+            fontSize +
+            8
 
         );
 
@@ -3015,15 +3716,334 @@ function renderVideo(){
     });
 
 
-    requestAnimationFrame(
-        renderVideo
+    /*
+    ========================================================
+    BOTTOM DETECTION BAR
+
+    이것도 Canvas 자체에 그리기 때문에
+    EXPORT VIDEO에 그대로 들어간다.
+    ========================================================
+    */
+
+    visualCtx.filter =
+    "none";
+
+
+    visualCtx.fillStyle =
+    "#050505";
+
+
+    visualCtx.fillRect(
+
+        0,
+
+        videoHeight,
+
+        canvasWidth,
+
+        barHeight
+
+    );
+
+
+    /*
+    top separator
+    */
+
+    visualCtx.fillStyle =
+    "#252525";
+
+
+    visualCtx.fillRect(
+
+        0,
+
+        videoHeight,
+
+        canvasWidth,
+
+        Math.max(
+            1,
+            videoWidth/1200
+        )
+
+    );
+
+
+    const detectionLine =
+
+    predictions.length
+
+    ?
+
+    predictions
+    .map(
+        object=>
+
+        object.class
+        .toUpperCase()
+
+        +
+
+        " "
+
+        +
+
+        Math.round(
+            object.score *
+            100
+        )
+
+        +
+
+        "%"
+
+    )
+
+    .join("   ·   ")
+
+    :
+
+    "NO OBJECTS";
+
+
+    const bottomFontSize =
+
+    Math.max(
+
+        12,
+
+        Math.round(
+            videoWidth /
+            75
+        )
+
+    );
+
+
+    visualCtx.font =
+
+    `${bottomFontSize}px monospace`;
+
+
+    visualCtx.fillStyle =
+    "#d8d8d8";
+
+
+    visualCtx.textBaseline =
+    "middle";
+
+
+    /*
+    text가 너무 길 경우 clip
+    */
+
+    visualCtx.save();
+
+
+    visualCtx.beginPath();
+
+
+    visualCtx.rect(
+
+        0,
+
+        videoHeight,
+
+        canvasWidth,
+
+        barHeight
+
+    );
+
+
+    visualCtx.clip();
+
+
+    visualCtx.fillText(
+
+        detectionLine,
+
+        Math.max(
+            15,
+            videoWidth *
+            .015
+        ),
+
+        videoHeight +
+        barHeight /
+        2
+
+    );
+
+
+    visualCtx.restore();
+
+
+    /*
+    EXPORT PROGRESS
+    HTML에만 표시.
+    영상에는 안 찍힌다.
+    */
+
+    if(
+        exporting &&
+        video.duration
+    ){
+
+        const percentage =
+
+        Math.min(
+
+            100,
+
+            Math.round(
+
+                video.currentTime /
+
+                video.duration *
+
+                100
+
+            )
+
+        );
+
+
+        exportProgress.textContent =
+
+        `RECORDING ${percentage}%`;
+
+    }
+
+
+    if(running){
+
+        requestAnimationFrame(
+            renderVideo
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+RESET SESSION
+========================================================= */
+
+function resetSessionState(){
+
+    predictions =
+    [];
+
+
+    previousObjects =
+    [];
+
+
+    detectionBusy =
+    false;
+
+
+    lastDetection =
+    0;
+
+
+    detectionCount =
+    0;
+
+
+    detectionStart =
+    performance.now();
+
+
+    lastGlitch =
+    0;
+
+
+    lastKey =
+    0;
+
+
+    lastImpact =
+    0;
+
+
+    objectMeter.textContent =
+    "0";
+
+
+    motionMeter.textContent =
+    "0.00";
+
+
+    detectionMeter.textContent =
+    "0 Hz";
+
+
+    eventMeter.textContent =
+    "—";
+
+
+    objectsElement.textContent =
+    "NO OBJECTS";
+
+}
+
+
+/* =========================================================
+APPLY EXPORT SNAPSHOT
+========================================================= */
+
+function applyExportAudioSettings(){
+
+    if(
+        !AC ||
+        !exportSettings
+    )
+        return;
+
+
+    const now =
+    AC.currentTime;
+
+
+    videoGain.gain
+    .setValueAtTime(
+
+        exportSettings.videoVolume,
+
+        now
+
+    );
+
+
+    synthMaster.gain
+    .setValueAtTime(
+
+        exportSettings.masterVolume,
+
+        now
+
+    );
+
+
+    synthDelayGain.gain
+    .setValueAtTime(
+
+        exportSettings.spaceAmount *
+        .7,
+
+        now
+
     );
 
 }
 
 
 /* =========================================================
-   PLAY
+NORMAL PLAY
 ========================================================= */
 
 playButton.addEventListener(
@@ -3032,9 +4052,18 @@ async()=>{
 
     if(
         !videoReady ||
-        !modelReady
+        !modelReady ||
+        running
     )
         return;
+
+
+    exporting =
+    false;
+
+
+    exportSettings =
+    null;
 
 
     createAudioEngine();
@@ -3050,13 +4079,9 @@ async()=>{
     }
 
 
-    /*
-       video audio now controlled
-       ONLY by videoGain.
-    */
-
     video.muted =
     false;
+
 
     video.volume =
     1;
@@ -3086,28 +4111,27 @@ async()=>{
     );
 
 
+    synthDelayGain.gain
+    .setValueAtTime(
+
+        Number(
+            spaceAmount.value
+        )
+
+        *
+
+        .7,
+
+        AC.currentTime
+
+    );
+
+
     video.currentTime =
     0;
 
 
-    predictions =
-    [];
-
-
-    previousObjects =
-    [];
-
-
-    detectionCount =
-    0;
-
-
-    detectionStart =
-    performance.now();
-
-
-    lastDetection =
-    0;
+    resetSessionState();
 
 
     try{
@@ -3118,10 +4142,14 @@ async()=>{
 
     catch(error){
 
-        console.error(error);
+        console.error(
+            error
+        );
+
 
         statusElement.textContent =
         "PLAYBACK ERROR";
+
 
         return;
 
@@ -3132,16 +4160,11 @@ async()=>{
     true;
 
 
-    playButton.disabled =
-    true;
-
-
-    stopButton.disabled =
-    false;
-
-
     statusElement.textContent =
     "GENERATING";
+
+
+    updateButtons();
 
 
     requestAnimationFrame(
@@ -3157,10 +4180,589 @@ async()=>{
 
 
 /* =========================================================
-   STOP
+MEDIA RECORDER MIME TYPE
+========================================================= */
+
+function getSupportedMimeType(){
+
+    const types = [
+
+        "video/mp4;codecs=h264,aac",
+
+        "video/mp4",
+
+        "video/webm;codecs=vp9,opus",
+
+        "video/webm;codecs=vp8,opus",
+
+        "video/webm"
+
+    ];
+
+
+    for(
+        const type of types
+    ){
+
+        if(
+            MediaRecorder
+            .isTypeSupported(type)
+        ){
+
+            return type;
+
+        }
+
+    }
+
+
+    return "";
+
+}
+
+
+/* =========================================================
+START EXPORT RECORDING
+========================================================= */
+
+async function startExportRecording(){
+
+    if(
+        !videoReady ||
+        !modelReady ||
+        running
+    )
+        return;
+
+
+    /*
+    ============================================
+    SNAPSHOT ALL SETTINGS
+    ============================================
+    */
+
+    exportSettings =
+    currentSettings();
+
+
+    exporting =
+    true;
+
+
+    /*
+    old download 제거
+    */
+
+    if(recordedURL){
+
+        URL.revokeObjectURL(
+            recordedURL
+        );
+
+
+        recordedURL =
+        null;
+
+    }
+
+
+    recordedBlob =
+    null;
+
+
+    downloadButton.disabled =
+    true;
+
+
+    createAudioEngine();
+
+
+    if(
+        AC.state ===
+        "suspended"
+    ){
+
+        await AC.resume();
+
+    }
+
+
+    applyExportAudioSettings();
+
+
+    /*
+    ============================================
+    RESET VIDEO
+    ============================================
+    */
+
+    video.pause();
+
+
+    video.currentTime =
+    0;
+
+
+    resetSessionState();
+
+
+    /*
+    ============================================
+    CANVAS VIDEO STREAM
+    ============================================
+    */
+
+    const canvasStream =
+
+    visualCanvas.captureStream(
+        30
+    );
+
+
+    /*
+    ============================================
+    FINAL AUDIO TRACK
+    ============================================
+    */
+
+    const audioTracks =
+
+    recordDestination
+    .stream
+    .getAudioTracks();
+
+
+    /*
+    ============================================
+    COMBINED STREAM
+    ============================================
+    */
+
+    const tracks = [
+
+        ...canvasStream
+        .getVideoTracks(),
+
+        ...audioTracks
+
+    ];
+
+
+    recordingStream =
+
+    new MediaStream(
+        tracks
+    );
+
+
+    const mimeType =
+    getSupportedMimeType();
+
+
+    try{
+
+        mediaRecorder =
+
+        mimeType
+
+        ?
+
+        new MediaRecorder(
+
+            recordingStream,
+
+            {
+                mimeType,
+                videoBitsPerSecond:
+                12000000
+            }
+
+        )
+
+        :
+
+        new MediaRecorder(
+            recordingStream
+        );
+
+    }
+
+    catch(error){
+
+        console.error(error);
+
+
+        exporting =
+        false;
+
+
+        exportSettings =
+        null;
+
+
+        statusElement.textContent =
+        "RECORDER ERROR";
+
+
+        exportProgress.textContent =
+        "UNSUPPORTED";
+
+
+        return;
+
+    }
+
+
+    recordedChunks =
+    [];
+
+
+    mediaRecorder.ondataavailable =
+    event=>{
+
+        if(
+            event.data &&
+            event.data.size >
+            0
+        ){
+
+            recordedChunks.push(
+                event.data
+            );
+
+        }
+
+    };
+
+
+    mediaRecorder.onstop =
+    ()=>{
+
+        const actualType =
+
+        mediaRecorder.mimeType
+
+        ||
+
+        mimeType
+
+        ||
+
+        "video/webm";
+
+
+        recordedBlob =
+
+        new Blob(
+
+            recordedChunks,
+
+            {
+                type:
+                actualType
+            }
+
+        );
+
+
+        recordedURL =
+
+        URL.createObjectURL(
+            recordedBlob
+        );
+
+
+        downloadButton.disabled =
+        false;
+
+
+        exportButton.classList.remove(
+            "recording"
+        );
+
+
+        exportProgress.textContent =
+        "READY TO DOWNLOAD";
+
+
+        statusElement.textContent =
+        "EXPORT COMPLETE";
+
+
+        exporting =
+        false;
+
+
+        exportSettings =
+        null;
+
+
+        /*
+        다시 UI slider 값으로
+        audio 복귀
+        */
+
+        if(AC){
+
+            videoGain.gain
+            .setValueAtTime(
+
+                Number(
+                    videoVolume.value
+                ),
+
+                AC.currentTime
+
+            );
+
+
+            synthMaster.gain
+            .setValueAtTime(
+
+                Number(
+                    masterVolume.value
+                ),
+
+                AC.currentTime
+
+            );
+
+
+            synthDelayGain.gain
+            .setValueAtTime(
+
+                Number(
+                    spaceAmount.value
+                )
+
+                *
+
+                .7,
+
+                AC.currentTime
+
+            );
+
+        }
+
+
+        updateButtons();
+
+    };
+
+
+    /*
+    ============================================
+    START RECORDER
+    ============================================
+    */
+
+    mediaRecorder.start(
+        1000
+    );
+
+
+    exportButton.classList.add(
+        "recording"
+    );
+
+
+    exportProgress.textContent =
+    "RECORDING 0%";
+
+
+    statusElement.textContent =
+    "EXPORTING";
+
+
+    /*
+    ============================================
+    PLAY VIDEO
+    ============================================
+    */
+
+    video.muted =
+    false;
+
+
+    video.volume =
+    1;
+
+
+    try{
+
+        await video.play();
+
+    }
+
+    catch(error){
+
+        console.error(error);
+
+
+        stopRecorder();
+
+
+        statusElement.textContent =
+        "EXPORT PLAYBACK ERROR";
+
+
+        return;
+
+    }
+
+
+    running =
+    true;
+
+
+    updateButtons();
+
+
+    requestAnimationFrame(
+        renderVideo
+    );
+
+
+    requestAnimationFrame(
+        detectionLoop
+    );
+
+}
+
+
+/* =========================================================
+EXPORT BUTTON
+========================================================= */
+
+exportButton.addEventListener(
+"click",
+()=>{
+
+    startExportRecording();
+
+});
+
+
+/* =========================================================
+STOP RECORDER
+========================================================= */
+
+function stopRecorder(){
+
+    if(
+        mediaRecorder &&
+        mediaRecorder.state !==
+        "inactive"
+    ){
+
+        try{
+
+            mediaRecorder.requestData();
+
+        }
+
+        catch(e){}
+
+
+        mediaRecorder.stop();
+
+    }
+
+}
+
+
+/* =========================================================
+DOWNLOAD
+========================================================= */
+
+downloadButton.addEventListener(
+"click",
+()=>{
+
+    if(
+        !recordedBlob ||
+        !recordedURL
+    )
+        return;
+
+
+    const mime =
+
+    recordedBlob.type
+
+    ||
+
+    "";
+
+
+    const extension =
+
+    mime.includes(
+        "mp4"
+    )
+
+    ?
+
+    "mp4"
+
+    :
+
+    "webm";
+
+
+    const now =
+    new Date();
+
+
+    const stamp =
+
+    now
+    .toISOString()
+    .replace(
+        /[:.]/g,
+        "-"
+    );
+
+
+    const anchor =
+
+    document.createElement(
+        "a"
+    );
+
+
+    anchor.href =
+    recordedURL;
+
+
+    anchor.download =
+
+    `presence-synth-${stamp}.${extension}`;
+
+
+    document.body.appendChild(
+        anchor
+    );
+
+
+    anchor.click();
+
+
+    anchor.remove();
+
+});
+
+
+/* =========================================================
+STOP EVERYTHING
 ========================================================= */
 
 function stopEverything(){
+
+    const wasExporting =
+    exporting;
+
 
     running =
     false;
@@ -3169,7 +4771,10 @@ function stopEverything(){
     video.pause();
 
 
-    if(AC && radioGain){
+    if(
+        AC &&
+        radioGain
+    ){
 
         radioGain.gain
         .setTargetAtTime(
@@ -3185,15 +4790,24 @@ function stopEverything(){
     }
 
 
-    stopButton.disabled =
-    true;
+    if(
+        wasExporting
+    ){
+
+        stopRecorder();
+
+    }
 
 
-    updatePlayButton();
+    else{
+
+        statusElement.textContent =
+        "STOPPED";
+
+    }
 
 
-    statusElement.textContent =
-    "STOPPED";
+    updateButtons();
 
 }
 
@@ -3205,7 +4819,7 @@ stopButton.addEventListener(
 
 
 /* =========================================================
-   END
+VIDEO ENDED
 ========================================================= */
 
 video.addEventListener(
@@ -3216,7 +4830,14 @@ video.addEventListener(
     false;
 
 
-    if(AC && radioGain){
+    /*
+    Radio fade
+    */
+
+    if(
+        AC &&
+        radioGain
+    ){
 
         radioGain.gain
         .setTargetAtTime(
@@ -3225,28 +4846,165 @@ video.addEventListener(
 
             AC.currentTime,
 
-            .2
+            .12
 
         );
 
     }
 
 
-    stopButton.disabled =
-    true;
+    /*
+    EXPORT라면
+    impact/key tail을 아주 조금 더 녹음.
+
+    영상은 마지막 프레임에 정지하고
+    잔향만 약간 남긴다.
+    */
+
+    if(
+        exporting
+    ){
+
+        exportProgress.textContent =
+        "FINALIZING";
 
 
-    updatePlayButton();
+        /*
+        긴 resonance의 전체 tail을 기다리면
+        영상보다 너무 길어질 수 있어서
+        1.2초만 추가.
+        */
+
+        setTimeout(
+        ()=>{
+
+            stopRecorder();
+
+        },
+        1200
+        );
+
+    }
+
+    else{
+
+        statusElement.textContent =
+        "FINISHED";
 
 
-    statusElement.textContent =
-    "FINISHED";
+        updateButtons();
+
+    }
 
 });
 
 
 /* =========================================================
-   CLEANUP
+INITIAL CANVAS FRAME WHEN SEEKED
+========================================================= */
+
+video.addEventListener(
+"seeked",
+()=>{
+
+    if(
+        !running &&
+        videoReady
+    ){
+
+        const videoWidth =
+        video.videoWidth;
+
+
+        const videoHeight =
+        video.videoHeight;
+
+
+        visualCtx.save();
+
+
+        visualCtx.filter =
+        "grayscale(100%) contrast(110%)";
+
+
+        visualCtx.drawImage(
+
+            video,
+
+            0,
+            0,
+
+            videoWidth,
+            videoHeight
+
+        );
+
+
+        visualCtx.restore();
+
+
+        const barHeight =
+
+        visualCanvas.height -
+        videoHeight;
+
+
+        visualCtx.fillStyle =
+        "#050505";
+
+
+        visualCtx.fillRect(
+
+            0,
+
+            videoHeight,
+
+            visualCanvas.width,
+
+            barHeight
+
+        );
+
+
+        visualCtx.fillStyle =
+        "#d8d8d8";
+
+
+        visualCtx.font =
+
+        `${Math.max(
+            12,
+            Math.round(
+                videoWidth/75
+            )
+        )}px monospace`;
+
+
+        visualCtx.textBaseline =
+        "middle";
+
+
+        visualCtx.fillText(
+
+            "NO OBJECTS",
+
+            Math.max(
+                15,
+                videoWidth*.015
+            ),
+
+            videoHeight +
+            barHeight/2
+
+        );
+
+    }
+
+});
+
+
+/* =========================================================
+CLEANUP
 ========================================================= */
 
 window.addEventListener(
@@ -3257,6 +5015,15 @@ window.addEventListener(
 
         URL.revokeObjectURL(
             objectURL
+        );
+
+    }
+
+
+    if(recordedURL){
+
+        URL.revokeObjectURL(
+            recordedURL
         );
 
     }
