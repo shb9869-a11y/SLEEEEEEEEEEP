@@ -218,6 +218,10 @@ select{
     color:black!important;
 }
 
+.error{
+    color:#ff7777!important;
+}
+
 @media(max-width:600px){
     h1{font-size:58px}
     button,.fileButton{flex:1}
@@ -232,7 +236,7 @@ select{
 <h1>PRESENCE<br>SYNTH</h1>
 
 <div class="subtitle">
-VIDEO / DETECTION / STATIC / GLITCH / RESONANCE / MEMORY
+VIDEO / DETECTION / PIANO / STATIC / MEMORY / PRESENCE
 </div>
 
 <div class="buttons">
@@ -242,10 +246,10 @@ SELECT VIDEO
 <input id="fileInput" type="file" accept="video/*">
 </div>
 
-<button id="playButton" disabled>GENERATE</button>
-<button id="stopButton" disabled>STOP</button>
-<button id="exportButton" disabled>EXPORT VIDEO</button>
-<button id="downloadButton" disabled>DOWNLOAD VIDEO</button>
+<button id="playButton" type="button" disabled>GENERATE</button>
+<button id="stopButton" type="button" disabled>STOP</button>
+<button id="exportButton" type="button" disabled>EXPORT VIDEO</button>
+<button id="downloadButton" type="button" disabled>DOWNLOAD VIDEO</button>
 
 </div>
 
@@ -256,7 +260,7 @@ SELECT VIDEO
 
 <div class="channel">
 
-<div class="channelName">SOUND MODE</div>
+<div class="channelName">OBJECT NOTE CHARACTER</div>
 
 <select id="soundMode">
 <option value="original">01 — ORIGINAL</option>
@@ -266,7 +270,7 @@ SELECT VIDEO
 </select>
 
 <div id="soundDescription" class="description">
-TING SHA + LOW BOWL
+DRY FELT / SMALL ROOM / CLOSE
 </div>
 
 </div>
@@ -328,7 +332,7 @@ SMALL MOTIF / INCOMPLETE MEMORY / SILENCE
 
 <div class="control">
 <label><span>LEVEL</span><span id="radioValue"></span></label>
-<input id="radioLevel" type="range" min="0" max="1.5" step=".01" value=".30">
+<input id="radioLevel" type="range" min="0" max="1.5" step=".01" value=".18">
 </div>
 
 <div class="control">
@@ -338,7 +342,7 @@ SMALL MOTIF / INCOMPLETE MEMORY / SILENCE
 
 <div class="control">
 <label><span>STATIC</span><span id="staticValue"></span></label>
-<input id="radioStatic" type="range" min="0" max="1" step=".01" value=".55">
+<input id="radioStatic" type="range" min="0" max="1" step=".01" value=".38">
 </div>
 </div>
 
@@ -348,67 +352,67 @@ SMALL MOTIF / INCOMPLETE MEMORY / SILENCE
 
 <div class="control">
 <label><span>LEVEL</span><span id="glitchValue"></span></label>
-<input id="glitchLevel" type="range" min="0" max="1.5" step=".01" value=".25">
+<input id="glitchLevel" type="range" min="0" max="1.5" step=".01" value=".12">
 </div>
 
 <div class="control">
 <label><span>DENSITY</span><span id="densityValue"></span></label>
-<input id="glitchDensity" type="range" min="0" max="1" step=".01" value=".32">
+<input id="glitchDensity" type="range" min="0" max="1" step=".01" value=".18">
 </div>
 </div>
 
 
 <div class="channel">
-<div class="channelName">OBJECT IMPACT</div>
+<div class="channelName">OBJECT NOTE</div>
 
 <div class="control">
 <label><span>LEVEL</span><span id="impactValue"></span></label>
-<input id="impactLevel" type="range" min="0" max="1.5" step=".01" value=".25">
+<input id="impactLevel" type="range" min="0" max="1.5" step=".01" value=".42">
 </div>
 
 <div class="control">
 <label><span>RESONANCE</span><span id="impactResValue"></span></label>
-<input id="impactResonance" type="range" min="0" max="1" step=".01" value=".82">
+<input id="impactResonance" type="range" min="0" max="1" step=".01" value=".62">
 </div>
 </div>
 
 
 <div class="channel">
-<div class="channelName">SINGING BOWL</div>
+<div class="channelName">SINGING BOWL / GHOST</div>
 
 <div class="control">
 <label><span>LEVEL</span><span id="bowlValue"></span></label>
-<input id="bowlLevel" type="range" min="0" max="1.5" step=".01" value=".13">
+<input id="bowlLevel" type="range" min="0" max="1.5" step=".01" value=".035">
 </div>
 
 <div class="control">
 <label><span>RESONANCE</span><span id="bowlResValue"></span></label>
-<input id="bowlResonance" type="range" min="0" max="1" step=".01" value=".82">
+<input id="bowlResonance" type="range" min="0" max="1" step=".01" value=".72">
 </div>
 
 <div class="control">
 <label><span>TONE</span><span id="bowlToneValue"></span></label>
-<input id="bowlTone" type="range" min="0" max="1" step=".01" value=".45">
+<input id="bowlTone" type="range" min="0" max="1" step=".01" value=".58">
 </div>
 </div>
 
 
 <div class="channel">
-<div class="channelName">MELODY / SOFT KEYS</div>
+<div class="channelName">SOFT KEYS / AFTERIMAGE</div>
 
 <div class="control">
 <label><span>LEVEL</span><span id="keyValue"></span></label>
-<input id="keyLevel" type="range" min="0" max="1.5" step=".01" value=".25">
+<input id="keyLevel" type="range" min="0" max="1.5" step=".01" value=".07">
 </div>
 
 <div class="control">
 <label><span>SOFTNESS</span><span id="softValue"></span></label>
-<input id="keySoftness" type="range" min="0" max="1" step=".01" value=".82">
+<input id="keySoftness" type="range" min="0" max="1" step=".01" value=".88">
 </div>
 
 <div class="control">
 <label><span>TRIGGER CHANCE</span><span id="melodyChanceValue"></span></label>
-<input id="melodyChance" type="range" min="0" max="1" step=".01" value=".58">
+<input id="melodyChance" type="range" min="0" max="1" step=".01" value=".72">
 </div>
 
 <div class="control">
@@ -423,7 +427,7 @@ SMALL MOTIF / INCOMPLETE MEMORY / SILENCE
 
 <div class="control">
 <label><span>DELAY</span><span id="spaceValue"></span></label>
-<input id="spaceAmount" type="range" min="0" max="1" step=".01" value=".52">
+<input id="spaceAmount" type="range" min="0" max="1" step=".01" value=".38">
 </div>
 </div>
 
@@ -456,6 +460,7 @@ SMALL MOTIF / INCOMPLETE MEMORY / SILENCE
 
 <div id="objects">NO OBJECTS</div>
 
+
 <div class="meters">
 
 <div class="meter">
@@ -479,11 +484,12 @@ EVENT
 </div>
 
 <div class="meter">
-MELODY
+NOTE
 <strong id="melodyMeter">—</strong>
 </div>
 
 </div>
+
 
 <div class="exportInfo">
 EXPORT STATUS:
@@ -498,6 +504,7 @@ VIDEO + DETECTION TEXT + ORIGINAL AUDIO + GENERATED AUDIO
 
 
 <script>
+"use strict";
 
 /* =========================================================
 DOM
@@ -512,7 +519,10 @@ const visualCanvas = $("visualCanvas");
 const ctx = visualCanvas.getContext("2d");
 
 const analysisCanvas = $("analysisCanvas");
-const analysisCtx = analysisCanvas.getContext("2d");
+const analysisCtx = analysisCanvas.getContext(
+    "2d",
+    {willReadFrequently:true}
+);
 
 const stage = $("stage");
 
@@ -537,7 +547,6 @@ const motionMeter = $("motionMeter");
 const sourceMeter = $("sourceMeter");
 const eventMeter = $("eventMeter");
 const melodyMeter = $("melodyMeter");
-
 const exportProgress = $("exportProgress");
 
 const videoVolume = $("videoVolume");
@@ -570,17 +579,30 @@ const colorAmount = $("colorAmount");
 
 
 /* =========================================================
-LABELS
+GLOBAL ERROR PROTECTION
+========================================================= */
+
+window.addEventListener("error", event => {
+    console.error("GLOBAL ERROR:",event.error || event.message);
+});
+
+window.addEventListener("unhandledrejection", event => {
+    console.error("PROMISE ERROR:",event.reason);
+});
+
+
+/* =========================================================
+SLIDER LABELS
 ========================================================= */
 
 function sliderLabel(slider,id){
 
     const label = $(id);
 
-    function update(){
+    const update = () => {
         label.textContent =
         Math.round(Number(slider.value)*100)+"%";
-    }
+    };
 
     slider.addEventListener("input",update);
     update();
@@ -616,95 +638,100 @@ sliderLabel(colorAmount,"colorValue");
 
 
 /* =========================================================
-SOUND MODES
+CHARACTERS
 ========================================================= */
 
 const SOUND_MODES = {
 
-original:{
-    description:"TING SHA + LOW BOWL / ORIGINAL",
-    impactMin:175,
-    impactRange:120,
-    impactRatios:[1,2.01,2.76,4.12,5.43],
-    bowlMin:95,
-    bowlRange:75,
-    bowlRatios:[1,1.47,2.09,2.63,3.91],
-    shimmer:.035,
-    bowlChance:.12,
-    movementBowlChance:.025
-},
+    original:{
+        description:"DRY FELT / SMALL ROOM / CLOSE",
+        cutoff:2600,
+        attack:.008,
+        body:1.0,
+        decay:3.4,
+        detune:1.2,
+        overtone2:.105,
+        overtone3:.018,
+        hammer:.012,
+        ghostChance:.035
+    },
 
-clear:{
-    description:"CLEAR METAL / BRIGHT / LIGHT",
-    impactMin:260,
-    impactRange:240,
-    impactRatios:[1,2,3.01,4.02,6.04],
-    bowlMin:180,
-    bowlRange:160,
-    bowlRatios:[1,2.002,2.998,4.01,5.02],
-    shimmer:.018,
-    bowlChance:.16,
-    movementBowlChance:.035
-},
+    clear:{
+        description:"CLEAR PIANO / AIR / LIGHT",
+        cutoff:4300,
+        attack:.006,
+        body:.82,
+        decay:3.0,
+        detune:.45,
+        overtone2:.145,
+        overtone3:.035,
+        hammer:.018,
+        ghostChance:.025
+    },
 
-strange:{
-    description:"UNSTABLE / PLAYFUL / UNEVEN",
-    impactMin:155,
-    impactRange:320,
-    impactRatios:[1,1.37,2.11,3.29,5.17,6.83],
-    bowlMin:115,
-    bowlRange:250,
-    bowlRatios:[1,1.22,1.79,2.41,3.67,5.13],
-    shimmer:.04,
-    bowlChance:.22,
-    movementBowlChance:.055
-},
+    strange:{
+        description:"PREPARED FELT / UNSTABLE / HUMAN",
+        cutoff:3100,
+        attack:.009,
+        body:.90,
+        decay:4.1,
+        detune:4.2,
+        overtone2:.09,
+        overtone3:.027,
+        hammer:.016,
+        ghostChance:.05
+    },
 
-gentle:{
-    description:"SOFT / ROUND / LONG AFTERIMAGE",
-    impactMin:220,
-    impactRange:120,
-    impactRatios:[1,2.002,3.005,4.01],
-    bowlMin:145,
-    bowlRange:100,
-    bowlRatios:[1,1.5,2,3,4.01],
-    shimmer:.008,
-    bowlChance:.13,
-    movementBowlChance:.018
-}
+    gentle:{
+        description:"ROUND FELT / DISTANT / SOFT",
+        cutoff:1900,
+        attack:.018,
+        body:1.08,
+        decay:5.2,
+        detune:.7,
+        overtone2:.065,
+        overtone3:.010,
+        hammer:.006,
+        ghostChance:.025
+    }
 
 };
 
 
 const MELODY_DESCRIPTIONS = {
 
-off:
-"NO MELODY",
+    off:
+    "NO PITCH SEQUENCE",
 
-fragile:
-"WIDE INTERVALS / LONG SILENCE / SINGLE NOTES",
+    fragile:
+    "WIDE INTERVALS / SILENCE / SINGLE NOTES",
 
-memory:
-"SMALL MOTIF / INCOMPLETE MEMORY / MUTATION",
+    memory:
+    "SMALL MOTIF / INCOMPLETE MEMORY / RETURN",
 
-drift:
-"OPEN SCALE / SLOW WANDERING / NO RESOLUTION",
+    drift:
+    "OPEN NOTES / WANDERING / NO RESOLUTION",
 
-broken:
-"REPETITION / OCTAVE DISPLACEMENT / MISSING NOTES"
+    broken:
+    "REPETITION / MISSING NOTES / OCTAVE SHIFTS"
 
 };
 
 
-soundMode.addEventListener("change",()=>{
+function updateDescriptions(){
+
     soundDescription.textContent =
     SOUND_MODES[soundMode.value].description;
-});
 
-melodyMode.addEventListener("change",()=>{
     melodyDescription.textContent =
     MELODY_DESCRIPTIONS[melodyMode.value];
-});
+
+}
+
+soundMode.addEventListener("change",updateDescriptions);
+melodyMode.addEventListener("change",updateDescriptions);
+
+updateDescriptions();
 
 
 /* =========================================================
@@ -735,12 +762,23 @@ let exportSettings = null;
 
 
 /* =========================================================
+RECORDER STATE
+========================================================= */
+
+let mediaRecorder = null;
+let chunks = [];
+
+let recordedBlob = null;
+let recordedURL = null;
+
+
+/* =========================================================
 SETTINGS
 ========================================================= */
 
 function getSettings(){
 
-    return{
+    return {
 
         soundMode:soundMode.value,
         melodyMode:melodyMode.value,
@@ -779,8 +817,9 @@ function getSettings(){
 
 function S(name){
 
-    if(exporting && exportSettings)
+    if(exporting && exportSettings){
         return exportSettings[name];
+    }
 
     return getSettings()[name];
 }
@@ -788,107 +827,183 @@ function S(name){
 
 function currentSoundMode(){
 
-    return SOUND_MODES[
-        exporting && exportSettings
-        ? exportSettings.soundMode
-        : soundMode.value
-    ];
+    const mode = S("soundMode");
+
+    return SOUND_MODES[mode] || SOUND_MODES.original;
 }
 
 
 /* =========================================================
-MELODY ENGINE
+BUTTONS
 ========================================================= */
 
-/*
-MIDI note conversion.
+function updateButtons(){
 
-60 = middle C
-62 = D
-69 = A
-*/
+    const ready =
+    modelReady &&
+    videoReady;
+
+    playButton.disabled =
+    !ready ||
+    running ||
+    exporting;
+
+    exportButton.disabled =
+    !ready ||
+    running ||
+    exporting;
+
+    stopButton.disabled =
+    !running &&
+    !exporting;
+
+    downloadButton.disabled =
+    !recordedBlob;
+}
+
+
+/* =========================================================
+MELODY
+========================================================= */
 
 function midiToFrequency(note){
-    return 440*Math.pow(2,(note-69)/12);
+
+    return 440 *
+    Math.pow(
+        2,
+        (note-69)/12
+    );
+}
+
+
+function midiName(midi){
+
+    const names = [
+        "C","C#","D","D#",
+        "E","F","F#","G",
+        "G#","A","A#","B"
+    ];
+
+    const note =
+    names[
+        ((midi%12)+12)%12
+    ];
+
+    const octave =
+    Math.floor(midi/12)-1;
+
+    return note+octave;
 }
 
 
 /*
-각 모드는 '완성된 곡'이 아니라
-음정 관계와 기억 구조만 정의한다.
+Small pitch collections.
+
+The point is not to write a song.
+The point is to make each presence
+leave one note behind.
 */
 
 const MELODY_PATTERNS = {
 
-fragile:[
-    62,
-    69,
-    74,
-    67,
-    76,
-    71,
-    64
-],
+    fragile:[
+        62,
+        69,
+        74,
+        67,
+        76,
+        71,
+        64
+    ],
 
-memory:[
-    62,
-    69,
-    72,
-    76,
-    69,
-    74
-],
+    memory:[
+        62,
+        69,
+        72,
+        76,
+        69,
+        74
+    ],
 
-drift:[
-    57,
-    62,
-    64,
-    69,
-    71,
-    74,
-    76,
-    81
-],
+    drift:[
+        57,
+        62,
+        64,
+        69,
+        71,
+        74,
+        76,
+        81
+    ],
 
-broken:[
-    62,
-    62,
-    69,
-    74,
-    69,
-    62,
-    76,
-    62
-]
+    broken:[
+        62,
+        62,
+        69,
+        74,
+        69,
+        62,
+        76,
+        62
+    ]
 
 };
 
 
 let melodyIndex = 0;
 let melodyCycle = 0;
-
-let lastMelodyTime = -999;
 let lastMelodyMidi = null;
 
 
-/*
-다음 음을 고른다.
-*/
+/* =========================================================
+NEXT OBJECT NOTE
+========================================================= */
 
 function getNextMelodyNote(){
 
     const mode =
     S("melodyMode");
 
-    if(mode==="off")
-        return null;
+
+    /*
+    OFF does not mean silence.
+
+    It means:
+    object notes stay around one
+    neutral pitch instead of forming
+    a melodic sequence.
+    */
+
+    if(mode==="off"){
+
+        let note = 62;
+
+        const register =
+        S("melodyRegister");
+
+        if(register<.25)
+            note -= 12;
+
+        else if(register>.76)
+            note += 12;
+
+        return{
+            rest:false,
+            midi:note
+        };
+    }
 
 
     const pattern =
     MELODY_PATTERNS[mode];
 
-    if(!pattern)
-        return null;
+    if(!pattern){
+
+        return{
+            rest:false,
+            midi:62
+        };
+    }
 
 
     let note =
@@ -898,14 +1013,9 @@ function getNextMelodyNote(){
     ];
 
 
-    /*
-    REGISTER
-
-    낮음 <-> 높음
-    */
-
     const register =
     S("melodyRegister");
+
 
     if(register<.25)
         note -= 12;
@@ -915,115 +1025,14 @@ function getNextMelodyNote(){
 
 
     /*
-    =====================================================
     FRAGILE
-
-    큰 여백.
-    가끔 음을 한 옥타브 멀리 보낸다.
-    =====================================================
     */
 
     if(mode==="fragile"){
 
-        if(Math.random()<.23){
+        if(Math.random()<.20){
 
-            note +=
-            Math.random()<.5
-            ?
-            12
-            :
-            -12;
-
-        }
-    }
-
-
-    /*
-    =====================================================
-    MEMORY
-
-    매 cycle마다 기억이 조금씩 변한다.
-
-    - 한 음이 빠지기도 함
-    - 옥타브가 바뀌기도 함
-    - 직전 음이 되돌아오기도 함
-    =====================================================
-    */
-
-    if(mode==="memory"){
-
-        if(
-            melodyCycle>0 &&
-            Math.random()<.16
-        ){
-            return {
-                rest:true
-            };
-        }
-
-
-        if(
-            melodyCycle>0 &&
-            Math.random()<.15
-        ){
-            note +=
-            Math.random()<.5
-            ?
-            12
-            :
-            -12;
-        }
-
-
-        if(
-            lastMelodyMidi!==null &&
-            Math.random()<.10
-        ){
-            note =
-            lastMelodyMidi;
-        }
-    }
-
-
-    /*
-    =====================================================
-    DRIFT
-
-    pattern에서 조금 벗어나며 떠돈다.
-    =====================================================
-    */
-
-    if(mode==="drift"){
-
-        const movements=[
-            -5,
-            -2,
-            0,
-            0,
-            2,
-            5,
-            7
-        ];
-
-        note +=
-        movements[
-            Math.floor(
-                Math.random()*
-                movements.length
-            )
-        ];
-    }
-
-
-    /*
-    =====================================================
-    BROKEN
-    =====================================================
-    */
-
-    if(mode==="broken"){
-
-        if(Math.random()<.24){
+            melodyIndex++;
 
             return{
                 rest:true
@@ -1031,26 +1040,116 @@ function getNextMelodyNote(){
         }
 
 
-        if(Math.random()<.28){
+        if(Math.random()<.20){
 
             note +=
             Math.random()<.5
-            ?
-            12
-            :
-            -12;
+            ? 12
+            : -12;
+        }
+    }
 
+
+    /*
+    MEMORY
+    */
+
+    if(mode==="memory"){
+
+        if(
+            melodyCycle>0 &&
+            Math.random()<.13
+        ){
+
+            melodyIndex++;
+
+            return{
+                rest:true
+            };
+        }
+
+
+        if(
+            melodyCycle>0 &&
+            Math.random()<.12
+        ){
+
+            note +=
+            Math.random()<.5
+            ? 12
+            : -12;
         }
 
 
         if(
             lastMelodyMidi!==null &&
-            Math.random()<.28
+            Math.random()<.09
         ){
 
             note =
             lastMelodyMidi;
+        }
+    }
 
+
+    /*
+    DRIFT
+    */
+
+    if(mode==="drift"){
+
+        const movements = [
+            -5,
+            -2,
+            0,
+            0,
+            0,
+            2,
+            5
+        ];
+
+        note +=
+        movements[
+            Math.floor(
+                Math.random() *
+                movements.length
+            )
+        ];
+    }
+
+
+    /*
+    BROKEN
+    */
+
+    if(mode==="broken"){
+
+        if(Math.random()<.20){
+
+            melodyIndex++;
+
+            return{
+                rest:true
+            };
+        }
+
+
+        if(
+            lastMelodyMidi!==null &&
+            Math.random()<.24
+        ){
+
+            note =
+            lastMelodyMidi;
+        }
+
+
+        if(Math.random()<.20){
+
+            note +=
+            Math.random()<.5
+            ? 12
+            : -12;
         }
     }
 
@@ -1063,6 +1162,7 @@ function getNextMelodyNote(){
         pattern.length ===
         0
     ){
+
         melodyCycle++;
     }
 
@@ -1096,7 +1196,8 @@ let radioSource = null;
 let radioFilter = null;
 let radioGain = null;
 
-let lastImpact = -999;
+let lastObjectNote = -999;
+let lastSoftKey = -999;
 let lastBowl = -999;
 let lastGlitch = -999;
 
@@ -1116,6 +1217,14 @@ function initAudio(){
     window.webkitAudioContext;
 
 
+    if(!AudioContextClass){
+
+        throw new Error(
+            "Web Audio API is not supported."
+        );
+    }
+
+
     AC =
     new AudioContextClass();
 
@@ -1125,7 +1234,7 @@ function initAudio(){
 
 
     /*
-    VIDEO BUS
+    ORIGINAL VIDEO
     */
 
     videoSource =
@@ -1134,6 +1243,7 @@ function initAudio(){
     videoGain =
     AC.createGain();
 
+
     videoSource.connect(videoGain);
 
     videoGain.connect(AC.destination);
@@ -1141,7 +1251,7 @@ function initAudio(){
 
 
     /*
-    GENERATED BUS
+    GENERATED
     */
 
     generatedMaster =
@@ -1198,6 +1308,10 @@ function initAudio(){
 }
 
 
+/* =========================================================
+MIXER
+========================================================= */
+
 function applyAudioSettings(){
 
     if(!AC)
@@ -1222,24 +1336,28 @@ function applyAudioSettings(){
     );
 
 
+    /*
+    Shorter and cleaner than before.
+    */
+
     delay.delayTime.setTargetAtTime(
-        .30+
-        S("spaceAmount")*.45,
+        .23 +
+        S("spaceAmount")*.34,
         now,
         .05
     );
 
 
     delayFeedback.gain.setTargetAtTime(
-        .10+
-        S("spaceAmount")*.40,
+        .07 +
+        S("spaceAmount")*.27,
         now,
         .05
     );
 
 
     delayWet.gain.setTargetAtTime(
-        S("spaceAmount")*.48,
+        S("spaceAmount")*.32,
         now,
         .05
     );
@@ -1247,16 +1365,18 @@ function applyAudioSettings(){
 
 
 [
-videoVolume,
-masterVolume,
-spaceAmount
+    videoVolume,
+    masterVolume,
+    spaceAmount
 ].forEach(el=>{
 
     el.addEventListener(
         "input",
         ()=>{
+
             if(!exporting)
                 applyAudioSettings();
+
         }
     );
 
@@ -1285,7 +1405,7 @@ function createRadio(){
     buffer.getChannelData(0);
 
 
-    let brown=0;
+    let brown = 0;
 
 
     for(let i=0;i<length;i++){
@@ -1295,23 +1415,23 @@ function createRadio(){
 
 
         brown =
-        brown*.958+
-        white*.042;
+        brown*.96 +
+        white*.04;
 
 
         let value =
-        brown*1.8;
+        brown*1.45;
 
 
-        if(Math.random()<.004){
+        if(Math.random()<.0025){
 
             value +=
-            (Math.random()*2-1)*2;
-
+            (Math.random()*2-1)*1.3;
         }
 
 
-        data[i]=value;
+        data[i] =
+        value;
     }
 
 
@@ -1332,7 +1452,7 @@ function createRadio(){
     "bandpass";
 
     radioFilter.Q.value =
-    5;
+    4;
 
 
     radioGain =
@@ -1366,7 +1486,11 @@ function createRadio(){
 
 function updateRadio(motion){
 
-    if(!AC)
+    if(
+        !AC ||
+        !radioGain ||
+        !radioFilter
+    )
         return;
 
 
@@ -1374,42 +1498,58 @@ function updateRadio(motion){
     AC.currentTime;
 
 
+    const level =
+    S("radioLevel") *
+    (
+        .005 +
+        S("radioStatic")*.027 +
+        motion*.012
+    );
+
+
     radioGain.gain.setTargetAtTime(
-
-        S("radioLevel")*
-        (
-            .008+
-            S("radioStatic")*.045+
-            motion*.02
-        ),
-
+        level,
         now,
-        .08
-
+        .10
     );
 
 
     radioFilter.frequency.setTargetAtTime(
 
-        350+
+        500 +
         Math.pow(
             S("radioFrequency"),
             2
-        )*6500+
-        motion*1200,
+        ) *
+        5000 +
+        motion*700,
 
         now,
-        .1
-
+        .12
     );
 }
 
 
 /* =========================================================
-OBJECT IMPACT
+OBJECT NOTE
 ========================================================= */
 
-function playImpact(x,strength){
+/*
+This replaces the old metallic impact.
+
+New object =
+one piano-like note.
+
+No bell.
+No giant metallic partial stack.
+No horror hit.
+*/
+
+function playObjectNote(
+    midi,
+    x,
+    strength=.5
+){
 
     if(!AC)
         return;
@@ -1419,11 +1559,10 @@ function playImpact(x,strength){
     AC.currentTime;
 
 
-    if(now-lastImpact<.27)
+    if(
+        now-lastObjectNote < .24
+    )
         return;
-
-
-    lastImpact=now;
 
 
     const level =
@@ -1434,283 +1573,47 @@ function playImpact(x,strength){
         return;
 
 
+    lastObjectNote =
+    now;
+
+
+    const character =
+    currentSoundMode();
+
+
     const resonance =
     S("impactResonance");
 
 
-    const mode =
-    currentSoundMode();
-
-
-    let base =
-    mode.impactMin+
-    x*mode.impactRange;
-
-
-    if(
-        S("soundMode")==="strange"
-    ){
-
-        base +=
-        (Math.random()-.5)*80;
-
-    }
-
-
-    const filter =
-    AC.createBiquadFilter();
-
-    filter.type =
-    "lowpass";
-
-    filter.frequency.value =
-    2800+
-    resonance*5000;
-
-
-    const pan =
-    AC.createStereoPanner();
-
-    pan.pan.value =
-    x*2-1;
-
-
-    filter.connect(pan);
-
-    pan.connect(generatedDry);
-    pan.connect(delay);
-
-
-    mode.impactRatios.forEach(
-    (ratio,index)=>{
-
-        const osc =
-        AC.createOscillator();
-
-        const gain =
-        AC.createGain();
-
-
-        osc.type =
-        "sine";
-
-
-        osc.frequency.value =
-        Math.max(
-            70,
-            base*ratio
-        );
-
-
-        osc.detune.value =
-        (Math.random()-.5)*5;
-
-
-        const amplitude =
-        Math.pow(.48,index);
-
-
-        gain.gain.setValueAtTime(
-            .0001,
-            now
-        );
-
-
-        gain.gain.exponentialRampToValueAtTime(
-
-            Math.max(
-                .0002,
-                level*
-                amplitude*
-                (
-                    .03+
-                    strength*.05
-                )
-            ),
-
-            now+.008
-
-        );
-
-
-        const decay =
-        Math.max(
-            .8,
-            1.2+
-            resonance*5-
-            index*.2
-        );
-
-
-        gain.gain.exponentialRampToValueAtTime(
-            .0001,
-            now+decay
-        );
-
-
-        osc.connect(gain);
-        gain.connect(filter);
-
-        osc.start(now);
-        osc.stop(now+decay+.3);
-
-    });
+    let note =
+    midi;
 
 
     /*
-    SHORT SHIMMER
+    STRANGE:
+    still piano-like,
+    but occasionally slightly displaced.
     */
 
-    if(mode.shimmer>0){
-
-        const length =
-        Math.floor(
-            AC.sampleRate*.10
-        );
-
-
-        const buffer =
-        AC.createBuffer(
-            1,
-            length,
-            AC.sampleRate
-        );
-
-
-        const d =
-        buffer.getChannelData(0);
-
-
-        for(let i=0;i<length;i++){
-
-            d[i]=
-            (Math.random()*2-1)*
-            Math.pow(
-                1-i/length,
-                2.5
-            );
-
-        }
-
-
-        const source =
-        AC.createBufferSource();
-
-        source.buffer =
-        buffer;
-
-
-        const high =
-        AC.createBiquadFilter();
-
-        high.type =
-        "bandpass";
-
-        high.frequency.value =
-        4800;
-
-        high.Q.value =
-        2;
-
-
-        const gain =
-        AC.createGain();
-
-
-        gain.gain.setValueAtTime(
-            level*mode.shimmer,
-            now
-        );
-
-
-        gain.gain.exponentialRampToValueAtTime(
-            .0001,
-            now+.10
-        );
-
-
-        source.connect(high);
-        high.connect(gain);
-        gain.connect(pan);
-
-        source.start(now);
-    }
-
-
-    eventMeter.textContent =
-    "TING";
-}
-
-
-/* =========================================================
-BOWL
-========================================================= */
-
-function playBowl(x,strength=.5){
-
-    if(!AC)
-        return;
-
-
-    const now =
-    AC.currentTime;
-
-
-    if(now-lastBowl<1.3)
-        return;
-
-
-    lastBowl=now;
-
-
-    const level =
-    S("bowlLevel");
-
-
-    if(level<=.001)
-        return;
-
-
-    const mode =
-    currentSoundMode();
-
-
-    const resonance =
-    S("bowlResonance");
-
-
-    const tone =
-    S("bowlTone");
-
-
-    let base =
-    mode.bowlMin+
-    x*mode.bowlRange+
-    tone*35;
-
-
     if(
-        S("soundMode")==="strange"
+        S("soundMode")==="strange" &&
+        Math.random()<.18
     ){
 
-        const jumps=[
-            .82,
-            1,
-            1.18,
-            1.41
-        ];
-
-
-        base *=
-        jumps[
-            Math.floor(
-                Math.random()*
-                jumps.length
-            )
-        ];
-
+        note +=
+        Math.random()<.5
+        ? 12
+        : -12;
     }
 
+
+    const frequency =
+    midiToFrequency(note);
+
+
+    /*
+    MASTER NOTE FILTER
+    */
 
     const filter =
     AC.createBiquadFilter();
@@ -1721,123 +1624,423 @@ function playBowl(x,strength=.5){
 
 
     filter.frequency.value =
-    1000+
-    tone*6000;
+    character.cutoff +
+    resonance*1000;
 
+
+    filter.Q.value =
+    .35;
+
+
+    /*
+    ENVELOPE
+    */
+
+    const envelope =
+    AC.createGain();
+
+
+    envelope.gain.value =
+    .0001;
+
+
+    /*
+    PAN FROM OBJECT POSITION
+    */
 
     const pan =
     AC.createStereoPanner();
 
 
     pan.pan.value =
-    (x*2-1)*.6;
+    (x*2-1)*.60;
 
 
-    filter.connect(pan);
+    filter.connect(
+        envelope
+    );
 
-    pan.connect(generatedDry);
-    pan.connect(delay);
-
-
-    mode.bowlRatios.forEach(
-    (ratio,index)=>{
-
-        [-1,1].forEach(side=>{
-
-            const osc =
-            AC.createOscillator();
-
-            const gain =
-            AC.createGain();
+    envelope.connect(
+        pan
+    );
 
 
-            osc.type =
-            "sine";
+    pan.connect(
+        generatedDry
+    );
+
+    pan.connect(
+        delay
+    );
 
 
-            osc.frequency.value =
-            Math.max(
-                60,
-                base*ratio
-            );
+    /*
+    VELOCITY
+
+    Large object = slightly firmer key.
+    Not dramatically louder.
+    */
+
+    const velocity =
+    .55 +
+    Math.min(
+        1,
+        strength
+    )*.45;
 
 
-            osc.detune.value =
-            side*
-            (
-                1.2+
-                index*.45
-            );
+    const peak =
+    Math.max(
+        .0002,
+
+        level *
+        character.body *
+        velocity *
+        .095
+    );
 
 
-            const amplitude =
-            Math.pow(.55,index);
+    envelope.gain.setValueAtTime(
+        .0001,
+        now
+    );
 
 
-            gain.gain.setValueAtTime(
-                .0001,
-                now
-            );
+    envelope.gain.exponentialRampToValueAtTime(
+        peak,
+        now + character.attack
+    );
 
 
-            gain.gain.exponentialRampToValueAtTime(
-
-                Math.max(
-                    .00015,
-                    level*
-                    amplitude*
-                    (
-                        .008+
-                        strength*.022
-                    )
-                ),
-
-                now+
-                .06+
-                index*.012
-
-            );
+    envelope.gain.exponentialRampToValueAtTime(
+        Math.max(
+            .00015,
+            peak*.34
+        ),
+        now+.28
+    );
 
 
-            const decay =
-            Math.max(
-                1.5,
-                2.5+
-                resonance*6.5-
-                index*.3
-            );
+    const decay =
+    character.decay +
+    resonance*2.1;
 
 
-            gain.gain.exponentialRampToValueAtTime(
-                .0001,
-                now+decay
-            );
+    envelope.gain.exponentialRampToValueAtTime(
+        .0001,
+        now+decay
+    );
 
 
-            osc.connect(gain);
-            gain.connect(filter);
+    /*
+    FUNDAMENTAL
 
-            osc.start(now);
-            osc.stop(now+decay+.3);
+    Two extremely close oscillators
+    create a little acoustic movement
+    instead of a sterile synth sine.
+    */
 
-        });
+    const fundamentalA =
+    AC.createOscillator();
 
-    });
+    const fundamentalB =
+    AC.createOscillator();
+
+
+    fundamentalA.type =
+    "sine";
+
+    fundamentalB.type =
+    "sine";
+
+
+    fundamentalA.frequency.value =
+    frequency;
+
+    fundamentalB.frequency.value =
+    frequency;
+
+
+    fundamentalA.detune.value =
+    -character.detune*.5;
+
+    fundamentalB.detune.value =
+    character.detune*.5;
+
+
+    const fundamentalBGain =
+    AC.createGain();
+
+    fundamentalBGain.gain.value =
+    .32;
+
+
+    fundamentalA.connect(
+        filter
+    );
+
+
+    fundamentalB.connect(
+        fundamentalBGain
+    );
+
+    fundamentalBGain.connect(
+        filter
+    );
+
+
+    /*
+    SECOND PARTIAL
+    */
+
+    const partial2 =
+    AC.createOscillator();
+
+    const partial2Gain =
+    AC.createGain();
+
+
+    partial2.type =
+    "sine";
+
+
+    partial2.frequency.value =
+    frequency*2.003;
+
+
+    partial2Gain.gain.value =
+    character.overtone2;
+
+
+    partial2.connect(
+        partial2Gain
+    );
+
+    partial2Gain.connect(
+        filter
+    );
+
+
+    /*
+    THIRD PARTIAL
+
+    Very quiet.
+    This is not the old metallic stack.
+    */
+
+    const partial3 =
+    AC.createOscillator();
+
+    const partial3Gain =
+    AC.createGain();
+
+
+    partial3.type =
+    "triangle";
+
+
+    partial3.frequency.value =
+    frequency*3.006;
+
+
+    partial3Gain.gain.value =
+    character.overtone3;
+
+
+    partial3.connect(
+        partial3Gain
+    );
+
+    partial3Gain.connect(
+        filter
+    );
+
+
+    /*
+    FELT / HAMMER
+
+    Short muted mechanical attack.
+    */
+
+    const noiseLength =
+    Math.max(
+        1,
+        Math.floor(
+            AC.sampleRate*.035
+        )
+    );
+
+
+    const noiseBuffer =
+    AC.createBuffer(
+        1,
+        noiseLength,
+        AC.sampleRate
+    );
+
+
+    const data =
+    noiseBuffer.getChannelData(0);
+
+
+    for(let i=0;i<noiseLength;i++){
+
+        const t =
+        i/noiseLength;
+
+
+        data[i] =
+        (Math.random()*2-1) *
+        Math.pow(
+            1-t,
+            5
+        );
+    }
+
+
+    const hammer =
+    AC.createBufferSource();
+
+
+    hammer.buffer =
+    noiseBuffer;
+
+
+    const hammerFilter =
+    AC.createBiquadFilter();
+
+
+    hammerFilter.type =
+    "bandpass";
+
+
+    hammerFilter.frequency.value =
+    Math.min(
+        3500,
+        700 + frequency*1.5
+    );
+
+
+    hammerFilter.Q.value =
+    .65;
+
+
+    const hammerGain =
+    AC.createGain();
+
+
+    hammerGain.gain.value =
+    level *
+    character.hammer *
+    velocity;
+
+
+    hammer.connect(
+        hammerFilter
+    );
+
+    hammerFilter.connect(
+        hammerGain
+    );
+
+    hammerGain.connect(
+        envelope
+    );
+
+
+    /*
+    Tiny body resonance.
+
+    A very quiet lower component makes
+    the note feel physical without
+    becoming a dark drone.
+    */
+
+    const body =
+    AC.createOscillator();
+
+    const bodyGain =
+    AC.createGain();
+
+
+    body.type =
+    "sine";
+
+
+    body.frequency.value =
+    Math.max(
+        55,
+        frequency*.5
+    );
+
+
+    bodyGain.gain.value =
+    .035 +
+    resonance*.025;
+
+
+    body.connect(
+        bodyGain
+    );
+
+    bodyGain.connect(
+        filter
+    );
+
+
+    fundamentalA.start(now);
+    fundamentalB.start(now);
+
+    partial2.start(now);
+    partial3.start(now);
+
+    body.start(now);
+    hammer.start(now);
+
+
+    const stopTime =
+    now +
+    decay +
+    .25;
+
+
+    fundamentalA.stop(stopTime);
+    fundamentalB.stop(stopTime);
+
+    partial2.stop(stopTime);
+    partial3.stop(stopTime);
+
+    body.stop(stopTime);
+
+
+    lastMelodyMidi =
+    note;
+
+
+    melodyMeter.textContent =
+    midiName(note);
 
 
     eventMeter.textContent =
-    "BOWL";
+    "OBJECT NOTE";
 }
 
 
 /* =========================================================
-FELT-LIKE MELODY NOTE
+SOFT KEY AFTERIMAGE
 ========================================================= */
 
-function playMelodyNote(
-midi,
-x,
-strength=.5
+/*
+Soft Keys still exist.
+
+They are now a secondary echo,
+not the main event.
+*/
+
+function playSoftKey(
+    midi,
+    x,
+    strength=.5
 ){
 
     if(!AC)
@@ -1856,36 +2059,48 @@ strength=.5
     AC.currentTime;
 
 
-    /*
-    같은 순간 너무 많은 피아노음 방지.
-    */
-
     if(
-        now-lastMelodyTime<.32
+        now-lastSoftKey < .65
     )
         return;
 
 
-    lastMelodyTime =
+    lastSoftKey =
     now;
-
-
-    const frequency =
-    midiToFrequency(midi);
 
 
     const softness =
     S("keySoftness");
 
 
+    let note =
+    midi;
+
+
     /*
-    =====================================================
-    MASTER NOTE BUS
-    =====================================================
+    Mostly nearby notes / octave shadows.
     */
 
-    const noteGain =
-    AC.createGain();
+    const choices = [
+        0,
+        0,
+        12,
+        -12,
+        7
+    ];
+
+
+    note +=
+    choices[
+        Math.floor(
+            Math.random() *
+            choices.length
+        )
+    ];
+
+
+    const frequency =
+    midiToFrequency(note);
 
 
     const filter =
@@ -1897,12 +2112,12 @@ strength=.5
 
 
     filter.frequency.value =
-    1300+
-    (1-softness)*4500;
+    900 +
+    (1-softness)*3200;
 
 
-    filter.Q.value =
-    .5;
+    const gain =
+    AC.createGain();
 
 
     const pan =
@@ -1910,373 +2125,130 @@ strength=.5
 
 
     pan.pan.value =
-    (x*2-1)*.5;
+    (x*2-1)*.38;
 
 
-    filter.connect(noteGain);
-    noteGain.connect(pan);
+    filter.connect(
+        gain
+    );
 
-    pan.connect(generatedDry);
-    pan.connect(delay);
-
-
-    /*
-    Felt piano처럼:
-    빠른 attack,
-    초반 decay,
-    이후 긴 꼬리.
-    */
-
-    const peak =
-    level*
-    (
-        .035+
-        strength*.055
+    gain.connect(
+        pan
     );
 
 
-    noteGain.gain.setValueAtTime(
+    pan.connect(
+        generatedDry
+    );
+
+    pan.connect(
+        delay
+    );
+
+
+    const peak =
+    Math.max(
+        .00015,
+        level *
+        (
+            .022 +
+            strength*.025
+        )
+    );
+
+
+    gain.gain.setValueAtTime(
         .0001,
         now
     );
 
 
-    noteGain.gain.exponentialRampToValueAtTime(
-        Math.max(.0002,peak),
-        now+.012
+    gain.gain.exponentialRampToValueAtTime(
+        peak,
+        now+.035
     );
 
 
-    noteGain.gain.exponentialRampToValueAtTime(
-        Math.max(.00015,peak*.32),
-        now+.32
+    gain.gain.exponentialRampToValueAtTime(
+        peak*.22,
+        now+.55
     );
 
 
     const decay =
-    2.8+
-    softness*3.7;
+    3.2 +
+    softness*3.2;
 
 
-    noteGain.gain.exponentialRampToValueAtTime(
+    gain.gain.exponentialRampToValueAtTime(
         .0001,
         now+decay
     );
 
 
-    /*
-    =====================================================
-    FUNDAMENTAL
-    =====================================================
-    */
+    const oscA =
+    AC.createOscillator();
 
-    const fundamental =
+    const oscB =
     AC.createOscillator();
 
 
-    fundamental.type =
+    oscA.type =
     "sine";
 
-
-    fundamental.frequency.value =
-    frequency;
-
-
-    fundamental.detune.value =
-    (Math.random()-.5)*1.5;
-
-
-    fundamental.connect(filter);
-
-
-    /*
-    =====================================================
-    SECOND PARTIAL
-    =====================================================
-    */
-
-    const partial2 =
-    AC.createOscillator();
-
-    const partial2Gain =
-    AC.createGain();
-
-
-    partial2.type =
-    "sine";
-
-    partial2.frequency.value =
-    frequency*2.002;
-
-
-    partial2Gain.gain.value =
-    .13;
-
-
-    partial2.connect(
-        partial2Gain
-    );
-
-    partial2Gain.connect(
-        filter
-    );
-
-
-    /*
-    =====================================================
-    THIRD PARTIAL
-    =====================================================
-    */
-
-    const partial3 =
-    AC.createOscillator();
-
-    const partial3Gain =
-    AC.createGain();
-
-
-    partial3.type =
+    oscB.type =
     "triangle";
 
-    partial3.frequency.value =
-    frequency*3.003;
+
+    oscA.frequency.value =
+    frequency;
+
+    oscB.frequency.value =
+    frequency*2.001;
 
 
-    partial3Gain.gain.value =
-    .025;
+    const oscBGain =
+    AC.createGain();
+
+    oscBGain.gain.value =
+    .045;
 
 
-    partial3.connect(
-        partial3Gain
-    );
-
-    partial3Gain.connect(
+    oscA.connect(
         filter
     );
 
 
-    /*
-    =====================================================
-    FELT / HAMMER NOISE
+    oscB.connect(
+        oscBGain
+    );
 
-    아주 짧은 공기성 어택.
-    =====================================================
-    */
-
-    const noiseLength =
-    Math.floor(
-        AC.sampleRate*.045
+    oscBGain.connect(
+        filter
     );
 
 
-    const noiseBuffer =
-    AC.createBuffer(
-        1,
-        noiseLength,
-        AC.sampleRate
+    oscA.start(now);
+    oscB.start(now);
+
+
+    oscA.stop(
+        now+decay+.2
     );
 
-
-    const data =
-    noiseBuffer.getChannelData(0);
-
-
-    for(
-        let i=0;
-        i<noiseLength;
-        i++
-    ){
-
-        data[i] =
-        (Math.random()*2-1)*
-        Math.pow(
-            1-i/noiseLength,
-            4
-        );
-
-    }
-
-
-    const noise =
-    AC.createBufferSource();
-
-    noise.buffer =
-    noiseBuffer;
-
-
-    const noiseFilter =
-    AC.createBiquadFilter();
-
-
-    noiseFilter.type =
-    "bandpass";
-
-
-    noiseFilter.frequency.value =
-    1200+
-    frequency*.8;
-
-
-    noiseFilter.Q.value =
-    .7;
-
-
-    const noiseGain =
-    AC.createGain();
-
-
-    noiseGain.gain.value =
-    level*.012*
-    (1-softness*.6);
-
-
-    noise.connect(
-        noiseFilter
-    );
-
-    noiseFilter.connect(
-        noiseGain
-    );
-
-    noiseGain.connect(
-        noteGain
-    );
-
-
-    fundamental.start(now);
-    partial2.start(now);
-    partial3.start(now);
-
-    noise.start(now);
-
-
-    fundamental.stop(
-        now+decay+.3
-    );
-
-    partial2.stop(
-        now+decay+.3
-    );
-
-    partial3.stop(
-        now+decay+.3
-    );
-
-
-    lastMelodyMidi =
-    midi;
-
-
-    melodyMeter.textContent =
-    midiName(midi);
-
-
-    eventMeter.textContent =
-    "MELODY";
-}
-
-
-/* =========================================================
-MIDI NAME
-========================================================= */
-
-function midiName(midi){
-
-    const names=[
-        "C","C#","D","D#",
-        "E","F","F#","G",
-        "G#","A","A#","B"
-    ];
-
-
-    const note =
-    names[
-        ((midi%12)+12)%12
-    ];
-
-
-    const octave =
-    Math.floor(midi/12)-1;
-
-
-    return note+octave;
-}
-
-
-/* =========================================================
-TRIGGER MELODY
-========================================================= */
-
-function triggerMelody(
-x,
-strength,
-reason="OBJECT"
-){
-
-    if(
-        S("melodyMode")==="off"
-    )
-        return;
-
-
-    /*
-    EVENT가 있어도 항상 음을 내지 않는다.
-    침묵 자체가 중요.
-    */
-
-    let chance =
-    S("melodyChance");
-
-
-    if(reason==="MOTION")
-        chance *= .20;
-
-
-    if(
-        Math.random() >
-        chance
-    )
-        return;
-
-
-    const next =
-    getNextMelodyNote();
-
-
-    if(!next)
-        return;
-
-
-    /*
-    모티프 안에 의도적 쉼.
-    */
-
-    if(next.rest){
-
-        melodyMeter.textContent =
-        "REST";
-
-        melodyIndex++;
-
-        return;
-    }
-
-
-    playMelodyNote(
-        next.midi,
-        x,
-        strength
+    oscB.stop(
+        now+decay+.2
     );
 }
 
 
 /* =========================================================
-GLITCH
+GHOST BOWL
 ========================================================= */
 
-function playGlitch(
-x,
-motion
+function playBowl(
+    x,
+    strength=.5
 ){
 
     if(!AC)
@@ -2287,7 +2259,185 @@ motion
     AC.currentTime;
 
 
-    if(now-lastGlitch<.06)
+    if(now-lastBowl<2.4)
+        return;
+
+
+    const level =
+    S("bowlLevel");
+
+
+    if(level<=.001)
+        return;
+
+
+    lastBowl =
+    now;
+
+
+    const resonance =
+    S("bowlResonance");
+
+
+    const tone =
+    S("bowlTone");
+
+
+    /*
+    Higher and softer than old bowl.
+    Avoid horror low-end.
+    */
+
+    const base =
+    190 +
+    tone*170 +
+    x*60;
+
+
+    const ratios = [
+        1,
+        1.501,
+        2.002,
+        3.004
+    ];
+
+
+    const filter =
+    AC.createBiquadFilter();
+
+
+    filter.type =
+    "lowpass";
+
+
+    filter.frequency.value =
+    1800 +
+    tone*2600;
+
+
+    const pan =
+    AC.createStereoPanner();
+
+
+    pan.pan.value =
+    (x*2-1)*.45;
+
+
+    filter.connect(
+        pan
+    );
+
+
+    pan.connect(
+        generatedDry
+    );
+
+    pan.connect(
+        delay
+    );
+
+
+    ratios.forEach(
+        (ratio,index)=>{
+
+            const osc =
+            AC.createOscillator();
+
+            const gain =
+            AC.createGain();
+
+
+            osc.type =
+            "sine";
+
+
+            osc.frequency.value =
+            base*ratio;
+
+
+            osc.detune.value =
+            (Math.random()-.5)*1.2;
+
+
+            const peak =
+            Math.max(
+                .0001,
+
+                level *
+                Math.pow(.43,index) *
+                (
+                    .012 +
+                    strength*.014
+                )
+            );
+
+
+            gain.gain.setValueAtTime(
+                .0001,
+                now
+            );
+
+
+            gain.gain.exponentialRampToValueAtTime(
+                peak,
+                now+.12
+            );
+
+
+            const decay =
+            2.6 +
+            resonance*4.2 -
+            index*.2;
+
+
+            gain.gain.exponentialRampToValueAtTime(
+                .0001,
+                now+decay
+            );
+
+
+            osc.connect(
+                gain
+            );
+
+            gain.connect(
+                filter
+            );
+
+
+            osc.start(now);
+
+            osc.stop(
+                now+decay+.2
+            );
+
+        }
+    );
+
+
+    eventMeter.textContent =
+    "GHOST";
+}
+
+
+/* =========================================================
+GLITCH
+========================================================= */
+
+function playGlitch(
+    x,
+    motion
+){
+
+    if(!AC)
+        return;
+
+
+    const now =
+    AC.currentTime;
+
+
+    if(now-lastGlitch<.09)
         return;
 
 
@@ -2298,16 +2448,16 @@ motion
         return;
 
 
-    lastGlitch =
-    now;
-
-
     const level =
     S("glitchLevel");
 
 
     if(level<=.001)
         return;
+
+
+    lastGlitch =
+    now;
 
 
     const osc =
@@ -2325,15 +2475,17 @@ motion
 
     osc.type =
     Math.random()>.5
-    ?
-    "square"
-    :
-    "sawtooth";
+    ? "square"
+    : "sawtooth";
 
+
+    /*
+    Keep it away from horror bass.
+    */
 
     osc.frequency.value =
-    500+
-    Math.random()*4200;
+    850 +
+    Math.random()*3000;
 
 
     filter.type =
@@ -2341,35 +2493,36 @@ motion
 
 
     filter.frequency.value =
-    1000+
-    Math.random()*5500;
+    1300 +
+    Math.random()*4000;
 
 
     filter.Q.value =
-    5+
-    Math.random()*12;
+    4 +
+    Math.random()*8;
+
+
+    const peak =
+    Math.max(
+        .0001,
+
+        level *
+        (
+            .0025 +
+            motion*.014
+        )
+    );
 
 
     gain.gain.setValueAtTime(
-
-        Math.max(
-            .0001,
-            level*
-            (
-                .004+
-                motion*.028
-            )
-        ),
-
+        peak,
         now
     );
 
 
     gain.gain.exponentialRampToValueAtTime(
         .0001,
-        now+
-        .02+
-        Math.random()*.065
+        now+.018+Math.random()*.035
     );
 
 
@@ -2377,20 +2530,206 @@ motion
     x*2-1;
 
 
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(pan);
+    osc.connect(
+        filter
+    );
 
-    pan.connect(generatedDry);
-    pan.connect(delay);
+    filter.connect(
+        gain
+    );
+
+    gain.connect(
+        pan
+    );
+
+
+    pan.connect(
+        generatedDry
+    );
+
+    pan.connect(
+        delay
+    );
 
 
     osc.start(now);
-    osc.stop(now+.12);
+
+    osc.stop(
+        now+.09
+    );
 
 
     eventMeter.textContent =
     "GLITCH";
+}
+
+
+/* =========================================================
+OBJECT MUSICAL EVENT
+========================================================= */
+
+function triggerObjectMusicalEvent(
+    x,
+    strength
+){
+
+    /*
+    Chance controls whether this presence
+    actually leaves a note.
+
+    Silence remains part of the system.
+    */
+
+    if(
+        Math.random() >
+        S("melodyChance")
+    ){
+
+        melodyMeter.textContent =
+        "SILENCE";
+
+        return;
+    }
+
+
+    const next =
+    getNextMelodyNote();
+
+
+    if(!next)
+        return;
+
+
+    if(next.rest){
+
+        melodyMeter.textContent =
+        "REST";
+
+        return;
+    }
+
+
+    /*
+    OBJECT NOTE IS THE MELODY.
+
+    No separate metal impact first.
+    */
+
+    playObjectNote(
+        next.midi,
+        x,
+        strength
+    );
+
+
+    /*
+    Very occasional soft-key shadow.
+    */
+
+    if(
+        S("keyLevel")>.001 &&
+        Math.random()<.14
+    ){
+
+        const midi =
+        next.midi;
+
+        const px =
+        x;
+
+        const ps =
+        strength;
+
+
+        setTimeout(
+            ()=>{
+
+                if(running){
+
+                    playSoftKey(
+                        midi,
+                        px,
+                        ps*.65
+                    );
+                }
+
+            },
+
+            240 +
+            Math.random()*650
+        );
+    }
+
+
+    /*
+    Ghost resonance is extremely rare.
+    */
+
+    if(
+        Math.random() <
+        currentSoundMode().ghostChance
+    ){
+
+        const px =
+        x;
+
+        const ps =
+        strength;
+
+
+        setTimeout(
+            ()=>{
+
+                if(running){
+
+                    playBowl(
+                        px,
+                        ps*.55
+                    );
+                }
+
+            },
+
+            500 +
+            Math.random()*900
+        );
+    }
+}
+
+
+/* =========================================================
+MOTION AFTERIMAGE
+========================================================= */
+
+function triggerMotionAfterimage(
+    x,
+    motion
+){
+
+    /*
+    Movement should not constantly
+    write the melody.
+
+    Occasionally it recalls the last note.
+    */
+
+    if(
+        lastMelodyMidi===null
+    )
+        return;
+
+
+    if(
+        motion>.27 &&
+        Math.random()<.018
+    ){
+
+        playSoftKey(
+            lastMelodyMidi,
+            x,
+            motion
+        );
+    }
 }
 
 
@@ -2402,9 +2741,30 @@ async function loadModel(){
 
     try{
 
+        if(
+            typeof tf==="undefined" ||
+            typeof cocoSsd==="undefined"
+        ){
+
+            throw new Error(
+                "TensorFlow or COCO-SSD failed to load."
+            );
+        }
+
+
         try{
-            await tf.setBackend("webgl");
-        }catch(e){}
+
+            await tf.setBackend(
+                "webgl"
+            );
+
+        }catch(error){
+
+            console.warn(
+                "WebGL backend unavailable.",
+                error
+            );
+        }
 
 
         await tf.ready();
@@ -2426,10 +2786,8 @@ async function loadModel(){
 
         statusElement.textContent =
         videoReady
-        ?
-        "READY"
-        :
-        "SELECT VIDEO";
+        ? "READY"
+        : "SELECT VIDEO";
 
 
         updateButtons();
@@ -2438,11 +2796,25 @@ async function loadModel(){
 
         console.error(error);
 
+
+        modelReady =
+        false;
+
+
         modelState.textContent =
         "AI MODEL: ERROR";
 
+
+        modelState.classList.add(
+            "error"
+        );
+
+
         statusElement.textContent =
         "AI LOAD ERROR";
+
+
+        updateButtons();
     }
 }
 
@@ -2454,155 +2826,235 @@ VIDEO LOAD
 ========================================================= */
 
 fileInput.addEventListener(
-"change",
-event=>{
+    "change",
+    event=>{
 
-    const file =
-    event.target.files[0];
+        try{
 
-
-    if(!file)
-        return;
-
-
-    stopEverything();
+            const file =
+            event.target.files &&
+            event.target.files[0];
 
 
-    if(objectURL)
-        URL.revokeObjectURL(objectURL);
+            if(!file)
+                return;
 
 
-    objectURL =
-    URL.createObjectURL(file);
+            stopEverything();
 
 
-    video.src =
-    objectURL;
+            videoReady =
+            false;
 
 
-    video.load();
+            predictions = [];
+            previousObjects = [];
 
 
-    filenameElement.textContent =
-    file.name;
+            updateButtons();
 
 
-    stage.style.display =
-    "block";
+            if(objectURL){
+
+                URL.revokeObjectURL(
+                    objectURL
+                );
+            }
 
 
-    videoReady =
-    false;
+            objectURL =
+            URL.createObjectURL(
+                file
+            );
 
 
-    video.onloadedmetadata =
+            video.src =
+            objectURL;
+
+
+            video.load();
+
+
+            filenameElement.textContent =
+            file.name;
+
+
+            stage.style.display =
+            "block";
+
+
+            statusElement.textContent =
+            "LOADING VIDEO...";
+
+        }catch(error){
+
+            console.error(error);
+
+            statusElement.textContent =
+            "VIDEO LOAD ERROR";
+
+            statusElement.classList.add(
+                "error"
+            );
+        }
+    }
+);
+
+
+/* =========================================================
+VIDEO METADATA
+========================================================= */
+
+video.addEventListener(
+    "loadedmetadata",
     ()=>{
 
+        try{
 
-        /*
-        REAL-TIME EXPORT
-        */
+            video.defaultPlaybackRate =
+            1;
 
-        video.defaultPlaybackRate =
-        1;
-
-        video.playbackRate =
-        1;
+            video.playbackRate =
+            1;
 
 
-        if(
-            "preservesPitch" in video
-        ){
+            if(
+                "preservesPitch" in video
+            ){
 
-            video.preservesPitch =
+                video.preservesPitch =
+                true;
+            }
+
+
+            const vw =
+            video.videoWidth;
+
+            const vh =
+            video.videoHeight;
+
+
+            if(!vw || !vh){
+
+                throw new Error(
+                    "Invalid video dimensions."
+                );
+            }
+
+
+            const barHeight =
+            Math.max(
+                56,
+                Math.round(
+                    vh*.07
+                )
+            );
+
+
+            visualCanvas.width =
+            vw;
+
+
+            visualCanvas.height =
+            vh+barHeight;
+
+
+            const analysisWidth =
+            Math.min(
+                512,
+                vw
+            );
+
+
+            analysisCanvas.width =
+            analysisWidth;
+
+
+            analysisCanvas.height =
+            Math.max(
+                1,
+                Math.round(
+                    analysisWidth *
+                    vh /
+                    vw
+                )
+            );
+
+
+            videoReady =
             true;
 
+
+            statusElement.classList.remove(
+                "error"
+            );
+
+
+            statusElement.textContent =
+            modelReady
+            ? "READY"
+            : "VIDEO READY / WAITING FOR AI";
+
+
+            video.currentTime =
+            0;
+
+
+            drawFrame();
+
+            updateTimeDisplay();
+            updateButtons();
+
+        }catch(error){
+
+            console.error(error);
+
+
+            videoReady =
+            false;
+
+
+            statusElement.textContent =
+            "VIDEO INITIALIZATION ERROR";
+
+
+            statusElement.classList.add(
+                "error"
+            );
+
+
+            updateButtons();
         }
+    }
+);
 
 
-        const barHeight =
+video.addEventListener(
+    "error",
+    ()=>{
 
-        Math.max(
-            56,
-            Math.round(
-                video.videoHeight*.07
-            )
-        );
-
-
-        visualCanvas.width =
-        video.videoWidth;
-
-
-        visualCanvas.height =
-        video.videoHeight+
-        barHeight;
-
-
-        const analysisWidth =
-
-        Math.min(
-            512,
-            video.videoWidth
-        );
-
-
-        analysisCanvas.width =
-        analysisWidth;
-
-
-        analysisCanvas.height =
-
-        Math.round(
-            analysisWidth*
-            video.videoHeight/
-            video.videoWidth
+        console.error(
+            "VIDEO ERROR",
+            video.error
         );
 
 
         videoReady =
-        true;
+        false;
 
 
         statusElement.textContent =
-        "READY";
+        "VIDEO ERROR";
 
 
-        video.currentTime =
-        0;
+        statusElement.classList.add(
+            "error"
+        );
 
-
-        drawFrame();
 
         updateButtons();
-    };
-});
-
-
-/* =========================================================
-BUTTONS
-========================================================= */
-
-function updateButtons(){
-
-    const ready =
-    modelReady &&
-    videoReady;
-
-
-    playButton.disabled =
-    !ready ||
-    running;
-
-
-    exportButton.disabled =
-    !ready ||
-    running;
-
-
-    stopButton.disabled =
-    !running;
-}
+    }
+);
 
 
 /* =========================================================
@@ -2610,7 +3062,7 @@ TRACK OBJECTS
 ========================================================= */
 
 function analyseObjects(
-detections
+    detections
 ){
 
     const current =
@@ -2622,21 +3074,20 @@ detections
 
         return{
 
-            className:
-            d.class,
+            className:d.class,
 
             x:
-            (x+w/2)/
+            (x+w/2) /
             analysisCanvas.width,
 
             y:
-            (y+h/2)/
+            (y+h/2) /
             analysisCanvas.height,
 
             area:
-            (w*h)/
+            (w*h) /
             (
-                analysisCanvas.width*
+                analysisCanvas.width *
                 analysisCanvas.height
             ),
 
@@ -2644,7 +3095,6 @@ detections
 
             isNew:false
         };
-
     });
 
 
@@ -2654,45 +3104,47 @@ detections
 
     current.forEach(obj=>{
 
-        let best=-1;
-        let bestDistance=Infinity;
+        let best =
+        -1;
+
+        let bestDistance =
+        Infinity;
 
 
         previousObjects.forEach(
-        (old,index)=>{
+            (old,index)=>{
 
-            if(used.has(index))
-                return;
-
-
-            if(
-                old.className !==
-                obj.className
-            )
-                return;
+                if(used.has(index))
+                    return;
 
 
-            const distance =
+                if(
+                    old.className !==
+                    obj.className
+                )
+                    return;
 
-            Math.hypot(
-                old.x-obj.x,
-                old.y-obj.y
-            );
+
+                const distance =
+                Math.hypot(
+                    old.x-obj.x,
+                    old.y-obj.y
+                );
 
 
-            if(
-                distance <
-                bestDistance
-            ){
+                if(
+                    distance <
+                    bestDistance
+                ){
 
-                bestDistance =
-                distance;
+                    bestDistance =
+                    distance;
 
-                best =
-                index;
+                    best =
+                    index;
+                }
             }
-
-        });
+        );
 
 
         if(
@@ -2704,11 +3156,11 @@ detections
 
 
             obj.motion =
-
             Math.min(
                 1,
-                bestDistance*
-                9*
+
+                bestDistance *
+                9 *
                 S("motionResponse")
             );
 
@@ -2716,9 +3168,7 @@ detections
 
             obj.isNew =
             true;
-
         }
-
     });
 
 
@@ -2733,140 +3183,47 @@ detections
 
 
         /*
-        =================================================
-        NEW OBJECT
-        =================================================
+        NEW PRESENCE
         */
 
         if(obj.isNew){
 
             const strength =
-
-            Math.min(
-                1,
-                obj.area*5
+            Math.max(
+                .18,
+                Math.min(
+                    1,
+                    obj.area*5
+                )
             );
 
 
-            /*
-            METAL
-            */
-
-            playImpact(
+            triggerObjectMusicalEvent(
                 obj.x,
                 strength
             );
-
-
-            /*
-            MELODY
-
-            객체가 등장하면
-            악보의 다음 한 음으로 진행.
-            */
-
-            triggerMelody(
-                obj.x,
-                Math.max(
-                    .25,
-                    strength
-                ),
-                "OBJECT"
-            );
-
-
-            /*
-            BOWL은 가끔만.
-            */
-
-            if(
-                Math.random() <
-                currentSoundMode()
-                .bowlChance
-            ){
-
-                setTimeout(
-                ()=>{
-
-                    if(running){
-
-                        playBowl(
-                            obj.x,
-                            Math.max(
-                                .25,
-                                strength
-                            )
-                        );
-
-                    }
-
-                },
-
-                180+
-                Math.random()*500
-
-                );
-
-            }
-
         }
 
 
         /*
-        =================================================
         MOTION
-        =================================================
         */
 
         if(
-            obj.motion>.045
+            obj.motion>.055
         ){
 
             playGlitch(
                 obj.x,
                 obj.motion
             );
-
         }
 
 
-        /*
-        큰 움직임에서
-        멜로디가 아주 드물게 진행.
-        */
-
-        if(
-            obj.motion>.22 &&
-            Math.random()<.10
-        ){
-
-            triggerMelody(
-                obj.x,
-                obj.motion,
-                "MOTION"
-            );
-
-        }
-
-
-        /*
-        Bowl 역시 드물게.
-        */
-
-        if(
-            obj.motion>.20 &&
-            Math.random() <
-            currentSoundMode()
-            .movementBowlChance
-        ){
-
-            playBowl(
-                obj.x,
-                obj.motion
-            );
-
-        }
-
+        triggerMotionAfterimage(
+            obj.x,
+            obj.motion
+        );
     });
 
 
@@ -2880,7 +3237,7 @@ detections
         current.length,
 
         motion:
-        totalMotion/
+        totalMotion /
         Math.max(
             1,
             current.length
@@ -2897,6 +3254,9 @@ async function runDetection(){
 
     if(
         !running ||
+        !modelReady ||
+        !model ||
+        !videoReady ||
         detectionBusy ||
         video.paused ||
         video.ended
@@ -2904,13 +3264,9 @@ async function runDetection(){
         return;
 
 
-    /*
-    VIDEO CURRENT TIME 기준.
-    */
-
     if(
         lastDetectionVideoTime>=0 &&
-        video.currentTime-
+        video.currentTime -
         lastDetectionVideoTime <
         DETECTION_INTERVAL
     )
@@ -2937,7 +3293,6 @@ async function runDetection(){
 
 
         let result =
-
         await model.detect(
             analysisCanvas,
             12,
@@ -2945,21 +3300,33 @@ async function runDetection(){
         );
 
 
+        if(!Array.isArray(result)){
+
+            result = [];
+        }
+
+
         result =
         result
 
         .filter(
             item=>
+            item &&
+            item.bbox &&
             item.score>=.30
         )
 
         .sort(
             (a,b)=>
-            b.bbox[2]*
-            b.bbox[3]
+            (
+                b.bbox[2] *
+                b.bbox[3]
+            )
             -
-            a.bbox[2]*
-            a.bbox[3]
+            (
+                a.bbox[2] *
+                a.bbox[3]
+            )
         )
 
         .slice(
@@ -2984,7 +3351,9 @@ async function runDetection(){
 
 
         objectMeter.textContent =
-        analysis.count;
+        String(
+            analysis.count
+        );
 
 
         motionMeter.textContent =
@@ -2996,24 +3365,32 @@ async function runDetection(){
 
     }catch(error){
 
-        console.error(error);
+        console.error(
+            "DETECTION ERROR:",
+            error
+        );
 
+    }finally{
+
+        detectionBusy =
+        false;
     }
-
-
-    detectionBusy =
-    false;
 }
 
 
 /* =========================================================
-TEXT
+DETECTION TEXT
 ========================================================= */
 
 function getDetectionText(){
 
-    if(!predictions.length)
+    if(
+        !predictions ||
+        predictions.length===0
+    ){
+
         return "NO OBJECTS";
+    }
 
 
     return predictions
@@ -3036,7 +3413,6 @@ function getDetectionText(){
         +
 
         "%"
-
     )
 
     .join(
@@ -3071,7 +3447,7 @@ function drawFrame(){
 
 
     /*
-    B&W BASE
+    GRAYSCALE BASE
     */
 
     ctx.save();
@@ -3081,213 +3457,214 @@ function drawFrame(){
     "grayscale(100%) contrast(110%)";
 
 
-    ctx.drawImage(
-        video,
-        0,
-        0,
-        vw,
-        vh
-    );
+    try{
+
+        ctx.drawImage(
+            video,
+            0,
+            0,
+            vw,
+            vh
+        );
+
+    }catch(error){
+
+        ctx.restore();
+        return;
+    }
 
 
     ctx.restore();
 
 
     /*
-    DETECTIONS
+    DETECTED OBJECTS
     */
 
     const scaleX =
-    vw/
+    vw /
     analysisCanvas.width;
 
 
     const scaleY =
-    vh/
+    vh /
     analysisCanvas.height;
 
 
     predictions.forEach(
-    object=>{
+        object=>{
 
-        const [x,y,w,h] =
-        object.bbox;
-
-
-        const dx =
-        x*scaleX;
-
-        const dy =
-        y*scaleY;
-
-        const dw =
-        w*scaleX;
-
-        const dh =
-        h*scaleY;
+            if(
+                !object ||
+                !object.bbox
+            )
+                return;
 
 
-        /*
-        COLOUR REGION
-        */
-
-        ctx.save();
+            const [x,y,w,h] =
+            object.bbox;
 
 
-        ctx.beginPath();
+            const dx =
+            x*scaleX;
 
-        ctx.rect(
-            dx,
-            dy,
-            dw,
-            dh
-        );
+            const dy =
+            y*scaleY;
 
-        ctx.clip();
+            const dw =
+            w*scaleX;
 
-
-        ctx.filter =
-        `saturate(${S("colorAmount")}) contrast(120%)`;
+            const dh =
+            h*scaleY;
 
 
-        const sx =
-        x/
-        analysisCanvas.width*
-        vw;
+            /*
+            RESTORE COLOR
+            */
+
+            ctx.save();
 
 
-        const sy =
-        y/
-        analysisCanvas.height*
-        vh;
+            ctx.beginPath();
 
 
-        const sw =
-        w/
-        analysisCanvas.width*
-        vw;
+            ctx.rect(
+                dx,
+                dy,
+                dw,
+                dh
+            );
 
 
-        const sh =
-        h/
-        analysisCanvas.height*
-        vh;
+            ctx.clip();
 
 
-        ctx.drawImage(
-            video,
-            sx,
-            sy,
-            sw,
-            sh,
-            dx,
-            dy,
-            dw,
-            dh
-        );
+            ctx.filter =
+            `saturate(${S("colorAmount")}) contrast(120%)`;
 
 
-        ctx.restore();
+            try{
+
+                ctx.drawImage(
+
+                    video,
+
+                    x*scaleX,
+                    y*scaleY,
+                    w*scaleX,
+                    h*scaleY,
+
+                    dx,
+                    dy,
+                    dw,
+                    dh
+
+                );
+
+            }catch(error){}
 
 
-        /*
-        BOX
-        */
-
-        ctx.strokeStyle =
-        "rgba(255,255,255,.95)";
+            ctx.restore();
 
 
-        ctx.lineWidth =
-        Math.max(
-            1.5,
-            vw/800
-        );
+            /*
+            BOX
+            */
+
+            ctx.strokeStyle =
+            "rgba(255,255,255,.95)";
 
 
-        ctx.strokeRect(
-            dx,
-            dy,
-            dw,
-            dh
-        );
+            ctx.lineWidth =
+            Math.max(
+                1.5,
+                vw/800
+            );
 
 
-        /*
-        LABEL
-        */
-
-        const fontSize =
-        Math.max(
-            11,
-            vw/90
-        );
+            ctx.strokeRect(
+                dx,
+                dy,
+                dw,
+                dh
+            );
 
 
-        ctx.font =
-        `${fontSize}px monospace`;
+            /*
+            LABEL
+            */
+
+            const fontSize =
+            Math.max(
+                11,
+                vw/90
+            );
 
 
-        const label =
-
-        object.class
-        .toUpperCase()
-
-        +
-
-        " "
-
-        +
-
-        Math.round(
-            object.score*100
-        )
-
-        +
-
-        "%";
+            ctx.font =
+            `${fontSize}px monospace`;
 
 
-        const tw =
-        ctx.measureText(label).width;
+            const label =
+
+            object.class
+            .toUpperCase()
+
+            +
+
+            " "
+
+            +
+
+            Math.round(
+                object.score*100
+            )
+
+            +
+
+            "%";
 
 
-        const labelY =
-        Math.max(
-            fontSize+8,
-            dy
-        );
+            const tw =
+            ctx.measureText(
+                label
+            ).width;
 
 
-        ctx.fillStyle =
-        "rgba(0,0,0,.8)";
+            const labelY =
+            Math.max(
+                fontSize+8,
+                dy
+            );
 
 
-        ctx.fillRect(
-            dx,
-            labelY-fontSize-8,
-            tw+12,
-            fontSize+8
-        );
+            ctx.fillStyle =
+            "rgba(0,0,0,.8)";
 
 
-        ctx.fillStyle =
-        "white";
+            ctx.fillRect(
+                dx,
+                labelY-fontSize-8,
+                tw+12,
+                fontSize+8
+            );
 
 
-        ctx.fillText(
-            label,
-            dx+6,
-            labelY-5
-        );
+            ctx.fillStyle =
+            "white";
 
-    });
+
+            ctx.fillText(
+                label,
+                dx+6,
+                labelY-5
+            );
+        }
+    );
 
 
     /*
-    =====================================================
-    BOTTOM DETECTION BAR
-    =====================================================
+    DETECTION BAR
     */
 
     ctx.filter =
@@ -3365,8 +3742,7 @@ function drawFrame(){
             15,
             vw*.015
         ),
-        vh+
-        barHeight/2
+        vh+barHeight/2
     );
 
 
@@ -3380,7 +3756,9 @@ TIME
 
 function formatTime(seconds){
 
-    if(!Number.isFinite(seconds))
+    if(
+        !Number.isFinite(seconds)
+    )
         return "00:00";
 
 
@@ -3396,7 +3774,7 @@ function formatTime(seconds){
     );
 
 
-    return(
+    return (
         String(min)
         .padStart(2,"0")
         +
@@ -3431,11 +3809,15 @@ function updateTimeDisplay(){
 
         const progress =
 
+        Number.isFinite(
+            video.duration
+        )
+        &&
         video.duration>0
 
         ?
 
-        video.currentTime/
+        video.currentTime /
         video.duration
 
         :
@@ -3458,7 +3840,7 @@ function updateTimeDisplay(){
 
         +
 
-        "%  ·  "
+        "% · "
 
         +
 
@@ -3475,7 +3857,6 @@ function updateTimeDisplay(){
         formatTime(
             video.duration
         );
-
     }
 }
 
@@ -3510,35 +3891,60 @@ RESET
 
 function resetSession(){
 
-    predictions=[];
-    previousObjects=[];
+    predictions = [];
+    previousObjects = [];
 
-    detectionBusy=false;
-    lastDetectionVideoTime=-1;
 
-    lastImpact=-999;
-    lastBowl=-999;
-    lastGlitch=-999;
+    detectionBusy =
+    false;
 
-    lastMelodyTime=-999;
-    lastMelodyMidi=null;
 
-    melodyIndex=0;
-    melodyCycle=0;
+    lastDetectionVideoTime =
+    -1;
 
-    objectMeter.textContent="0";
-    motionMeter.textContent="0.00";
 
-    eventMeter.textContent="—";
-    melodyMeter.textContent="—";
+    lastObjectNote =
+    -999;
 
-    objectsElement.textContent=
+    lastSoftKey =
+    -999;
+
+    lastBowl =
+    -999;
+
+    lastGlitch =
+    -999;
+
+
+    melodyIndex =
+    0;
+
+    melodyCycle =
+    0;
+
+    lastMelodyMidi =
+    null;
+
+
+    objectMeter.textContent =
+    "0";
+
+    motionMeter.textContent =
+    "0.00";
+
+    eventMeter.textContent =
+    "—";
+
+    melodyMeter.textContent =
+    "—";
+
+    objectsElement.textContent =
     "NO OBJECTS";
 }
 
 
 /* =========================================================
-SEEK WAIT
+SEEK
 ========================================================= */
 
 function waitForSeek(){
@@ -3551,21 +3957,24 @@ function waitForSeek(){
                 video.currentTime
             )<.05
         ){
+
             resolve();
             return;
         }
 
 
-        let finished=false;
+        let finished =
+        false;
 
 
-        const done=()=>{
+        const done = ()=>{
 
             if(finished)
                 return;
 
 
-            finished=true;
+            finished =
+            true;
 
 
             video.removeEventListener(
@@ -3588,7 +3997,6 @@ function waitForSeek(){
             done,
             1500
         );
-
     });
 }
 
@@ -3598,87 +4006,103 @@ GENERATE
 ========================================================= */
 
 playButton.addEventListener(
-"click",
-async()=>{
+    "click",
+    async ()=>{
 
-    if(running)
-        return;
-
-
-    exporting=false;
-    exportSettings=null;
-
-
-    initAudio();
+        if(
+            running ||
+            exporting
+        )
+            return;
 
 
-    if(AC.state==="suspended")
-        await AC.resume();
+        try{
+
+            exporting =
+            false;
+
+            exportSettings =
+            null;
 
 
-    video.defaultPlaybackRate=1;
-    video.playbackRate=1;
+            initAudio();
 
 
-    applyAudioSettings();
+            if(
+                AC.state==="suspended"
+            ){
 
-    resetSession();
-
-
-    video.pause();
-    video.currentTime=0;
-
-
-    await waitForSeek();
+                await AC.resume();
+            }
 
 
-    running=true;
+            video.defaultPlaybackRate =
+            1;
+
+            video.playbackRate =
+            1;
 
 
-    try{
+            applyAudioSettings();
 
-        await video.play();
+            resetSession();
 
-    }catch(error){
 
-        running=false;
-        console.error(error);
-        return;
+            video.pause();
 
+            video.currentTime =
+            0;
+
+
+            await waitForSeek();
+
+
+            running =
+            true;
+
+
+            await video.play();
+
+
+            statusElement.textContent =
+            "GENERATING";
+
+
+            updateButtons();
+
+            renderLoop();
+
+        }catch(error){
+
+            console.error(error);
+
+
+            running =
+            false;
+
+
+            statusElement.textContent =
+            "PLAYBACK ERROR";
+
+
+            statusElement.classList.add(
+                "error"
+            );
+
+
+            updateButtons();
+        }
     }
-
-
-    statusElement.textContent=
-    "GENERATING";
-
-
-    updateButtons();
-
-    renderLoop();
-});
+);
 
 
 /* =========================================================
-RECORDER
+MIME
 ========================================================= */
-
-let mediaRecorder=null;
-let chunks=[];
-
-let recordedBlob=null;
-let recordedURL=null;
-
 
 function chooseMime(){
 
-    /*
-    WebM 우선.
-
-    브라우저 MediaRecorder에서
-    duration metadata가 더 안정적인 편.
-    */
-
-    const candidates=[
+    const candidates = [
 
         "video/webm;codecs=vp9,opus",
         "video/webm;codecs=vp8,opus",
@@ -3691,13 +4115,11 @@ function chooseMime(){
     for(const type of candidates){
 
         if(
-            typeof MediaRecorder!=="undefined"
-            &&
+            typeof MediaRecorder!=="undefined" &&
             MediaRecorder.isTypeSupported(type)
         ){
 
             return type;
-
         }
     }
 
@@ -3718,13 +4140,15 @@ exportButton.addEventListener(
 
 async function startExport(){
 
-    if(running)
+    if(
+        running ||
+        exporting
+    )
         return;
 
 
     if(
-        typeof MediaRecorder==="undefined"
-        ||
+        typeof MediaRecorder==="undefined" ||
         !visualCanvas.captureStream
     ){
 
@@ -3736,248 +4160,249 @@ async function startExport(){
     }
 
 
-    /*
-    모든 설정 동결.
-    MELODY MODE도 포함.
-    */
-
-    exportSettings=
-    getSettings();
-
-
-    exporting=true;
-
-
-    initAudio();
-
-
-    if(AC.state==="suspended")
-        await AC.resume();
-
-
-    /*
-    SOURCE VIDEO = REAL TIME
-    */
-
-    video.defaultPlaybackRate=1;
-    video.playbackRate=1;
-
-
-    if(recordedURL){
-
-        URL.revokeObjectURL(
-            recordedURL
-        );
-
-        recordedURL=null;
-    }
-
-
-    recordedBlob=null;
-
-    downloadButton.disabled=true;
-
-
-    resetSession();
-
-
-    video.pause();
-    video.currentTime=0;
-
-
-    await waitForSeek();
-
-
-    drawFrame();
-
-    applyAudioSettings();
-
-
-    /*
-    30 FPS CANVAS
-    */
-
-    const canvasStream =
-    visualCanvas.captureStream(30);
-
-
-    const combined =
-    new MediaStream([
-
-        ...canvasStream
-        .getVideoTracks(),
-
-        ...recordDestination
-        .stream
-        .getAudioTracks()
-
-    ]);
-
-
-    const mime =
-    chooseMime();
-
-
-    const options={
-
-        videoBitsPerSecond:
-        12000000,
-
-        audioBitsPerSecond:
-        192000
-
-    };
-
-
-    if(mime)
-        options.mimeType=mime;
-
-
     try{
 
-        mediaRecorder=
+        /*
+        FREEZE SETTINGS
+        */
+
+        exportSettings =
+        getSettings();
+
+
+        exporting =
+        true;
+
+
+        initAudio();
+
+
+        if(
+            AC.state==="suspended"
+        ){
+
+            await AC.resume();
+        }
+
+
+        video.defaultPlaybackRate =
+        1;
+
+        video.playbackRate =
+        1;
+
+
+        if(recordedURL){
+
+            URL.revokeObjectURL(
+                recordedURL
+            );
+
+            recordedURL =
+            null;
+        }
+
+
+        recordedBlob =
+        null;
+
+
+        downloadButton.disabled =
+        true;
+
+
+        resetSession();
+
+
+        video.pause();
+
+        video.currentTime =
+        0;
+
+
+        await waitForSeek();
+
+
+        drawFrame();
+
+        applyAudioSettings();
+
+
+        /*
+        CANVAS VIDEO
+        */
+
+        const canvasStream =
+        visualCanvas.captureStream(30);
+
+
+        /*
+        AUDIO
+        */
+
+        const combined =
+        new MediaStream([
+
+            ...canvasStream
+            .getVideoTracks(),
+
+            ...recordDestination
+            .stream
+            .getAudioTracks()
+
+        ]);
+
+
+        const mime =
+        chooseMime();
+
+
+        const options = {
+
+            videoBitsPerSecond:
+            12000000,
+
+            audioBitsPerSecond:
+            192000
+
+        };
+
+
+        if(mime){
+
+            options.mimeType =
+            mime;
+        }
+
+
+        mediaRecorder =
         new MediaRecorder(
             combined,
             options
         );
 
-    }catch(error){
 
-        console.error(error);
-
-        exporting=false;
-        exportSettings=null;
-
-        statusElement.textContent=
-        "RECORDER ERROR";
-
-        return;
-    }
+        chunks =
+        [];
 
 
-    chunks=[];
+        mediaRecorder.ondataavailable =
+        event=>{
+
+            if(
+                event.data &&
+                event.data.size>0
+            ){
+
+                chunks.push(
+                    event.data
+                );
+            }
+        };
 
 
-    mediaRecorder.ondataavailable=
-    event=>{
+        mediaRecorder.onerror =
+        event=>{
 
-        if(
-            event.data &&
-            event.data.size>0
-        ){
+            console.error(
+                "RECORDER ERROR:",
+                event
+            );
+        };
 
-            chunks.push(
-                event.data
+
+        mediaRecorder.onstop =
+        ()=>{
+
+            const type =
+
+            mediaRecorder.mimeType
+            ||
+            mime
+            ||
+            "video/webm";
+
+
+            recordedBlob =
+            new Blob(
+                chunks,
+                {type}
             );
 
-        }
-    };
+
+            recordedURL =
+            URL.createObjectURL(
+                recordedBlob
+            );
 
 
-    mediaRecorder.onerror=
-    event=>{
+            exporting =
+            false;
 
-        console.error(
-            "RECORDER ERROR",
-            event
+
+            exportSettings =
+            null;
+
+
+            exportButton.classList.remove(
+                "recording"
+            );
+
+
+            exportProgress.textContent =
+            "READY TO DOWNLOAD";
+
+
+            statusElement.textContent =
+            "EXPORT COMPLETE";
+
+
+            applyAudioSettings();
+
+            updateButtons();
+        };
+
+
+        /*
+        IMPORTANT:
+        recorder starts before video.
+        */
+
+        mediaRecorder.start(
+            1000
         );
 
-    };
 
-
-    mediaRecorder.onstop=
-    ()=>{
-
-        const type =
-
-        mediaRecorder.mimeType
-        ||
-        mime
-        ||
-        "video/webm";
-
-
-        recordedBlob =
-        new Blob(
-            chunks,
-            {type}
-        );
-
-
-        recordedURL =
-        URL.createObjectURL(
-            recordedBlob
-        );
-
-
-        downloadButton.disabled=
-        false;
-
-
-        exportButton.classList.remove(
+        exportButton.classList.add(
             "recording"
         );
 
 
-        exportProgress.textContent=
-        "READY TO DOWNLOAD";
+        statusElement.textContent =
+        "EXPORTING";
 
 
-        statusElement.textContent=
-        "EXPORT COMPLETE";
+        exportProgress.textContent =
+        "RECORDING 0%";
 
 
-        exporting=false;
-        exportSettings=null;
+        await new Promise(
+            resolve=>
+            setTimeout(
+                resolve,
+                120
+            )
+        );
 
 
-        applyAudioSettings();
+        running =
+        true;
+
 
         updateButtons();
-    };
 
+        renderLoop();
 
-    /*
-    RECORDER STARTS FIRST
-    */
-
-    mediaRecorder.start(1000);
-
-
-    exportButton.classList.add(
-        "recording"
-    );
-
-
-    statusElement.textContent=
-    "EXPORTING";
-
-
-    exportProgress.textContent=
-    "RECORDING 0%";
-
-
-    await new Promise(
-        resolve=>
-        setTimeout(
-            resolve,
-            120
-        )
-    );
-
-
-    /*
-    THEN VIDEO.
-    */
-
-    running=true;
-
-    updateButtons();
-
-    renderLoop();
-
-
-    try{
 
         await video.play();
 
@@ -3985,7 +4410,31 @@ async function startExport(){
 
         console.error(error);
 
-        running=false;
+
+        running =
+        false;
+
+
+        exporting =
+        false;
+
+
+        exportSettings =
+        null;
+
+
+        exportButton.classList.remove(
+            "recording"
+        );
+
+
+        statusElement.textContent =
+        "EXPORT ERROR";
+
+
+        statusElement.classList.add(
+            "error"
+        );
 
 
         if(
@@ -3993,94 +4442,100 @@ async function startExport(){
             mediaRecorder.state!=="inactive"
         ){
 
-            mediaRecorder.stop();
-
+            try{
+                mediaRecorder.stop();
+            }catch(e){}
         }
+
+
+        updateButtons();
     }
 }
 
 
 /* =========================================================
-END
+VIDEO ENDED
 ========================================================= */
 
 video.addEventListener(
-"ended",
-()=>{
+    "ended",
+    ()=>{
 
-    if(!running)
-        return;
-
-
-    running=false;
+        if(!running)
+            return;
 
 
-    if(renderRAF)
-        cancelAnimationFrame(
-            renderRAF
-        );
+        running =
+        false;
 
 
-    drawFrame();
+        if(renderRAF){
+
+            cancelAnimationFrame(
+                renderRAF
+            );
+        }
 
 
-    if(
-        AC &&
-        radioGain
-    ){
+        drawFrame();
 
-        radioGain.gain.setTargetAtTime(
-            0,
-            AC.currentTime,
-            .05
-        );
 
+        if(
+            AC &&
+            radioGain
+        ){
+
+            radioGain.gain.setTargetAtTime(
+                0,
+                AC.currentTime,
+                .05
+            );
+        }
+
+
+        if(exporting){
+
+            exportProgress.textContent =
+            "FINALIZING";
+
+
+            /*
+            Let generated sound leave
+            a very short final tail.
+            */
+
+            setTimeout(
+                ()=>{
+
+                    if(
+                        mediaRecorder &&
+                        mediaRecorder.state!=="inactive"
+                    ){
+
+                        try{
+
+                            mediaRecorder.requestData();
+
+                        }catch(error){}
+
+
+                        mediaRecorder.stop();
+                    }
+
+                },
+                800
+            );
+
+        }else{
+
+            statusElement.textContent =
+            "FINISHED";
+
+
+            updateButtons();
+        }
     }
-
-
-    if(exporting){
-
-        exportProgress.textContent=
-        "FINALIZING";
-
-
-        /*
-        800ms tail only.
-
-        2분 원본 →
-        약 2분 + 0.8초.
-        */
-
-        setTimeout(
-        ()=>{
-
-            if(
-                mediaRecorder &&
-                mediaRecorder.state!=="inactive"
-            ){
-
-                try{
-                    mediaRecorder.requestData();
-                }catch(e){}
-
-
-                mediaRecorder.stop();
-
-            }
-
-        },
-        800
-        );
-
-    }else{
-
-        statusElement.textContent=
-        "FINISHED";
-
-        updateButtons();
-
-    }
-});
+);
 
 
 /* =========================================================
@@ -4102,13 +4557,16 @@ function stopEverything(){
         return;
 
 
-    running=false;
+    running =
+    false;
 
 
-    if(renderRAF)
+    if(renderRAF){
+
         cancelAnimationFrame(
             renderRAF
         );
+    }
 
 
     video.pause();
@@ -4124,7 +4582,6 @@ function stopEverything(){
             AC.currentTime,
             .05
         );
-
     }
 
 
@@ -4134,24 +4591,26 @@ function stopEverything(){
         mediaRecorder.state!=="inactive"
     ){
 
-        exportProgress.textContent=
+        exportProgress.textContent =
         "FINALIZING";
 
 
         try{
+
             mediaRecorder.requestData();
-        }catch(e){}
+
+        }catch(error){}
 
 
         mediaRecorder.stop();
 
     }else{
 
-        statusElement.textContent=
+        statusElement.textContent =
         "STOPPED";
 
-        updateButtons();
 
+        updateButtons();
     }
 }
 
@@ -4161,96 +4620,109 @@ DOWNLOAD
 ========================================================= */
 
 downloadButton.addEventListener(
-"click",
-()=>{
+    "click",
+    ()=>{
 
-    if(
-        !recordedBlob ||
-        !recordedURL
-    )
-        return;
-
-
-    const extension =
-
-    recordedBlob.type
-    .includes("mp4")
-
-    ?
-
-    "mp4"
-
-    :
-
-    "webm";
+        if(
+            !recordedBlob ||
+            !recordedURL
+        )
+            return;
 
 
-    const date =
+        const extension =
 
-    new Date()
-    .toISOString()
-    .replace(
-        /[:.]/g,
-        "-"
-    );
+        recordedBlob.type
+        .includes("mp4")
 
+        ?
 
-    const a =
-    document.createElement("a");
+        "mp4"
 
+        :
 
-    a.href =
-    recordedURL;
+        "webm";
 
 
-    a.download =
-    `presence-synth-${date}.${extension}`;
+        const date =
+
+        new Date()
+        .toISOString()
+        .replace(
+            /[:.]/g,
+            "-"
+        );
 
 
-    document.body.appendChild(a);
+        const a =
+        document.createElement(
+            "a"
+        );
 
-    a.click();
 
-    a.remove();
-});
+        a.href =
+        recordedURL;
+
+
+        a.download =
+        `presence-synth-${date}.${extension}`;
+
+
+        document.body.appendChild(
+            a
+        );
+
+
+        a.click();
+
+        a.remove();
+    }
+);
 
 
 /* =========================================================
-EVENTS
+OTHER EVENTS
 ========================================================= */
 
 video.addEventListener(
-"seeked",
-()=>{
+    "seeked",
+    ()=>{
 
-    if(!running)
-        drawFrame();
+        if(!running){
 
-});
+            drawFrame();
+        }
+    }
+);
 
 
 video.addEventListener(
-"timeupdate",
-updateTimeDisplay
+    "timeupdate",
+    updateTimeDisplay
 );
 
 
 window.addEventListener(
-"beforeunload",
-()=>{
+    "beforeunload",
+    ()=>{
 
-    if(objectURL)
-        URL.revokeObjectURL(
-            objectURL
-        );
+        if(objectURL){
+
+            URL.revokeObjectURL(
+                objectURL
+            );
+        }
 
 
-    if(recordedURL)
-        URL.revokeObjectURL(
-            recordedURL
-        );
+        if(recordedURL){
 
-});
+            URL.revokeObjectURL(
+                recordedURL
+            );
+        }
+    }
+);
+
 </script>
 
 </body>
