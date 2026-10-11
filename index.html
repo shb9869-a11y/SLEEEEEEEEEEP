@@ -1,4729 +1,786 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-
 <title>PRESENCE SYNTH</title>
-
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
-
 <style>
 *{box-sizing:border-box}
-
-html,body{
-    margin:0;
-    background:#050505;
-    color:#eee;
-    font-family:Arial,Helvetica,sans-serif;
-}
-
-main{
-    width:min(1200px,94vw);
-    margin:auto;
-    padding:40px 0 100px;
-}
-
-h1{
-    margin:0;
-    font-size:clamp(50px,8vw,105px);
-    line-height:.83;
-    letter-spacing:-.07em;
-}
-
-.subtitle{
-    margin:22px 0 38px;
-    color:#555;
-    font:11px monospace;
-}
-
-.buttons{
-    display:flex;
-    flex-wrap:wrap;
-    gap:7px;
-    border-top:1px solid #292929;
-    padding-top:18px;
-}
-
-button,.fileButton{
-    position:relative;
-    min-height:48px;
-    padding:14px 20px;
-    border:1px solid #555;
-    background:transparent;
-    color:white;
-    font-size:11px;
-    font-weight:bold;
-    cursor:pointer;
-    overflow:hidden;
-}
-
-button:hover,.fileButton:hover{
-    background:white;
-    color:black;
-}
-
-button:disabled{
-    opacity:.25;
-    cursor:default;
-}
-
-#fileInput{
-    position:absolute;
-    inset:0;
-    width:100%;
-    height:100%;
-    opacity:0;
-    cursor:pointer;
-}
-
-.sectionTitle{
-    margin-top:35px;
-    margin-bottom:10px;
-    color:#444;
-    font:10px monospace;
-    letter-spacing:.15em;
-}
-
-.mixer{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
-    gap:1px;
-    background:#222;
-    border:1px solid #222;
-}
-
-.channel{
-    background:#080808;
-    padding:18px;
-}
-
-.channelName{
-    margin-bottom:18px;
-    color:#aaa;
-    font:11px monospace;
-}
-
-.control{
-    margin-bottom:17px;
-}
-
-.control:last-child{
-    margin-bottom:0;
-}
-
-.control label{
-    display:flex;
-    justify-content:space-between;
-    margin-bottom:8px;
-    color:#555;
-    font:9px monospace;
-}
-
-input[type=range]{
-    width:100%;
-    accent-color:white;
-}
-
-select{
-    width:100%;
-    height:42px;
-    padding:0 10px;
-    border:1px solid #555;
-    border-radius:0;
-    background:#080808;
-    color:white;
-    font:11px monospace;
-}
-
-.description{
-    margin-top:12px;
-    min-height:32px;
-    color:#555;
-    font:9px/1.6 monospace;
-}
-
-.stage{
-    display:none;
-    width:100%;
-    margin-top:30px;
-    background:#000;
-}
-
-#video,#analysisCanvas{
-    display:none;
-}
-
-#visualCanvas{
-    display:block;
-    width:100%;
-    height:auto;
-    background:#000;
-}
-
-#status,#objects{
-    margin-top:14px;
-    color:#777;
-    font:10px monospace;
-}
-
-#filename{
-    margin-top:5px;
-    color:#444;
-    font:9px monospace;
-}
-
-.meters{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(110px,1fr));
-    gap:1px;
-    margin-top:20px;
-    background:#222;
-}
-
-.meter{
-    padding:13px;
-    background:#050505;
-    color:#444;
-    font:9px monospace;
-}
-
-.meter strong{
-    display:block;
-    margin-top:5px;
-    color:#aaa;
-    font-size:15px;
-    font-weight:normal;
-}
-
-.exportInfo{
-    margin-top:20px;
-    padding:14px;
-    border:1px solid #1e1e1e;
-    color:#555;
-    font:10px/1.8 monospace;
-}
-
+html,body{margin:0;background:#050505;color:#eee;font-family:Arial,Helvetica,sans-serif}
+main{width:min(1200px,94vw);margin:auto;padding:40px 0 100px}
+h1{margin:0;font-size:clamp(50px,8vw,105px);line-height:.83;letter-spacing:-.07em}
+.subtitle{margin:22px 0 38px;color:#555;font:11px monospace}
+.buttons{display:flex;flex-wrap:wrap;gap:7px;border-top:1px solid #292929;padding-top:18px}
+button,.fileButton{display:flex;align-items:center;justify-content:center;position:relative;min-height:48px;padding:14px 20px;border:1px solid #555;background:transparent;color:white;font-size:11px;font-weight:bold;cursor:pointer}
+button:hover,.fileButton:hover{background:white;color:black}
+button:disabled{opacity:.25;cursor:default}
+#fileInput{display:none}
+.sectionTitle{margin-top:35px;margin-bottom:10px;color:#444;font:10px monospace;letter-spacing:.15em}
+.mixer{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1px;background:#222;border:1px solid #222}
+.channel{background:#080808;padding:18px;min-width:0}
+.channelName{margin-bottom:18px;color:#aaa;font:11px monospace}
+.control{margin-bottom:17px}
+.control:last-child{margin-bottom:0}
+.control label{display:flex;justify-content:space-between;gap:8px;margin-bottom:8px;color:#666;font:9px monospace}
+input[type=range]{width:100%;accent-color:white}
+select{width:100%;height:42px;padding:0 10px;border:1px solid #555;border-radius:0;background:#080808;color:white;font:11px monospace}
+.description{margin-top:12px;min-height:32px;color:#555;font:9px/1.6 monospace}
+.stage{display:none;width:100%;margin-top:30px;background:#000}
+#video,#analysisCanvas{display:none}
+#visualCanvas{display:block;width:100%;height:auto;background:#000}
+#status,#objects{margin-top:14px;color:#777;font:10px monospace;overflow-wrap:anywhere}
+#filename{margin-top:5px;color:#444;font:9px monospace;overflow-wrap:anywhere}
+.meters{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:1px;margin-top:20px;background:#222}
+.meter{padding:13px;background:#050505;color:#444;font:9px monospace}
+.meter strong{display:block;margin-top:5px;color:#aaa;font-size:15px;font-weight:normal}
+.exportInfo{margin-top:20px;padding:14px;border:1px solid #1e1e1e;color:#555;font:10px/1.8 monospace;overflow-wrap:anywhere}
 #exportProgress{color:#aaa}
-
-#modelState{
-    margin-top:25px;
-    color:#333;
-    font:9px monospace;
-}
-
-.recording{
-    background:white!important;
-    color:black!important;
-}
-
-.error{
-    color:#ff7777!important;
-}
-
-@media(max-width:600px){
-    h1{font-size:58px}
-    button,.fileButton{flex:1}
-}
+#modelState{margin-top:25px;color:#333;font:9px monospace}
+.recording{background:white!important;color:black!important}
+@media(max-width:600px){h1{font-size:58px}.buttons button,.buttons .fileButton{flex:1}}
 </style>
 </head>
-
 <body>
-
 <main>
-
 <h1>PRESENCE<br>SYNTH</h1>
-
-<div class="subtitle">
-VIDEO / DETECTION / PIANO / STATIC / MEMORY / PRESENCE
-</div>
+<div class="subtitle">VIDEO / DETECTION / ELECTRONIC TONES / STATIC / GLITCH</div>
 
 <div class="buttons">
-
-<div class="fileButton">
-SELECT VIDEO
+<label class="fileButton" for="fileInput">SELECT VIDEO</label>
 <input id="fileInput" type="file" accept="video/*">
+<button id="playButton" disabled>GENERATE</button>
+<button id="stopButton" disabled>STOP</button>
+<button id="exportButton" disabled>EXPORT VIDEO</button>
+<button id="downloadButton" disabled>DOWNLOAD VIDEO</button>
 </div>
-
-<button id="playButton" type="button" disabled>GENERATE</button>
-<button id="stopButton" type="button" disabled>STOP</button>
-<button id="exportButton" type="button" disabled>EXPORT VIDEO</button>
-<button id="downloadButton" type="button" disabled>DOWNLOAD VIDEO</button>
-
-</div>
-
 
 <div class="sectionTitle">CHARACTER</div>
-
 <div class="mixer">
-
 <div class="channel">
-
-<div class="channelName">OBJECT NOTE CHARACTER</div>
-
+<div class="channelName">SOUND MODE</div>
 <select id="soundMode">
 <option value="original">01 — ORIGINAL</option>
 <option value="clear">02 — CLEAR</option>
 <option value="strange">03 — STRANGE</option>
-<option value="gentle">04 — GENTLE</option>
+<option value="gentle" selected>04 — GENTLE</option>
 </select>
-
-<div id="soundDescription" class="description">
-DRY FELT / SMALL ROOM / CLOSE
+<div id="soundDescription" class="description">SOFT ATTACK / ROUNDED RESONANCE</div>
 </div>
-
-</div>
-
-
 <div class="channel">
-
-<div class="channelName">MELODY MODE</div>
-
+<div class="channelName">EVENT TONE</div>
 <select id="melodyMode">
 <option value="off">00 — OFF</option>
-<option value="fragile">01 — FRAGILE</option>
-<option value="memory" selected>02 — MEMORY</option>
-<option value="drift">03 — DRIFT</option>
-<option value="broken">04 — BROKEN</option>
+<option value="keys">01 — SOFT KEYS</option>
+<option value="pulse" selected>02 — ELECTRIC PULSE</option>
+<option value="fm">03 — FM GLASS</option>
+<option value="low">04 — LOW SYNTH</option>
+<option value="sequence">05 — BROKEN SEQUENCE</option>
+<option value="memory">06 — MEMORY TONE</option>
 </select>
-
-<div id="melodyDescription" class="description">
-SMALL MOTIF / INCOMPLETE MEMORY / SILENCE
+<div id="melodyDescription" class="description">SHORT ELECTRONIC NOTES / IRREGULAR GAPS</div>
 </div>
-
 </div>
-
-</div>
-
 
 <div class="sectionTitle">OUTPUT MIXER</div>
-
 <div class="mixer">
-
 <div class="channel">
 <div class="channelName">VIDEO AUDIO</div>
-
-<div class="control">
-<label><span>ORIGINAL SOUND</span><span id="videoValue"></span></label>
-<input id="videoVolume" type="range" min="0" max="1" step=".01" value=".5">
+<div class="control"><label><span>ORIGINAL SOUND</span><span id="videoValue"></span></label><input id="videoVolume" type="range" min="0" max="1" step=".01" value=".5"></div>
 </div>
-</div>
-
-
 <div class="channel">
 <div class="channelName">GENERATED AUDIO</div>
-
-<div class="control">
-<label><span>MASTER</span><span id="masterValue"></span></label>
-<input id="masterVolume" type="range" min="0" max="2" step=".01" value="1">
+<div class="control"><label><span>MASTER</span><span id="masterValue"></span></label><input id="masterVolume" type="range" min="0" max="2" step=".01" value="1"></div>
 </div>
 </div>
-
-</div>
-
 
 <div class="sectionTitle">GENERATED SOUND</div>
-
 <div class="mixer">
-
 <div class="channel">
 <div class="channelName">RADIO / STATIC</div>
-
-<div class="control">
-<label><span>LEVEL</span><span id="radioValue"></span></label>
-<input id="radioLevel" type="range" min="0" max="1.5" step=".01" value=".18">
+<div class="control"><label><span>LEVEL</span><span id="radioValue"></span></label><input id="radioLevel" type="range" min="0" max="1.5" step=".01" value=".20"></div>
+<div class="control"><label><span>TUNING</span><span id="radioFreqValue"></span></label><input id="radioFrequency" type="range" min="0" max="1" step=".01" value=".45"></div>
+<div class="control"><label><span>STATIC</span><span id="staticValue"></span></label><input id="radioStatic" type="range" min="0" max="1" step=".01" value=".45"></div>
 </div>
-
-<div class="control">
-<label><span>TUNING</span><span id="radioFreqValue"></span></label>
-<input id="radioFrequency" type="range" min="0" max="1" step=".01" value=".45">
-</div>
-
-<div class="control">
-<label><span>STATIC</span><span id="staticValue"></span></label>
-<input id="radioStatic" type="range" min="0" max="1" step=".01" value=".38">
-</div>
-</div>
-
-
 <div class="channel">
 <div class="channelName">GLITCH</div>
-
-<div class="control">
-<label><span>LEVEL</span><span id="glitchValue"></span></label>
-<input id="glitchLevel" type="range" min="0" max="1.5" step=".01" value=".12">
+<div class="control"><label><span>LEVEL</span><span id="glitchValue"></span></label><input id="glitchLevel" type="range" min="0" max="1.5" step=".01" value=".18"></div>
+<div class="control"><label><span>DENSITY</span><span id="densityValue"></span></label><input id="glitchDensity" type="range" min="0" max="1" step=".01" value=".28"></div>
 </div>
-
-<div class="control">
-<label><span>DENSITY</span><span id="densityValue"></span></label>
-<input id="glitchDensity" type="range" min="0" max="1" step=".01" value=".18">
-</div>
-</div>
-
-
 <div class="channel">
-<div class="channelName">OBJECT NOTE</div>
-
-<div class="control">
-<label><span>LEVEL</span><span id="impactValue"></span></label>
-<input id="impactLevel" type="range" min="0" max="1.5" step=".01" value=".42">
+<div class="channelName">OBJECT IMPACT</div>
+<div class="control"><label><span>LEVEL</span><span id="impactValue"></span></label><input id="impactLevel" type="range" min="0" max="1.5" step=".01" value=".20"></div>
+<div class="control"><label><span>RESONANCE</span><span id="impactResValue"></span></label><input id="impactResonance" type="range" min="0" max="1" step=".01" value=".48"></div>
 </div>
-
-<div class="control">
-<label><span>RESONANCE</span><span id="impactResValue"></span></label>
-<input id="impactResonance" type="range" min="0" max="1" step=".01" value=".62">
-</div>
-</div>
-
-
 <div class="channel">
-<div class="channelName">SINGING BOWL / GHOST</div>
-
-<div class="control">
-<label><span>LEVEL</span><span id="bowlValue"></span></label>
-<input id="bowlLevel" type="range" min="0" max="1.5" step=".01" value=".035">
+<div class="channelName">SINGING BOWL</div>
+<div class="control"><label><span>LEVEL</span><span id="bowlValue"></span></label><input id="bowlLevel" type="range" min="0" max="1.5" step=".01" value=".08"></div>
+<div class="control"><label><span>RESONANCE</span><span id="bowlResValue"></span></label><input id="bowlResonance" type="range" min="0" max="1" step=".01" value=".65"></div>
+<div class="control"><label><span>TONE</span><span id="bowlToneValue"></span></label><input id="bowlTone" type="range" min="0" max="1" step=".01" value=".45"></div>
 </div>
-
-<div class="control">
-<label><span>RESONANCE</span><span id="bowlResValue"></span></label>
-<input id="bowlResonance" type="range" min="0" max="1" step=".01" value=".72">
-</div>
-
-<div class="control">
-<label><span>TONE</span><span id="bowlToneValue"></span></label>
-<input id="bowlTone" type="range" min="0" max="1" step=".01" value=".58">
-</div>
-</div>
-
-
 <div class="channel">
-<div class="channelName">SOFT KEYS / AFTERIMAGE</div>
-
-<div class="control">
-<label><span>LEVEL</span><span id="keyValue"></span></label>
-<input id="keyLevel" type="range" min="0" max="1.5" step=".01" value=".07">
+<div class="channelName">EVENT TONE</div>
+<div class="control"><label><span>LEVEL</span><span id="keyValue"></span></label><input id="keyLevel" type="range" min="0" max="1.5" step=".01" value=".25"></div>
+<div class="control"><label><span>SOFTNESS</span><span id="softValue"></span></label><input id="keySoftness" type="range" min="0" max="1" step=".01" value=".75"></div>
+<div class="control"><label><span>TRIGGER CHANCE</span><span id="melodyChanceValue"></span></label><input id="melodyChance" type="range" min="0" max="1" step=".01" value=".62"></div>
+<div class="control"><label><span>REGISTER</span><span id="registerValue"></span></label><input id="melodyRegister" type="range" min="0" max="1" step=".01" value=".50"></div>
 </div>
-
-<div class="control">
-<label><span>SOFTNESS</span><span id="softValue"></span></label>
-<input id="keySoftness" type="range" min="0" max="1" step=".01" value=".88">
-</div>
-
-<div class="control">
-<label><span>TRIGGER CHANCE</span><span id="melodyChanceValue"></span></label>
-<input id="melodyChance" type="range" min="0" max="1" step=".01" value=".72">
-</div>
-
-<div class="control">
-<label><span>REGISTER</span><span id="registerValue"></span></label>
-<input id="melodyRegister" type="range" min="0" max="1" step=".01" value=".48">
-</div>
-</div>
-
-
 <div class="channel">
 <div class="channelName">SPACE</div>
-
-<div class="control">
-<label><span>DELAY</span><span id="spaceValue"></span></label>
-<input id="spaceAmount" type="range" min="0" max="1" step=".01" value=".38">
+<div class="control"><label><span>DELAY</span><span id="spaceValue"></span></label><input id="spaceAmount" type="range" min="0" max="1" step=".01" value=".40"></div>
 </div>
-</div>
-
-
 <div class="channel">
 <div class="channelName">INTERACTION</div>
-
-<div class="control">
-<label><span>MOTION</span><span id="motionValue"></span></label>
-<input id="motionResponse" type="range" min="0" max="2" step=".01" value="1">
-</div>
-
-<div class="control">
-<label><span>COLOR</span><span id="colorValue"></span></label>
-<input id="colorAmount" type="range" min="1" max="4" step=".05" value="2.2">
+<div class="control"><label><span>MOTION</span><span id="motionValue"></span></label><input id="motionResponse" type="range" min="0" max="2" step=".01" value="1"></div>
+<div class="control"><label><span>COLOR</span><span id="colorValue"></span></label><input id="colorAmount" type="range" min="1" max="4" step=".05" value="2.2"></div>
 </div>
 </div>
-
-</div>
-
 
 <div id="status">LOADING AI...</div>
 <div id="filename"></div>
-
 <div id="stage" class="stage">
 <video id="video" playsinline preload="auto"></video>
 <canvas id="visualCanvas"></canvas>
 <canvas id="analysisCanvas"></canvas>
 </div>
-
 <div id="objects">NO OBJECTS</div>
 
-
 <div class="meters">
-
-<div class="meter">
-OBJECTS
-<strong id="objectMeter">0</strong>
+<div class="meter">OBJECTS<strong id="objectMeter">0</strong></div>
+<div class="meter">MOTION<strong id="motionMeter">0.00</strong></div>
+<div class="meter">SOURCE TIME<strong id="sourceMeter">00:00 / 00:00</strong></div>
+<div class="meter">EVENT<strong id="eventMeter">—</strong></div>
+<div class="meter">TONE<strong id="melodyMeter">—</strong></div>
 </div>
 
-<div class="meter">
-MOTION
-<strong id="motionMeter">0.00</strong>
-</div>
-
-<div class="meter">
-SOURCE TIME
-<strong id="sourceMeter">00:00 / 00:00</strong>
-</div>
-
-<div class="meter">
-EVENT
-<strong id="eventMeter">—</strong>
-</div>
-
-<div class="meter">
-NOTE
-<strong id="melodyMeter">—</strong>
-</div>
-
-</div>
-
-
-<div class="exportInfo">
-EXPORT STATUS:
-<span id="exportProgress">IDLE</span>
-<br>
-VIDEO + DETECTION TEXT + ORIGINAL AUDIO + GENERATED AUDIO
-</div>
-
+<div class="exportInfo">EXPORT STATUS: <span id="exportProgress">IDLE</span><br>VIDEO + DETECTION TEXT + ORIGINAL AUDIO + GENERATED AUDIO</div>
 <div id="modelState">AI MODEL: LOADING</div>
-
 </main>
-
 
 <script>
 "use strict";
+const $=id=>document.getElementById(id);
+const video=$("video"),fileInput=$("fileInput");
+const visualCanvas=$("visualCanvas"),ctx=visualCanvas.getContext("2d");
+const analysisCanvas=$("analysisCanvas"),analysisCtx=analysisCanvas.getContext("2d");
+const stage=$("stage");
+const playButton=$("playButton"),stopButton=$("stopButton"),exportButton=$("exportButton"),downloadButton=$("downloadButton");
+const soundMode=$("soundMode"),melodyMode=$("melodyMode");
+const statusElement=$("status"),filenameElement=$("filename"),objectsElement=$("objects"),modelState=$("modelState");
+const objectMeter=$("objectMeter"),motionMeter=$("motionMeter"),sourceMeter=$("sourceMeter"),eventMeter=$("eventMeter"),melodyMeter=$("melodyMeter"),exportProgress=$("exportProgress");
 
-/* =========================================================
-DOM
-========================================================= */
-
-const $ = id => document.getElementById(id);
-
-const video = $("video");
-const fileInput = $("fileInput");
-
-const visualCanvas = $("visualCanvas");
-const ctx = visualCanvas.getContext("2d");
-
-const analysisCanvas = $("analysisCanvas");
-const analysisCtx = analysisCanvas.getContext(
-    "2d",
-    {willReadFrequently:true}
-);
-
-const stage = $("stage");
-
-const playButton = $("playButton");
-const stopButton = $("stopButton");
-const exportButton = $("exportButton");
-const downloadButton = $("downloadButton");
-
-const soundMode = $("soundMode");
-const melodyMode = $("melodyMode");
-
-const soundDescription = $("soundDescription");
-const melodyDescription = $("melodyDescription");
-
-const statusElement = $("status");
-const filenameElement = $("filename");
-const objectsElement = $("objects");
-const modelState = $("modelState");
-
-const objectMeter = $("objectMeter");
-const motionMeter = $("motionMeter");
-const sourceMeter = $("sourceMeter");
-const eventMeter = $("eventMeter");
-const melodyMeter = $("melodyMeter");
-const exportProgress = $("exportProgress");
-
-const videoVolume = $("videoVolume");
-const masterVolume = $("masterVolume");
-
-const radioLevel = $("radioLevel");
-const radioFrequency = $("radioFrequency");
-const radioStatic = $("radioStatic");
-
-const glitchLevel = $("glitchLevel");
-const glitchDensity = $("glitchDensity");
-
-const impactLevel = $("impactLevel");
-const impactResonance = $("impactResonance");
-
-const bowlLevel = $("bowlLevel");
-const bowlResonance = $("bowlResonance");
-const bowlTone = $("bowlTone");
-
-const keyLevel = $("keyLevel");
-const keySoftness = $("keySoftness");
-
-const melodyChance = $("melodyChance");
-const melodyRegister = $("melodyRegister");
-
-const spaceAmount = $("spaceAmount");
-
-const motionResponse = $("motionResponse");
-const colorAmount = $("colorAmount");
-
-
-/* =========================================================
-GLOBAL ERROR PROTECTION
-========================================================= */
-
-window.addEventListener("error", event => {
-    console.error("GLOBAL ERROR:",event.error || event.message);
+const sliderIds=[
+"videoVolume","masterVolume","radioLevel","radioFrequency","radioStatic",
+"glitchLevel","glitchDensity","impactLevel","impactResonance",
+"bowlLevel","bowlResonance","bowlTone","keyLevel","keySoftness",
+"melodyChance","melodyRegister","spaceAmount","motionResponse","colorAmount"
+];
+const sliders={};
+sliderIds.forEach(id=>{
+  sliders[id]=$(id);
+  const label=$( {
+    videoVolume:"videoValue",masterVolume:"masterValue",
+    radioLevel:"radioValue",radioFrequency:"radioFreqValue",radioStatic:"staticValue",
+    glitchLevel:"glitchValue",glitchDensity:"densityValue",
+    impactLevel:"impactValue",impactResonance:"impactResValue",
+    bowlLevel:"bowlValue",bowlResonance:"bowlResValue",bowlTone:"bowlToneValue",
+    keyLevel:"keyValue",keySoftness:"softValue",melodyChance:"melodyChanceValue",
+    melodyRegister:"registerValue",spaceAmount:"spaceValue",motionResponse:"motionValue",
+    colorAmount:"colorValue"
+  }[id]);
+  const update=()=>label.textContent=Math.round(Number(sliders[id].value)*100)+"%";
+  sliders[id].addEventListener("input",update);update();
 });
 
-window.addEventListener("unhandledrejection", event => {
-    console.error("PROMISE ERROR:",event.reason);
-});
-
-
-/* =========================================================
-SLIDER LABELS
-========================================================= */
-
-function sliderLabel(slider,id){
-
-    const label = $(id);
-
-    const update = () => {
-        label.textContent =
-        Math.round(Number(slider.value)*100)+"%";
-    };
-
-    slider.addEventListener("input",update);
-    update();
-}
-
-sliderLabel(videoVolume,"videoValue");
-sliderLabel(masterVolume,"masterValue");
-
-sliderLabel(radioLevel,"radioValue");
-sliderLabel(radioFrequency,"radioFreqValue");
-sliderLabel(radioStatic,"staticValue");
-
-sliderLabel(glitchLevel,"glitchValue");
-sliderLabel(glitchDensity,"densityValue");
-
-sliderLabel(impactLevel,"impactValue");
-sliderLabel(impactResonance,"impactResValue");
-
-sliderLabel(bowlLevel,"bowlValue");
-sliderLabel(bowlResonance,"bowlResValue");
-sliderLabel(bowlTone,"bowlToneValue");
-
-sliderLabel(keyLevel,"keyValue");
-sliderLabel(keySoftness,"softValue");
-
-sliderLabel(melodyChance,"melodyChanceValue");
-sliderLabel(melodyRegister,"registerValue");
-
-sliderLabel(spaceAmount,"spaceValue");
-
-sliderLabel(motionResponse,"motionValue");
-sliderLabel(colorAmount,"colorValue");
-
-
-/* =========================================================
-CHARACTERS
-========================================================= */
-
-const SOUND_MODES = {
-
-    original:{
-        description:"DRY FELT / SMALL ROOM / CLOSE",
-        cutoff:2600,
-        attack:.008,
-        body:1.0,
-        decay:3.4,
-        detune:1.2,
-        overtone2:.105,
-        overtone3:.018,
-        hammer:.012,
-        ghostChance:.035
-    },
-
-    clear:{
-        description:"CLEAR PIANO / AIR / LIGHT",
-        cutoff:4300,
-        attack:.006,
-        body:.82,
-        decay:3.0,
-        detune:.45,
-        overtone2:.145,
-        overtone3:.035,
-        hammer:.018,
-        ghostChance:.025
-    },
-
-    strange:{
-        description:"PREPARED FELT / UNSTABLE / HUMAN",
-        cutoff:3100,
-        attack:.009,
-        body:.90,
-        decay:4.1,
-        detune:4.2,
-        overtone2:.09,
-        overtone3:.027,
-        hammer:.016,
-        ghostChance:.05
-    },
-
-    gentle:{
-        description:"ROUND FELT / DISTANT / SOFT",
-        cutoff:1900,
-        attack:.018,
-        body:1.08,
-        decay:5.2,
-        detune:.7,
-        overtone2:.065,
-        overtone3:.010,
-        hammer:.006,
-        ghostChance:.025
-    }
-
+const SOUND_MODES={
+  original:{description:"ORIGINAL METAL / MODERATE RESONANCE",impactMin:210,impactRange:110,ratios:[1,2.01,2.76,4.12],bowlMin:120,bowlRange:65,bowlRatios:[1,1.47,2.09,2.63],bowlChance:.08,movementBowlChance:.015},
+  clear:{description:"LIGHT / CLEAR / SHORT ATTACK",impactMin:300,impactRange:180,ratios:[1,2,3.01,4.02],bowlMin:190,bowlRange:100,bowlRatios:[1,2.002,2.998,4.01],bowlChance:.10,movementBowlChance:.02},
+  strange:{description:"UNSTABLE / DIGITAL / SLIGHTLY UNEVEN",impactMin:190,impactRange:220,ratios:[1,1.37,2.11,3.29],bowlMin:145,bowlRange:180,bowlRatios:[1,1.22,1.79,2.41],bowlChance:.14,movementBowlChance:.035},
+  gentle:{description:"SOFT ATTACK / ROUNDED RESONANCE",impactMin:245,impactRange:90,ratios:[1,2,3.005],bowlMin:160,bowlRange:70,bowlRatios:[1,1.5,2,3],bowlChance:.055,movementBowlChance:.01}
 };
-
-
-const MELODY_DESCRIPTIONS = {
-
-    off:
-    "NO PITCH SEQUENCE",
-
-    fragile:
-    "WIDE INTERVALS / SILENCE / SINGLE NOTES",
-
-    memory:
-    "SMALL MOTIF / INCOMPLETE MEMORY / RETURN",
-
-    drift:
-    "OPEN NOTES / WANDERING / NO RESOLUTION",
-
-    broken:
-    "REPETITION / MISSING NOTES / OCTAVE SHIFTS"
-
+const EVENT_DESCRIPTIONS={
+  off:"NO EVENT TONE",
+  keys:"SOFT KEYS / QUIET ATTACK / LONG TAIL",
+  pulse:"SHORT ELECTRONIC PULSES / IRREGULAR GAPS",
+  fm:"GLASSY FM TONE / SOFT DIGITAL EDGE",
+  low:"ROUNDED LOW SYNTH / SLOW DECAY",
+  sequence:"BROKEN SEQUENCE / CHANGING STEPS",
+  memory:"REPEATING MOTIF / MISSING NOTES / MUTATION"
 };
+soundMode.addEventListener("change",()=>{$("soundDescription").textContent=SOUND_MODES[soundMode.value].description});
+melodyMode.addEventListener("change",()=>{$("melodyDescription").textContent=EVENT_DESCRIPTIONS[melodyMode.value]});
 
-
-function updateDescriptions(){
-
-    soundDescription.textContent =
-    SOUND_MODES[soundMode.value].description;
-
-    melodyDescription.textContent =
-    MELODY_DESCRIPTIONS[melodyMode.value];
-
-}
-
-soundMode.addEventListener("change",updateDescriptions);
-melodyMode.addEventListener("change",updateDescriptions);
-
-updateDescriptions();
-
-
-/* =========================================================
-STATE
-========================================================= */
-
-let model = null;
-
-let modelReady = false;
-let videoReady = false;
-
-let running = false;
-let exporting = false;
-
-let objectURL = null;
-
-let predictions = [];
-let previousObjects = [];
-
-let detectionBusy = false;
-let lastDetectionVideoTime = -1;
-
-const DETECTION_INTERVAL = .085;
-
-let renderRAF = null;
-
-let exportSettings = null;
-
-
-/* =========================================================
-RECORDER STATE
-========================================================= */
-
-let mediaRecorder = null;
-let chunks = [];
-
-let recordedBlob = null;
-let recordedURL = null;
-
-
-/* =========================================================
-SETTINGS
-========================================================= */
+let model=null,modelReady=false,videoReady=false,running=false,exporting=false;
+let objectURL=null,predictions=[],previousObjects=[],detectionBusy=false,lastDetectionVideoTime=-1;
+let renderRAF=null,exportSettings=null;
+let mediaRecorder=null,chunks=[],recordedBlob=null,recordedURL=null,exportStopping=false;
+const DETECTION_INTERVAL=.10;
 
 function getSettings(){
-
-    return {
-
-        soundMode:soundMode.value,
-        melodyMode:melodyMode.value,
-
-        videoVolume:Number(videoVolume.value),
-        masterVolume:Number(masterVolume.value),
-
-        radioLevel:Number(radioLevel.value),
-        radioFrequency:Number(radioFrequency.value),
-        radioStatic:Number(radioStatic.value),
-
-        glitchLevel:Number(glitchLevel.value),
-        glitchDensity:Number(glitchDensity.value),
-
-        impactLevel:Number(impactLevel.value),
-        impactResonance:Number(impactResonance.value),
-
-        bowlLevel:Number(bowlLevel.value),
-        bowlResonance:Number(bowlResonance.value),
-        bowlTone:Number(bowlTone.value),
-
-        keyLevel:Number(keyLevel.value),
-        keySoftness:Number(keySoftness.value),
-
-        melodyChance:Number(melodyChance.value),
-        melodyRegister:Number(melodyRegister.value),
-
-        spaceAmount:Number(spaceAmount.value),
-
-        motionResponse:Number(motionResponse.value),
-        colorAmount:Number(colorAmount.value)
-
-    };
+  const o={soundMode:soundMode.value,melodyMode:melodyMode.value};
+  sliderIds.forEach(id=>o[id]=Number(sliders[id].value));
+  return {
+    soundMode:o.soundMode,melodyMode:o.melodyMode,
+    videoVolume:o.videoVolume,masterVolume:o.masterVolume,
+    radioLevel:o.radioLevel,radioFrequency:o.radioFrequency,radioStatic:o.radioStatic,
+    glitchLevel:o.glitchLevel,glitchDensity:o.glitchDensity,
+    impactLevel:o.impactLevel,impactResonance:o.impactResonance,
+    bowlLevel:o.bowlLevel,bowlResonance:o.bowlResonance,bowlTone:o.bowlTone,
+    keyLevel:o.keyLevel,keySoftness:o.keySoftness,melodyChance:o.melodyChance,
+    melodyRegister:o.melodyRegister,spaceAmount:o.spaceAmount,
+    motionResponse:o.motionResponse,colorAmount:o.colorAmount
+  };
 }
-
-
-function S(name){
-
-    if(exporting && exportSettings){
-        return exportSettings[name];
-    }
-
-    return getSettings()[name];
-}
-
-
-function currentSoundMode(){
-
-    const mode = S("soundMode");
-
-    return SOUND_MODES[mode] || SOUND_MODES.original;
-}
-
-
-/* =========================================================
-BUTTONS
-========================================================= */
-
-function updateButtons(){
-
-    const ready =
-    modelReady &&
-    videoReady;
-
-    playButton.disabled =
-    !ready ||
-    running ||
-    exporting;
-
-    exportButton.disabled =
-    !ready ||
-    running ||
-    exporting;
-
-    stopButton.disabled =
-    !running &&
-    !exporting;
-
-    downloadButton.disabled =
-    !recordedBlob;
-}
-
-
-/* =========================================================
-MELODY
-========================================================= */
-
-function midiToFrequency(note){
-
-    return 440 *
-    Math.pow(
-        2,
-        (note-69)/12
-    );
-}
-
-
-function midiName(midi){
-
-    const names = [
-        "C","C#","D","D#",
-        "E","F","F#","G",
-        "G#","A","A#","B"
-    ];
-
-    const note =
-    names[
-        ((midi%12)+12)%12
-    ];
-
-    const octave =
-    Math.floor(midi/12)-1;
-
-    return note+octave;
-}
-
-
-/*
-Small pitch collections.
-
-The point is not to write a song.
-The point is to make each presence
-leave one note behind.
-*/
-
-const MELODY_PATTERNS = {
-
-    fragile:[
-        62,
-        69,
-        74,
-        67,
-        76,
-        71,
-        64
-    ],
-
-    memory:[
-        62,
-        69,
-        72,
-        76,
-        69,
-        74
-    ],
-
-    drift:[
-        57,
-        62,
-        64,
-        69,
-        71,
-        74,
-        76,
-        81
-    ],
-
-    broken:[
-        62,
-        62,
-        69,
-        74,
-        69,
-        62,
-        76,
-        62
-    ]
-
-};
-
-
-let melodyIndex = 0;
-let melodyCycle = 0;
-let lastMelodyMidi = null;
-
-
-/* =========================================================
-NEXT OBJECT NOTE
-========================================================= */
-
-function getNextMelodyNote(){
-
-    const mode =
-    S("melodyMode");
-
-
-    /*
-    OFF does not mean silence.
-
-    It means:
-    object notes stay around one
-    neutral pitch instead of forming
-    a melodic sequence.
-    */
-
-    if(mode==="off"){
-
-        let note = 62;
-
-        const register =
-        S("melodyRegister");
-
-        if(register<.25)
-            note -= 12;
-
-        else if(register>.76)
-            note += 12;
-
-        return{
-            rest:false,
-            midi:note
-        };
-    }
-
-
-    const pattern =
-    MELODY_PATTERNS[mode];
-
-    if(!pattern){
-
-        return{
-            rest:false,
-            midi:62
-        };
-    }
-
-
-    let note =
-    pattern[
-        melodyIndex %
-        pattern.length
-    ];
-
-
-    const register =
-    S("melodyRegister");
-
-
-    if(register<.25)
-        note -= 12;
-
-    else if(register>.76)
-        note += 12;
-
-
-    /*
-    FRAGILE
-    */
-
-    if(mode==="fragile"){
-
-        if(Math.random()<.20){
-
-            melodyIndex++;
-
-            return{
-                rest:true
-            };
-        }
-
-
-        if(Math.random()<.20){
-
-            note +=
-            Math.random()<.5
-            ? 12
-            : -12;
-        }
-    }
-
-
-    /*
-    MEMORY
-    */
-
-    if(mode==="memory"){
-
-        if(
-            melodyCycle>0 &&
-            Math.random()<.13
-        ){
-
-            melodyIndex++;
-
-            return{
-                rest:true
-            };
-        }
-
-
-        if(
-            melodyCycle>0 &&
-            Math.random()<.12
-        ){
-
-            note +=
-            Math.random()<.5
-            ? 12
-            : -12;
-        }
-
-
-        if(
-            lastMelodyMidi!==null &&
-            Math.random()<.09
-        ){
-
-            note =
-            lastMelodyMidi;
-        }
-    }
-
-
-    /*
-    DRIFT
-    */
-
-    if(mode==="drift"){
-
-        const movements = [
-            -5,
-            -2,
-            0,
-            0,
-            0,
-            2,
-            5
-        ];
-
-        note +=
-        movements[
-            Math.floor(
-                Math.random() *
-                movements.length
-            )
-        ];
-    }
-
-
-    /*
-    BROKEN
-    */
-
-    if(mode==="broken"){
-
-        if(Math.random()<.20){
-
-            melodyIndex++;
-
-            return{
-                rest:true
-            };
-        }
-
-
-        if(
-            lastMelodyMidi!==null &&
-            Math.random()<.24
-        ){
-
-            note =
-            lastMelodyMidi;
-        }
-
-
-        if(Math.random()<.20){
-
-            note +=
-            Math.random()<.5
-            ? 12
-            : -12;
-        }
-    }
-
-
-    melodyIndex++;
-
-
-    if(
-        melodyIndex %
-        pattern.length ===
-        0
-    ){
-
-        melodyCycle++;
-    }
-
-
-    return{
-        rest:false,
-        midi:note
-    };
-}
-
-
-/* =========================================================
-AUDIO ENGINE
-========================================================= */
-
-let AC = null;
-
-let videoSource = null;
-let videoGain = null;
-
-let generatedMaster = null;
-let generatedDry = null;
-
-let delay = null;
-let delayFeedback = null;
-let delayWet = null;
-
-let recordDestination = null;
-
-let radioSource = null;
-let radioFilter = null;
-let radioGain = null;
-
-let lastObjectNote = -999;
-let lastSoftKey = -999;
-let lastBowl = -999;
-let lastGlitch = -999;
-
-
-/* =========================================================
-INIT AUDIO
-========================================================= */
+function S(name){return exporting&&exportSettings?exportSettings[name]:getSettings()[name]}
+function currentSoundMode(){return SOUND_MODES[S("soundMode")]}
+
+let AC=null,videoSource=null,videoGain=null,generatedMaster=null,generatedDry=null;
+let delay=null,delayFeedback=null,delayWet=null,recordDestination=null;
+let radioSource=null,radioFilter=null,radioGain=null;
+let lastImpact=-999,lastBowl=-999,lastGlitch=-999,lastToneTime=-999;
+let melodyIndex=0,melodyCycle=0,lastMelodyMidi=null;
 
 function initAudio(){
-
-    if(AC)
-        return;
-
-
-    const AudioContextClass =
-    window.AudioContext ||
-    window.webkitAudioContext;
-
-
-    if(!AudioContextClass){
-
-        throw new Error(
-            "Web Audio API is not supported."
-        );
-    }
-
-
-    AC =
-    new AudioContextClass();
-
-
-    recordDestination =
-    AC.createMediaStreamDestination();
-
-
-    /*
-    ORIGINAL VIDEO
-    */
-
-    videoSource =
-    AC.createMediaElementSource(video);
-
-    videoGain =
-    AC.createGain();
-
-
-    videoSource.connect(videoGain);
-
-    videoGain.connect(AC.destination);
-    videoGain.connect(recordDestination);
-
-
-    /*
-    GENERATED
-    */
-
-    generatedMaster =
-    AC.createGain();
-
-    generatedDry =
-    AC.createGain();
-
-
-    delay =
-    AC.createDelay(4);
-
-    delayFeedback =
-    AC.createGain();
-
-    delayWet =
-    AC.createGain();
-
-
-    generatedDry.connect(
-        generatedMaster
-    );
-
-
-    delay.connect(
-        delayFeedback
-    );
-
-    delayFeedback.connect(
-        delay
-    );
-
-    delay.connect(
-        delayWet
-    );
-
-    delayWet.connect(
-        generatedMaster
-    );
-
-
-    generatedMaster.connect(
-        AC.destination
-    );
-
-    generatedMaster.connect(
-        recordDestination
-    );
-
-
-    createRadio();
-
-    applyAudioSettings();
+  if(AC)return;
+  const AudioContextClass=window.AudioContext||window.webkitAudioContext;
+  if(!AudioContextClass)throw new Error("Web Audio API not supported");
+  AC=new AudioContextClass();
+  recordDestination=AC.createMediaStreamDestination();
+  videoSource=AC.createMediaElementSource(video);
+  videoGain=AC.createGain();
+  videoSource.connect(videoGain);
+  videoGain.connect(AC.destination);
+  videoGain.connect(recordDestination);
+  generatedMaster=AC.createGain();
+  generatedDry=AC.createGain();
+  delay=AC.createDelay(4);
+  delayFeedback=AC.createGain();
+  delayWet=AC.createGain();
+  generatedDry.connect(generatedMaster);
+  delay.connect(delayFeedback);
+  delayFeedback.connect(delay);
+  delay.connect(delayWet);
+  delayWet.connect(generatedMaster);
+  generatedMaster.connect(AC.destination);
+  generatedMaster.connect(recordDestination);
+  createRadio();
+  applyAudioSettings();
 }
-
-
-/* =========================================================
-MIXER
-========================================================= */
-
 function applyAudioSettings(){
-
-    if(!AC)
-        return;
-
-
-    const now =
-    AC.currentTime;
-
-
-    videoGain.gain.setTargetAtTime(
-        S("videoVolume"),
-        now,
-        .01
-    );
-
-
-    generatedMaster.gain.setTargetAtTime(
-        S("masterVolume"),
-        now,
-        .01
-    );
-
-
-    /*
-    Shorter and cleaner than before.
-    */
-
-    delay.delayTime.setTargetAtTime(
-        .23 +
-        S("spaceAmount")*.34,
-        now,
-        .05
-    );
-
-
-    delayFeedback.gain.setTargetAtTime(
-        .07 +
-        S("spaceAmount")*.27,
-        now,
-        .05
-    );
-
-
-    delayWet.gain.setTargetAtTime(
-        S("spaceAmount")*.32,
-        now,
-        .05
-    );
+  if(!AC)return;
+  const now=AC.currentTime;
+  videoGain.gain.setTargetAtTime(S("videoVolume"),now,.02);
+  generatedMaster.gain.setTargetAtTime(S("masterVolume"),now,.02);
+  delay.delayTime.setTargetAtTime(.18+S("spaceAmount")*.50,now,.05);
+  delayFeedback.gain.setTargetAtTime(.06+S("spaceAmount")*.30,now,.05);
+  delayWet.gain.setTargetAtTime(S("spaceAmount")*.32,now,.05);
 }
-
-
-[
-    videoVolume,
-    masterVolume,
-    spaceAmount
-].forEach(el=>{
-
-    el.addEventListener(
-        "input",
-        ()=>{
-
-            if(!exporting)
-                applyAudioSettings();
-
-        }
-    );
-
-});
-
-
-/* =========================================================
-RADIO
-========================================================= */
+["videoVolume","masterVolume","spaceAmount"].forEach(id=>sliders[id].addEventListener("input",()=>{if(!exporting&&AC)applyAudioSettings()}));
 
 function createRadio(){
-
-    const length =
-    AC.sampleRate*4;
-
-
-    const buffer =
-    AC.createBuffer(
-        1,
-        length,
-        AC.sampleRate
-    );
-
-
-    const data =
-    buffer.getChannelData(0);
-
-
-    let brown = 0;
-
-
-    for(let i=0;i<length;i++){
-
-        const white =
-        Math.random()*2-1;
-
-
-        brown =
-        brown*.96 +
-        white*.04;
-
-
-        let value =
-        brown*1.45;
-
-
-        if(Math.random()<.0025){
-
-            value +=
-            (Math.random()*2-1)*1.3;
-        }
-
-
-        data[i] =
-        value;
-    }
-
-
-    radioSource =
-    AC.createBufferSource();
-
-    radioSource.buffer =
-    buffer;
-
-    radioSource.loop =
-    true;
-
-
-    radioFilter =
-    AC.createBiquadFilter();
-
-    radioFilter.type =
-    "bandpass";
-
-    radioFilter.Q.value =
-    4;
-
-
-    radioGain =
-    AC.createGain();
-
-    radioGain.gain.value =
-    0;
-
-
-    radioSource.connect(
-        radioFilter
-    );
-
-    radioFilter.connect(
-        radioGain
-    );
-
-
-    radioGain.connect(
-        generatedDry
-    );
-
-    radioGain.connect(
-        delay
-    );
-
-
-    radioSource.start();
+  const length=AC.sampleRate*3,buffer=AC.createBuffer(1,length,AC.sampleRate),data=buffer.getChannelData(0);
+  let brown=0;
+  for(let i=0;i<length;i++){
+    brown=brown*.96+(Math.random()*2-1)*.04;
+    data[i]=brown*1.5+(Math.random()<.002?(Math.random()*2-1)*.7:0);
+  }
+  radioSource=AC.createBufferSource();radioSource.buffer=buffer;radioSource.loop=true;
+  radioFilter=AC.createBiquadFilter();radioFilter.type="bandpass";radioFilter.Q.value=3;
+  radioGain=AC.createGain();radioGain.gain.value=0;
+  radioSource.connect(radioFilter);radioFilter.connect(radioGain);
+  radioGain.connect(generatedDry);radioGain.connect(delay);radioSource.start();
 }
-
-
 function updateRadio(motion){
-
-    if(
-        !AC ||
-        !radioGain ||
-        !radioFilter
-    )
-        return;
-
-
-    const now =
-    AC.currentTime;
-
-
-    const level =
-    S("radioLevel") *
-    (
-        .005 +
-        S("radioStatic")*.027 +
-        motion*.012
-    );
-
-
-    radioGain.gain.setTargetAtTime(
-        level,
-        now,
-        .10
-    );
-
-
-    radioFilter.frequency.setTargetAtTime(
-
-        500 +
-        Math.pow(
-            S("radioFrequency"),
-            2
-        ) *
-        5000 +
-        motion*700,
-
-        now,
-        .12
-    );
+  if(!AC)return;
+  const now=AC.currentTime;
+  radioGain.gain.setTargetAtTime(S("radioLevel")*(.004+S("radioStatic")*.025+motion*.012),now,.1);
+  radioFilter.frequency.setTargetAtTime(250+S("radioFrequency")**2*5200+motion*700,now,.12);
 }
 
-
-/* =========================================================
-OBJECT NOTE
-========================================================= */
-
-/*
-This replaces the old metallic impact.
-
-New object =
-one piano-like note.
-
-No bell.
-No giant metallic partial stack.
-No horror hit.
-*/
-
-function playObjectNote(
-    midi,
-    x,
-    strength=.5
-){
-
-    if(!AC)
-        return;
-
-
-    const now =
-    AC.currentTime;
-
-
-    if(
-        now-lastObjectNote < .24
-    )
-        return;
-
-
-    const level =
-    S("impactLevel");
-
-
-    if(level<=.001)
-        return;
-
-
-    lastObjectNote =
-    now;
-
-
-    const character =
-    currentSoundMode();
-
-
-    const resonance =
-    S("impactResonance");
-
-
-    let note =
-    midi;
-
-
-    /*
-    STRANGE:
-    still piano-like,
-    but occasionally slightly displaced.
-    */
-
-    if(
-        S("soundMode")==="strange" &&
-        Math.random()<.18
-    ){
-
-        note +=
-        Math.random()<.5
-        ? 12
-        : -12;
-    }
-
-
-    const frequency =
-    midiToFrequency(note);
-
-
-    /*
-    MASTER NOTE FILTER
-    */
-
-    const filter =
-    AC.createBiquadFilter();
-
-
-    filter.type =
-    "lowpass";
-
-
-    filter.frequency.value =
-    character.cutoff +
-    resonance*1000;
-
-
-    filter.Q.value =
-    .35;
-
-
-    /*
-    ENVELOPE
-    */
-
-    const envelope =
-    AC.createGain();
-
-
-    envelope.gain.value =
-    .0001;
-
-
-    /*
-    PAN FROM OBJECT POSITION
-    */
-
-    const pan =
-    AC.createStereoPanner();
-
-
-    pan.pan.value =
-    (x*2-1)*.60;
-
-
-    filter.connect(
-        envelope
-    );
-
-    envelope.connect(
-        pan
-    );
-
-
-    pan.connect(
-        generatedDry
-    );
-
-    pan.connect(
-        delay
-    );
-
-
-    /*
-    VELOCITY
-
-    Large object = slightly firmer key.
-    Not dramatically louder.
-    */
-
-    const velocity =
-    .55 +
-    Math.min(
-        1,
-        strength
-    )*.45;
-
-
-    const peak =
-    Math.max(
-        .0002,
-
-        level *
-        character.body *
-        velocity *
-        .095
-    );
-
-
-    envelope.gain.setValueAtTime(
-        .0001,
-        now
-    );
-
-
-    envelope.gain.exponentialRampToValueAtTime(
-        peak,
-        now + character.attack
-    );
-
-
-    envelope.gain.exponentialRampToValueAtTime(
-        Math.max(
-            .00015,
-            peak*.34
-        ),
-        now+.28
-    );
-
-
-    const decay =
-    character.decay +
-    resonance*2.1;
-
-
-    envelope.gain.exponentialRampToValueAtTime(
-        .0001,
-        now+decay
-    );
-
-
-    /*
-    FUNDAMENTAL
-
-    Two extremely close oscillators
-    create a little acoustic movement
-    instead of a sterile synth sine.
-    */
-
-    const fundamentalA =
-    AC.createOscillator();
-
-    const fundamentalB =
-    AC.createOscillator();
-
-
-    fundamentalA.type =
-    "sine";
-
-    fundamentalB.type =
-    "sine";
-
-
-    fundamentalA.frequency.value =
-    frequency;
-
-    fundamentalB.frequency.value =
-    frequency;
-
-
-    fundamentalA.detune.value =
-    -character.detune*.5;
-
-    fundamentalB.detune.value =
-    character.detune*.5;
-
-
-    const fundamentalBGain =
-    AC.createGain();
-
-    fundamentalBGain.gain.value =
-    .32;
-
-
-    fundamentalA.connect(
-        filter
-    );
-
-
-    fundamentalB.connect(
-        fundamentalBGain
-    );
-
-    fundamentalBGain.connect(
-        filter
-    );
-
-
-    /*
-    SECOND PARTIAL
-    */
-
-    const partial2 =
-    AC.createOscillator();
-
-    const partial2Gain =
-    AC.createGain();
-
-
-    partial2.type =
-    "sine";
-
-
-    partial2.frequency.value =
-    frequency*2.003;
-
-
-    partial2Gain.gain.value =
-    character.overtone2;
-
-
-    partial2.connect(
-        partial2Gain
-    );
-
-    partial2Gain.connect(
-        filter
-    );
-
-
-    /*
-    THIRD PARTIAL
-
-    Very quiet.
-    This is not the old metallic stack.
-    */
-
-    const partial3 =
-    AC.createOscillator();
-
-    const partial3Gain =
-    AC.createGain();
-
-
-    partial3.type =
-    "triangle";
-
-
-    partial3.frequency.value =
-    frequency*3.006;
-
-
-    partial3Gain.gain.value =
-    character.overtone3;
-
-
-    partial3.connect(
-        partial3Gain
-    );
-
-    partial3Gain.connect(
-        filter
-    );
-
-
-    /*
-    FELT / HAMMER
-
-    Short muted mechanical attack.
-    */
-
-    const noiseLength =
-    Math.max(
-        1,
-        Math.floor(
-            AC.sampleRate*.035
-        )
-    );
-
-
-    const noiseBuffer =
-    AC.createBuffer(
-        1,
-        noiseLength,
-        AC.sampleRate
-    );
-
-
-    const data =
-    noiseBuffer.getChannelData(0);
-
-
-    for(let i=0;i<noiseLength;i++){
-
-        const t =
-        i/noiseLength;
-
-
-        data[i] =
-        (Math.random()*2-1) *
-        Math.pow(
-            1-t,
-            5
-        );
-    }
-
-
-    const hammer =
-    AC.createBufferSource();
-
-
-    hammer.buffer =
-    noiseBuffer;
-
-
-    const hammerFilter =
-    AC.createBiquadFilter();
-
-
-    hammerFilter.type =
-    "bandpass";
-
-
-    hammerFilter.frequency.value =
-    Math.min(
-        3500,
-        700 + frequency*1.5
-    );
-
-
-    hammerFilter.Q.value =
-    .65;
-
-
-    const hammerGain =
-    AC.createGain();
-
-
-    hammerGain.gain.value =
-    level *
-    character.hammer *
-    velocity;
-
-
-    hammer.connect(
-        hammerFilter
-    );
-
-    hammerFilter.connect(
-        hammerGain
-    );
-
-    hammerGain.connect(
-        envelope
-    );
-
-
-    /*
-    Tiny body resonance.
-
-    A very quiet lower component makes
-    the note feel physical without
-    becoming a dark drone.
-    */
-
-    const body =
-    AC.createOscillator();
-
-    const bodyGain =
-    AC.createGain();
-
-
-    body.type =
-    "sine";
-
-
-    body.frequency.value =
-    Math.max(
-        55,
-        frequency*.5
-    );
-
-
-    bodyGain.gain.value =
-    .035 +
-    resonance*.025;
-
-
-    body.connect(
-        bodyGain
-    );
-
-    bodyGain.connect(
-        filter
-    );
-
-
-    fundamentalA.start(now);
-    fundamentalB.start(now);
-
-    partial2.start(now);
-    partial3.start(now);
-
-    body.start(now);
-    hammer.start(now);
-
-
-    const stopTime =
-    now +
-    decay +
-    .25;
-
-
-    fundamentalA.stop(stopTime);
-    fundamentalB.stop(stopTime);
-
-    partial2.stop(stopTime);
-    partial3.stop(stopTime);
-
-    body.stop(stopTime);
-
-
-    lastMelodyMidi =
-    note;
-
-
-    melodyMeter.textContent =
-    midiName(note);
-
-
-    eventMeter.textContent =
-    "OBJECT NOTE";
+function connectVoice(osc,gain,x,withDelay=true){
+  const pan=AC.createStereoPanner();pan.pan.value=Math.max(-1,Math.min(1,(x*2-1)*.55));
+  osc.connect(gain);gain.connect(pan);pan.connect(generatedDry);
+  if(withDelay)pan.connect(delay);
+  return pan;
 }
 
-
-/* =========================================================
-SOFT KEY AFTERIMAGE
-========================================================= */
-
-/*
-Soft Keys still exist.
-
-They are now a secondary echo,
-not the main event.
-*/
-
-function playSoftKey(
-    midi,
-    x,
-    strength=.5
-){
-
-    if(!AC)
-        return;
-
-
-    const level =
-    S("keyLevel");
-
-
-    if(level<=.001)
-        return;
-
-
-    const now =
-    AC.currentTime;
-
-
-    if(
-        now-lastSoftKey < .65
-    )
-        return;
-
-
-    lastSoftKey =
-    now;
-
-
-    const softness =
-    S("keySoftness");
-
-
-    let note =
-    midi;
-
-
-    /*
-    Mostly nearby notes / octave shadows.
-    */
-
-    const choices = [
-        0,
-        0,
-        12,
-        -12,
-        7
-    ];
-
-
-    note +=
-    choices[
-        Math.floor(
-            Math.random() *
-            choices.length
-        )
-    ];
-
-
-    const frequency =
-    midiToFrequency(note);
-
-
-    const filter =
-    AC.createBiquadFilter();
-
-
-    filter.type =
-    "lowpass";
-
-
-    filter.frequency.value =
-    900 +
-    (1-softness)*3200;
-
-
-    const gain =
-    AC.createGain();
-
-
-    const pan =
-    AC.createStereoPanner();
-
-
-    pan.pan.value =
-    (x*2-1)*.38;
-
-
-    filter.connect(
-        gain
-    );
-
-    gain.connect(
-        pan
-    );
-
-
-    pan.connect(
-        generatedDry
-    );
-
-    pan.connect(
-        delay
-    );
-
-
-    const peak =
-    Math.max(
-        .00015,
-        level *
-        (
-            .022 +
-            strength*.025
-        )
-    );
-
-
-    gain.gain.setValueAtTime(
-        .0001,
-        now
-    );
-
-
-    gain.gain.exponentialRampToValueAtTime(
-        peak,
-        now+.035
-    );
-
-
-    gain.gain.exponentialRampToValueAtTime(
-        peak*.22,
-        now+.55
-    );
-
-
-    const decay =
-    3.2 +
-    softness*3.2;
-
-
-    gain.gain.exponentialRampToValueAtTime(
-        .0001,
-        now+decay
-    );
-
-
-    const oscA =
-    AC.createOscillator();
-
-    const oscB =
-    AC.createOscillator();
-
-
-    oscA.type =
-    "sine";
-
-    oscB.type =
-    "triangle";
-
-
-    oscA.frequency.value =
-    frequency;
-
-    oscB.frequency.value =
-    frequency*2.001;
-
-
-    const oscBGain =
-    AC.createGain();
-
-    oscBGain.gain.value =
-    .045;
-
-
-    oscA.connect(
-        filter
-    );
-
-
-    oscB.connect(
-        oscBGain
-    );
-
-    oscBGain.connect(
-        filter
-    );
-
-
-    oscA.start(now);
-    oscB.start(now);
-
-
-    oscA.stop(
-        now+decay+.2
-    );
-
-    oscB.stop(
-        now+decay+.2
-    );
+/* 부드러운 오브제 임팩트: 날카로운 금속 충격 대신 둥근 신스 펄스 */
+function playImpact(x,strength){
+  if(!AC||S("impactLevel")<=.001)return;
+  const now=AC.currentTime;
+  if(now-lastImpact<.22)return;
+  lastImpact=now;
+  const mode=currentSoundMode(),res=S("impactResonance"),level=S("impactLevel");
+  let base=mode.impactMin+x*mode.impactRange;
+  if(S("soundMode")==="strange")base*=.94+Math.random()*.12;
+  const master=AC.createGain();
+  master.gain.setValueAtTime(.0001,now);
+  master.gain.exponentialRampToValueAtTime(Math.max(.0002,level*(.025+strength*.025)),now+.025);
+  master.gain.exponentialRampToValueAtTime(.0001,now+.35+res*1.8);
+  const filter=AC.createBiquadFilter();filter.type="lowpass";filter.frequency.value=900+res*2400;
+  const pan=AC.createStereoPanner();pan.pan.value=x*2-1;
+  master.connect(filter);filter.connect(pan);pan.connect(generatedDry);pan.connect(delay);
+  const osc=AC.createOscillator();osc.type="sine";osc.frequency.setValueAtTime(base*1.08,now);osc.frequency.exponentialRampToValueAtTime(base,now+.12);
+  const fundamentalGain=AC.createGain();fundamentalGain.gain.value=1;
+  osc.connect(fundamentalGain);fundamentalGain.connect(master);
+  const sub=AC.createOscillator();sub.type="sine";sub.frequency.value=base*.5;
+  const subGain=AC.createGain();subGain.gain.value=.20;
+  sub.connect(subGain);subGain.connect(master);
+  osc.start(now);sub.start(now);osc.stop(now+2.5);sub.stop(now+2.5);
+  eventMeter.textContent="IMPACT";
 }
 
-
-/* =========================================================
-GHOST BOWL
-========================================================= */
-
-function playBowl(
-    x,
-    strength=.5
-){
-
-    if(!AC)
-        return;
-
-
-    const now =
-    AC.currentTime;
-
-
-    if(now-lastBowl<2.4)
-        return;
-
-
-    const level =
-    S("bowlLevel");
-
-
-    if(level<=.001)
-        return;
-
-
-    lastBowl =
-    now;
-
-
-    const resonance =
-    S("bowlResonance");
-
-
-    const tone =
-    S("bowlTone");
-
-
-    /*
-    Higher and softer than old bowl.
-    Avoid horror low-end.
-    */
-
-    const base =
-    190 +
-    tone*170 +
-    x*60;
-
-
-    const ratios = [
-        1,
-        1.501,
-        2.002,
-        3.004
-    ];
-
-
-    const filter =
-    AC.createBiquadFilter();
-
-
-    filter.type =
-    "lowpass";
-
-
-    filter.frequency.value =
-    1800 +
-    tone*2600;
-
-
-    const pan =
-    AC.createStereoPanner();
-
-
-    pan.pan.value =
-    (x*2-1)*.45;
-
-
-    filter.connect(
-        pan
-    );
-
-
-    pan.connect(
-        generatedDry
-    );
-
-    pan.connect(
-        delay
-    );
-
-
-    ratios.forEach(
-        (ratio,index)=>{
-
-            const osc =
-            AC.createOscillator();
-
-            const gain =
-            AC.createGain();
-
-
-            osc.type =
-            "sine";
-
-
-            osc.frequency.value =
-            base*ratio;
-
-
-            osc.detune.value =
-            (Math.random()-.5)*1.2;
-
-
-            const peak =
-            Math.max(
-                .0001,
-
-                level *
-                Math.pow(.43,index) *
-                (
-                    .012 +
-                    strength*.014
-                )
-            );
-
-
-            gain.gain.setValueAtTime(
-                .0001,
-                now
-            );
-
-
-            gain.gain.exponentialRampToValueAtTime(
-                peak,
-                now+.12
-            );
-
-
-            const decay =
-            2.6 +
-            resonance*4.2 -
-            index*.2;
-
-
-            gain.gain.exponentialRampToValueAtTime(
-                .0001,
-                now+decay
-            );
-
-
-            osc.connect(
-                gain
-            );
-
-            gain.connect(
-                filter
-            );
-
-
-            osc.start(now);
-
-            osc.stop(
-                now+decay+.2
-            );
-
-        }
-    );
-
-
-    eventMeter.textContent =
-    "GHOST";
+/* Singing bowl is now secondary and rare, to avoid a scary drone */
+function playBowl(x,strength=.4){
+  if(!AC||S("bowlLevel")<=.001)return;
+  const now=AC.currentTime;if(now-lastBowl<1.6)return;lastBowl=now;
+  const mode=currentSoundMode(),base=mode.bowlMin+x*mode.bowlRange+S("bowlTone")*25;
+  const bus=AC.createGain(),filter=AC.createBiquadFilter(),pan=AC.createStereoPanner();
+  const level=S("bowlLevel"),res=S("bowlResonance");
+  bus.gain.setValueAtTime(.0001,now);
+  bus.gain.exponentialRampToValueAtTime(Math.max(.0002,level*(.012+strength*.012)),now+.08);
+  bus.gain.exponentialRampToValueAtTime(.0001,now+1+res*3);
+  filter.type="lowpass";filter.frequency.value=1000+S("bowlTone")*2500;
+  pan.pan.value=(x*2-1)*.5;
+  bus.connect(filter);filter.connect(pan);pan.connect(generatedDry);pan.connect(delay);
+  [1,1.5,2.01].forEach((r,i)=>{
+    const osc=AC.createOscillator(),g=AC.createGain();
+    osc.type="sine";osc.frequency.value=base*r;osc.detune.value=(Math.random()-.5)*2;
+    g.gain.value=[1,.22,.08][i];osc.connect(g);g.connect(bus);
+    osc.start(now);osc.stop(now+4.5);
+  });
+  eventMeter.textContent="RESONANCE";
 }
 
-
-/* =========================================================
-GLITCH
-========================================================= */
-
-function playGlitch(
-    x,
-    motion
-){
-
-    if(!AC)
-        return;
-
-
-    const now =
-    AC.currentTime;
-
-
-    if(now-lastGlitch<.09)
-        return;
-
-
-    if(
-        Math.random() >
-        S("glitchDensity")
-    )
-        return;
-
-
-    const level =
-    S("glitchLevel");
-
-
-    if(level<=.001)
-        return;
-
-
-    lastGlitch =
-    now;
-
-
-    const osc =
-    AC.createOscillator();
-
-    const filter =
-    AC.createBiquadFilter();
-
-    const gain =
-    AC.createGain();
-
-    const pan =
-    AC.createStereoPanner();
-
-
-    osc.type =
-    Math.random()>.5
-    ? "square"
-    : "sawtooth";
-
-
-    /*
-    Keep it away from horror bass.
-    */
-
-    osc.frequency.value =
-    850 +
-    Math.random()*3000;
-
-
-    filter.type =
-    "bandpass";
-
-
-    filter.frequency.value =
-    1300 +
-    Math.random()*4000;
-
-
-    filter.Q.value =
-    4 +
-    Math.random()*8;
-
-
-    const peak =
-    Math.max(
-        .0001,
-
-        level *
-        (
-            .0025 +
-            motion*.014
-        )
-    );
-
-
-    gain.gain.setValueAtTime(
-        peak,
-        now
-    );
-
-
-    gain.gain.exponentialRampToValueAtTime(
-        .0001,
-        now+.018+Math.random()*.035
-    );
-
-
-    pan.pan.value =
-    x*2-1;
-
-
-    osc.connect(
-        filter
-    );
-
-    filter.connect(
-        gain
-    );
-
-    gain.connect(
-        pan
-    );
-
-
-    pan.connect(
-        generatedDry
-    );
-
-    pan.connect(
-        delay
-    );
-
-
-    osc.start(now);
-
-    osc.stop(
-        now+.09
-    );
-
-
-    eventMeter.textContent =
-    "GLITCH";
+const PATTERNS={
+  keys:[62,69,72,76,69,74],
+  pulse:[50,57,62,57,65,60,55],
+  fm:[62,65,69,74,69,67],
+  low:[38,45,41,48,43,36],
+  sequence:[55,62,65,57,69,60,67,53],
+  memory:[62,69,72,76,69,74]
+};
+function midiToFrequency(n){return 440*Math.pow(2,(n-69)/12)}
+function midiName(n){
+  const names=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+  return names[((n%12)+12)%12]+(Math.floor(n/12)-1);
+}
+function nextNote(){
+  const mode=S("melodyMode"),pattern=PATTERNS[mode];
+  if(!pattern)return null;
+  let note=pattern[melodyIndex%pattern.length];
+  const reg=S("melodyRegister");
+  if(reg<.22)note-=12;
+  else if(reg>.78)note+=12;
+  if(mode==="sequence"&&Math.random()<.25)note+=[-5,-2,2,5,7][Math.floor(Math.random()*5)];
+  if(mode==="fm"&&Math.random()<.18)note+=[-12,0,12][Math.floor(Math.random()*3)];
+  if(mode==="memory"&&melodyCycle>0&&Math.random()<.22){melodyIndex++;return {rest:true}}
+  if(mode==="memory"&&lastMelodyMidi!==null&&Math.random()<.20)note=lastMelodyMidi;
+  if(mode==="memory"&&melodyCycle>0&&Math.random()<.18)note+=Math.random()<.5?-12:12;
+  if(mode==="sequence"&&Math.random()<.12){melodyIndex++;return {rest:true}}
+  melodyIndex++;
+  if(melodyIndex%pattern.length===0)melodyCycle++;
+  return {note};
 }
 
-
-/* =========================================================
-OBJECT MUSICAL EVENT
-========================================================= */
-
-function triggerObjectMusicalEvent(
-    x,
-    strength
-){
-
-    /*
-    Chance controls whether this presence
-    actually leaves a note.
-
-    Silence remains part of the system.
-    */
-
-    if(
-        Math.random() >
-        S("melodyChance")
-    ){
-
-        melodyMeter.textContent =
-        "SILENCE";
-
-        return;
-    }
-
-
-    const next =
-    getNextMelodyNote();
-
-
-    if(!next)
-        return;
-
-
-    if(next.rest){
-
-        melodyMeter.textContent =
-        "REST";
-
-        return;
-    }
-
-
-    /*
-    OBJECT NOTE IS THE MELODY.
-
-    No separate metal impact first.
-    */
-
-    playObjectNote(
-        next.midi,
-        x,
-        strength
-    );
-
-
-    /*
-    Very occasional soft-key shadow.
-    */
-
-    if(
-        S("keyLevel")>.001 &&
-        Math.random()<.14
-    ){
-
-        const midi =
-        next.midi;
-
-        const px =
-        x;
-
-        const ps =
-        strength;
-
-
-        setTimeout(
-            ()=>{
-
-                if(running){
-
-                    playSoftKey(
-                        midi,
-                        px,
-                        ps*.65
-                    );
-                }
-
-            },
-
-            240 +
-            Math.random()*650
-        );
-    }
-
-
-    /*
-    Ghost resonance is extremely rare.
-    */
-
-    if(
-        Math.random() <
-        currentSoundMode().ghostChance
-    ){
-
-        const px =
-        x;
-
-        const ps =
-        strength;
-
-
-        setTimeout(
-            ()=>{
-
-                if(running){
-
-                    playBowl(
-                        px,
-                        ps*.55
-                    );
-                }
-
-            },
-
-            500 +
-            Math.random()*900
-        );
-    }
+/* Event tones: no fixed piano chord; one triggered synth note at a time */
+function playEventTone(x,strength,force=false){
+  const mode=S("melodyMode");
+  if(mode==="off"||!AC||S("keyLevel")<=.001)return;
+  const now=AC.currentTime;
+  if(now-lastToneTime<.24)return;
+  lastToneTime=now;
+  const chance=S("melodyChance");
+  if(!force&&Math.random()>chance)return;
+  const next=nextNote();
+  if(!next)return;
+  if(next.rest){melodyMeter.textContent="REST";eventMeter.textContent="GAP";return}
+  const midi=next.note,frequency=midiToFrequency(midi),soft=S("keySoftness"),level=S("keyLevel");
+  const osc=AC.createOscillator(),gain=AC.createGain(),filter=AC.createBiquadFilter();
+  const bus=AC.createGain(),pan=AC.createStereoPanner();
+  const baseLevel=level*(.018+strength*.045);
+  if(mode==="keys"){
+    osc.type="sine";
+    filter.type="lowpass";filter.frequency.value=1200+(1-soft)*2600;
+  }else if(mode==="pulse"){
+    osc.type="triangle";
+    filter.type="lowpass";filter.frequency.value=500+(1-soft)*2200;
+  }else if(mode==="fm"){
+    osc.type="sine";
+    filter.type="lowpass";filter.frequency.value=1800+(1-soft)*3200;
+  }else if(mode==="low"){
+    osc.type="triangle";
+    filter.type="lowpass";filter.frequency.value=350+(1-soft)*850;
+  }else{
+    osc.type="sawtooth";
+    filter.type="lowpass";filter.frequency.value=600+(1-soft)*2500;
+  }
+  osc.frequency.setValueAtTime(frequency,now);
+  if(mode==="fm"){
+    const mod=AC.createOscillator(),modGain=AC.createGain();
+    mod.type="sine";mod.frequency.value=frequency*1.997;
+    modGain.gain.value=frequency*(.25+Math.random()*.6);
+    mod.connect(modGain);modGain.connect(osc.frequency);
+    mod.start(now);mod.stop(now+1.8);
+  }
+  filter.Q.value=mode==="pulse"?1.2:.55;
+  const attack=mode==="pulse"?.008:.025;
+  const duration=mode==="low"?1.6:mode==="pulse"?.18:1.0+soft*1.8;
+  gain.gain.setValueAtTime(.0001,now);
+  gain.gain.exponentialRampToValueAtTime(Math.max(.0002,baseLevel),now+attack);
+  gain.gain.exponentialRampToValueAtTime(.0001,now+duration);
+  osc.connect(filter);filter.connect(gain);gain.connect(bus);
+  bus.connect(pan);pan.pan.value=x*2-1;
+  pan.connect(generatedDry);pan.connect(delay);
+  osc.start(now);osc.stop(now+duration+.1);
+  lastMelodyMidi=midi;
+  melodyMeter.textContent=midiName(midi);
+  eventMeter.textContent=mode.toUpperCase();
 }
 
-
-/* =========================================================
-MOTION AFTERIMAGE
-========================================================= */
-
-function triggerMotionAfterimage(
-    x,
-    motion
-){
-
-    /*
-    Movement should not constantly
-    write the melody.
-
-    Occasionally it recalls the last note.
-    */
-
-    if(
-        lastMelodyMidi===null
-    )
-        return;
-
-
-    if(
-        motion>.27 &&
-        Math.random()<.018
-    ){
-
-        playSoftKey(
-            lastMelodyMidi,
-            x,
-            motion
-        );
-    }
+function playGlitch(x,motion){
+  if(!AC||S("glitchLevel")<=.001)return;
+  const now=AC.currentTime;
+  if(now-lastGlitch<.07||Math.random()>S("glitchDensity"))return;
+  lastGlitch=now;
+  const osc=AC.createOscillator(),filter=AC.createBiquadFilter(),gain=AC.createGain(),pan=AC.createStereoPanner();
+  osc.type=Math.random()>.5?"triangle":"sine";
+  osc.frequency.value=180+Math.random()*1500;
+  filter.type="bandpass";filter.frequency.value=600+Math.random()*2200;filter.Q.value=2+Math.random()*5;
+  const duration=.025+Math.random()*.07;
+  gain.gain.setValueAtTime(Math.max(.0001,S("glitchLevel")*(.003+motion*.012)),now);
+  gain.gain.exponentialRampToValueAtTime(.0001,now+duration);
+  pan.pan.value=x*2-1;
+  osc.connect(filter);filter.connect(gain);gain.connect(pan);pan.connect(generatedDry);pan.connect(delay);
+  osc.start(now);osc.stop(now+duration+.01);
+  eventMeter.textContent="GLITCH";
 }
-
-
-/* =========================================================
-AI MODEL
-========================================================= */
 
 async function loadModel(){
-
-    try{
-
-        if(
-            typeof tf==="undefined" ||
-            typeof cocoSsd==="undefined"
-        ){
-
-            throw new Error(
-                "TensorFlow or COCO-SSD failed to load."
-            );
-        }
-
-
-        try{
-
-            await tf.setBackend(
-                "webgl"
-            );
-
-        }catch(error){
-
-            console.warn(
-                "WebGL backend unavailable.",
-                error
-            );
-        }
-
-
-        await tf.ready();
-
-
-        model =
-        await cocoSsd.load({
-            base:"lite_mobilenet_v2"
-        });
-
-
-        modelReady =
-        true;
-
-
-        modelState.textContent =
-        "AI MODEL: READY";
-
-
-        statusElement.textContent =
-        videoReady
-        ? "READY"
-        : "SELECT VIDEO";
-
-
-        updateButtons();
-
-    }catch(error){
-
-        console.error(error);
-
-
-        modelReady =
-        false;
-
-
-        modelState.textContent =
-        "AI MODEL: ERROR";
-
-
-        modelState.classList.add(
-            "error"
-        );
-
-
-        statusElement.textContent =
-        "AI LOAD ERROR";
-
-
-        updateButtons();
-    }
+  try{
+    if(!window.tf||!window.cocoSsd)throw new Error("AI libraries did not load. Check internet connection.");
+    try{await tf.setBackend("webgl")}catch(e){}
+    await tf.ready();
+    model=await cocoSsd.load({base:"lite_mobilenet_v2"});
+    modelReady=true;
+    modelState.textContent="AI MODEL: READY";
+    statusElement.textContent=videoReady?"READY":"SELECT VIDEO";
+    updateButtons();
+  }catch(err){
+    console.error(err);
+    modelState.textContent="AI MODEL: ERROR";
+    statusElement.textContent="AI LOAD ERROR — CHECK CONNECTION";
+    updateButtons();
+  }
 }
-
 loadModel();
 
-
-/* =========================================================
-VIDEO LOAD
-========================================================= */
-
-fileInput.addEventListener(
-    "change",
-    event=>{
-
-        try{
-
-            const file =
-            event.target.files &&
-            event.target.files[0];
-
-
-            if(!file)
-                return;
-
-
-            stopEverything();
-
-
-            videoReady =
-            false;
-
-
-            predictions = [];
-            previousObjects = [];
-
-
-            updateButtons();
-
-
-            if(objectURL){
-
-                URL.revokeObjectURL(
-                    objectURL
-                );
-            }
-
-
-            objectURL =
-            URL.createObjectURL(
-                file
-            );
-
-
-            video.src =
-            objectURL;
-
-
-            video.load();
-
-
-            filenameElement.textContent =
-            file.name;
-
-
-            stage.style.display =
-            "block";
-
-
-            statusElement.textContent =
-            "LOADING VIDEO...";
-
-        }catch(error){
-
-            console.error(error);
-
-            statusElement.textContent =
-            "VIDEO LOAD ERROR";
-
-            statusElement.classList.add(
-                "error"
-            );
-        }
-    }
-);
-
-
-/* =========================================================
-VIDEO METADATA
-========================================================= */
-
-video.addEventListener(
-    "loadedmetadata",
-    ()=>{
-
-        try{
-
-            video.defaultPlaybackRate =
-            1;
-
-            video.playbackRate =
-            1;
-
-
-            if(
-                "preservesPitch" in video
-            ){
-
-                video.preservesPitch =
-                true;
-            }
-
-
-            const vw =
-            video.videoWidth;
-
-            const vh =
-            video.videoHeight;
-
-
-            if(!vw || !vh){
-
-                throw new Error(
-                    "Invalid video dimensions."
-                );
-            }
-
-
-            const barHeight =
-            Math.max(
-                56,
-                Math.round(
-                    vh*.07
-                )
-            );
-
-
-            visualCanvas.width =
-            vw;
-
-
-            visualCanvas.height =
-            vh+barHeight;
-
-
-            const analysisWidth =
-            Math.min(
-                512,
-                vw
-            );
-
-
-            analysisCanvas.width =
-            analysisWidth;
-
-
-            analysisCanvas.height =
-            Math.max(
-                1,
-                Math.round(
-                    analysisWidth *
-                    vh /
-                    vw
-                )
-            );
-
-
-            videoReady =
-            true;
-
-
-            statusElement.classList.remove(
-                "error"
-            );
-
-
-            statusElement.textContent =
-            modelReady
-            ? "READY"
-            : "VIDEO READY / WAITING FOR AI";
-
-
-            video.currentTime =
-            0;
-
-
-            drawFrame();
-
-            updateTimeDisplay();
-            updateButtons();
-
-        }catch(error){
-
-            console.error(error);
-
-
-            videoReady =
-            false;
-
-
-            statusElement.textContent =
-            "VIDEO INITIALIZATION ERROR";
-
-
-            statusElement.classList.add(
-                "error"
-            );
-
-
-            updateButtons();
-        }
-    }
-);
-
-
-video.addEventListener(
-    "error",
-    ()=>{
-
-        console.error(
-            "VIDEO ERROR",
-            video.error
-        );
-
-
-        videoReady =
-        false;
-
-
-        statusElement.textContent =
-        "VIDEO ERROR";
-
-
-        statusElement.classList.add(
-            "error"
-        );
-
-
-        updateButtons();
-    }
-);
-
-
-/* =========================================================
-TRACK OBJECTS
-========================================================= */
-
-function analyseObjects(
-    detections
-){
-
-    const current =
-    detections.map(d=>{
-
-        const [x,y,w,h] =
-        d.bbox;
-
-
-        return{
-
-            className:d.class,
-
-            x:
-            (x+w/2) /
-            analysisCanvas.width,
-
-            y:
-            (y+h/2) /
-            analysisCanvas.height,
-
-            area:
-            (w*h) /
-            (
-                analysisCanvas.width *
-                analysisCanvas.height
-            ),
-
-            motion:0,
-
-            isNew:false
-        };
-    });
-
-
-    const used =
-    new Set();
-
-
-    current.forEach(obj=>{
-
-        let best =
-        -1;
-
-        let bestDistance =
-        Infinity;
-
-
-        previousObjects.forEach(
-            (old,index)=>{
-
-                if(used.has(index))
-                    return;
-
-
-                if(
-                    old.className !==
-                    obj.className
-                )
-                    return;
-
-
-                const distance =
-                Math.hypot(
-                    old.x-obj.x,
-                    old.y-obj.y
-                );
-
-
-                if(
-                    distance <
-                    bestDistance
-                ){
-
-                    bestDistance =
-                    distance;
-
-                    best =
-                    index;
-                }
-            }
-        );
-
-
-        if(
-            best>=0 &&
-            bestDistance<.25
-        ){
-
-            used.add(best);
-
-
-            obj.motion =
-            Math.min(
-                1,
-
-                bestDistance *
-                9 *
-                S("motionResponse")
-            );
-
-        }else{
-
-            obj.isNew =
-            true;
-        }
-    });
-
-
-    let totalMotion =
-    0;
-
-
-    current.forEach(obj=>{
-
-        totalMotion +=
-        obj.motion;
-
-
-        /*
-        NEW PRESENCE
-        */
-
-        if(obj.isNew){
-
-            const strength =
-            Math.max(
-                .18,
-                Math.min(
-                    1,
-                    obj.area*5
-                )
-            );
-
-
-            triggerObjectMusicalEvent(
-                obj.x,
-                strength
-            );
-        }
-
-
-        /*
-        MOTION
-        */
-
-        if(
-            obj.motion>.055
-        ){
-
-            playGlitch(
-                obj.x,
-                obj.motion
-            );
-        }
-
-
-        triggerMotionAfterimage(
-            obj.x,
-            obj.motion
-        );
-    });
-
-
-    previousObjects =
-    current;
-
-
-    return{
-
-        count:
-        current.length,
-
-        motion:
-        totalMotion /
-        Math.max(
-            1,
-            current.length
-        )
-    };
+function updateButtons(){
+  const ready=modelReady&&videoReady;
+  playButton.disabled=!ready||running;
+  exportButton.disabled=!ready||running;
+  stopButton.disabled=!running&&!exporting;
+  downloadButton.disabled=!recordedBlob;
 }
 
+function safeDraw(){
+  if(!videoReady||video.readyState<2)return;
+  try{drawFrame()}catch(err){console.warn("Frame not ready",err)}
+}
+function resetSession(){
+  predictions=[];previousObjects=[];detectionBusy=false;lastDetectionVideoTime=-1;
+  lastImpact=-999;lastBowl=-999;lastGlitch=-999;lastToneTime=-999;
+  melodyIndex=0;melodyCycle=0;lastMelodyMidi=null;
+  objectMeter.textContent="0";motionMeter.textContent="0.00";
+  eventMeter.textContent="—";melodyMeter.textContent="—";
+  objectsElement.textContent="NO OBJECTS";
+}
 
-/* =========================================================
-DETECTION
-========================================================= */
+function stopPlaybackOnly(){
+  running=false;
+  if(renderRAF)cancelAnimationFrame(renderRAF);
+  renderRAF=null;
+  video.pause();
+  if(AC&&radioGain)radioGain.gain.setTargetAtTime(0,AC.currentTime,.05);
+}
+function stopEverything(){
+  stopPlaybackOnly();
+  if(exporting&&mediaRecorder&&mediaRecorder.state!=="inactive"){
+    exportStopping=true;
+    try{mediaRecorder.requestData()}catch(e){}
+    mediaRecorder.stop();
+  }else{
+    exporting=false;exportSettings=null;
+    statusElement.textContent="STOPPED";
+    exportProgress.textContent="IDLE";
+    updateButtons();
+  }
+}
+
+fileInput.addEventListener("change",event=>{
+  const file=event.target.files&&event.target.files[0];
+  if(!file)return;
+  stopEverything();
+  if(objectURL)URL.revokeObjectURL(objectURL);
+  objectURL=URL.createObjectURL(file);
+  videoReady=false;
+  video.src=objectURL;
+  video.load();
+  filenameElement.textContent=file.name;
+  stage.style.display="block";
+  statusElement.textContent="LOADING VIDEO";
+  video.onloadedmetadata=()=>{
+    video.defaultPlaybackRate=1;video.playbackRate=1;
+    if("preservesPitch" in video)video.preservesPitch=true;
+    const w=video.videoWidth,h=video.videoHeight;
+    if(!w||!h){statusElement.textContent="VIDEO DIMENSION ERROR";return}
+    visualCanvas.width=w;
+    visualCanvas.height=h+Math.max(56,Math.round(h*.07));
+    const aw=Math.min(512,w);
+    analysisCanvas.width=aw;
+    analysisCanvas.height=Math.round(aw*h/w);
+    videoReady=true;
+    statusElement.textContent=modelReady?"READY":"AI MODEL LOADING";
+    updateButtons();
+    safeDraw();
+  };
+  video.onloadeddata=()=>{safeDraw();updateButtons()};
+  video.onerror=()=>{
+    videoReady=false;statusElement.textContent="VIDEO LOAD ERROR";updateButtons();
+  };
+});
+
+function analyseObjects(detections){
+  const current=detections.map(d=>{
+    const [x,y,w,h]=d.bbox;
+    return {className:d.class,x:(x+w/2)/analysisCanvas.width,y:(y+h/2)/analysisCanvas.height,
+      area:w*h/(analysisCanvas.width*analysisCanvas.height),motion:0,isNew:false};
+  });
+  const used=new Set();
+  current.forEach(obj=>{
+    let best=-1,bestDistance=Infinity;
+    previousObjects.forEach((old,i)=>{
+      if(used.has(i)||old.className!==obj.className)return;
+      const distance=Math.hypot(old.x-obj.x,old.y-obj.y);
+      if(distance<bestDistance){bestDistance=distance;best=i}
+    });
+    if(best>=0&&bestDistance<.25){
+      used.add(best);
+      obj.motion=Math.min(1,bestDistance*9*S("motionResponse"));
+    }else obj.isNew=true;
+  });
+  let totalMotion=0;
+  current.forEach(obj=>{
+    totalMotion+=obj.motion;
+    if(obj.isNew){
+      const strength=Math.min(1,obj.area*4);
+      playImpact(obj.x,strength);
+      playEventTone(obj.x,Math.max(.25,strength));
+      if(Math.random()<currentSoundMode().bowlChance)setTimeout(()=>{
+        if(running)playBowl(obj.x,Math.max(.25,strength));
+      },250+Math.random()*350);
+    }
+    if(obj.motion>.045)playGlitch(obj.x,obj.motion);
+    if(obj.motion>.22&&Math.random()<.08)playEventTone(obj.x,obj.motion);
+    if(obj.motion>.20&&Math.random()<currentSoundMode().movementBowlChance)playBowl(obj.x,obj.motion);
+  });
+  previousObjects=current;
+  return {count:current.length,motion:totalMotion/Math.max(1,current.length)};
+}
 
 async function runDetection(){
-
-    if(
-        !running ||
-        !modelReady ||
-        !model ||
-        !videoReady ||
-        detectionBusy ||
-        video.paused ||
-        video.ended
-    )
-        return;
-
-
-    if(
-        lastDetectionVideoTime>=0 &&
-        video.currentTime -
-        lastDetectionVideoTime <
-        DETECTION_INTERVAL
-    )
-        return;
-
-
-    lastDetectionVideoTime =
-    video.currentTime;
-
-
-    detectionBusy =
-    true;
-
-
-    try{
-
-        analysisCtx.drawImage(
-            video,
-            0,
-            0,
-            analysisCanvas.width,
-            analysisCanvas.height
-        );
-
-
-        let result =
-        await model.detect(
-            analysisCanvas,
-            12,
-            .30
-        );
-
-
-        if(!Array.isArray(result)){
-
-            result = [];
-        }
-
-
-        result =
-        result
-
-        .filter(
-            item=>
-            item &&
-            item.bbox &&
-            item.score>=.30
-        )
-
-        .sort(
-            (a,b)=>
-            (
-                b.bbox[2] *
-                b.bbox[3]
-            )
-            -
-            (
-                a.bbox[2] *
-                a.bbox[3]
-            )
-        )
-
-        .slice(
-            0,
-            12
-        );
-
-
-        predictions =
-        result;
-
-
-        const analysis =
-        analyseObjects(
-            result
-        );
-
-
-        updateRadio(
-            analysis.motion
-        );
-
-
-        objectMeter.textContent =
-        String(
-            analysis.count
-        );
-
-
-        motionMeter.textContent =
-        analysis.motion.toFixed(2);
-
-
-        objectsElement.textContent =
-        getDetectionText();
-
-    }catch(error){
-
-        console.error(
-            "DETECTION ERROR:",
-            error
-        );
-
-    }finally{
-
-        detectionBusy =
-        false;
-    }
+  if(!running||!modelReady||detectionBusy||video.paused||video.ended||video.readyState<2)return;
+  if(lastDetectionVideoTime>=0&&video.currentTime-lastDetectionVideoTime<DETECTION_INTERVAL)return;
+  lastDetectionVideoTime=video.currentTime;detectionBusy=true;
+  try{
+    analysisCtx.drawImage(video,0,0,analysisCanvas.width,analysisCanvas.height);
+    let result=await model.detect(analysisCanvas,12,.30);
+    result=result.filter(o=>o.score>=.30).sort((a,b)=>b.bbox[2]*b.bbox[3]-a.bbox[2]*a.bbox[3]).slice(0,12);
+    predictions=result;
+    const analysis=analyseObjects(result);
+    updateRadio(analysis.motion);
+    objectMeter.textContent=analysis.count;
+    motionMeter.textContent=analysis.motion.toFixed(2);
+    objectsElement.textContent=getDetectionText();
+  }catch(err){console.error("Detection error",err)}
+  finally{detectionBusy=false}
 }
-
-
-/* =========================================================
-DETECTION TEXT
-========================================================= */
-
 function getDetectionText(){
-
-    if(
-        !predictions ||
-        predictions.length===0
-    ){
-
-        return "NO OBJECTS";
-    }
-
-
-    return predictions
-
-    .map(object=>
-
-        object.class
-        .toUpperCase()
-
-        +
-
-        " "
-
-        +
-
-        Math.round(
-            object.score*100
-        )
-
-        +
-
-        "%"
-    )
-
-    .join(
-        "   ·   "
-    );
+  if(!predictions.length)return "NO OBJECTS";
+  return predictions.map(o=>o.class.toUpperCase()+" "+Math.round(o.score*100)+"%").join("   ·   ");
 }
-
-
-/* =========================================================
-DRAW
-========================================================= */
 
 function drawFrame(){
-
-    if(!videoReady)
-        return;
-
-
-    const vw =
-    video.videoWidth;
-
-    const vh =
-    video.videoHeight;
-
-
-    if(!vw || !vh)
-        return;
-
-
-    const barHeight =
-    visualCanvas.height-vh;
-
-
-    /*
-    GRAYSCALE BASE
-    */
-
-    ctx.save();
-
-
-    ctx.filter =
-    "grayscale(100%) contrast(110%)";
-
-
-    try{
-
-        ctx.drawImage(
-            video,
-            0,
-            0,
-            vw,
-            vh
-        );
-
-    }catch(error){
-
-        ctx.restore();
-        return;
-    }
-
-
+  if(!videoReady||video.readyState<2)return;
+  const vw=video.videoWidth,vh=video.videoHeight;
+  if(!vw||!vh)return;
+  const barHeight=visualCanvas.height-vh;
+  ctx.save();ctx.filter="grayscale(100%) contrast(110%)";
+  ctx.drawImage(video,0,0,vw,vh);ctx.restore();
+  const sxScale=vw/analysisCanvas.width,syScale=vh/analysisCanvas.height;
+  predictions.forEach(o=>{
+    const [x,y,w,h]=o.bbox,dx=x*sxScale,dy=y*syScale,dw=w*sxScale,dh=h*syScale;
+    ctx.save();ctx.beginPath();ctx.rect(dx,dy,dw,dh);ctx.clip();
+    ctx.filter=`saturate(${S("colorAmount")}) contrast(120%)`;
+    ctx.drawImage(video,x/analysisCanvas.width*vw,y/analysisCanvas.height*vh,
+      w/analysisCanvas.width*vw,h/analysisCanvas.height*vh,dx,dy,dw,dh);
     ctx.restore();
-
-
-    /*
-    DETECTED OBJECTS
-    */
-
-    const scaleX =
-    vw /
-    analysisCanvas.width;
-
-
-    const scaleY =
-    vh /
-    analysisCanvas.height;
-
-
-    predictions.forEach(
-        object=>{
-
-            if(
-                !object ||
-                !object.bbox
-            )
-                return;
-
-
-            const [x,y,w,h] =
-            object.bbox;
-
-
-            const dx =
-            x*scaleX;
-
-            const dy =
-            y*scaleY;
-
-            const dw =
-            w*scaleX;
-
-            const dh =
-            h*scaleY;
-
-
-            /*
-            RESTORE COLOR
-            */
-
-            ctx.save();
-
-
-            ctx.beginPath();
-
-
-            ctx.rect(
-                dx,
-                dy,
-                dw,
-                dh
-            );
-
-
-            ctx.clip();
-
-
-            ctx.filter =
-            `saturate(${S("colorAmount")}) contrast(120%)`;
-
-
-            try{
-
-                ctx.drawImage(
-
-                    video,
-
-                    x*scaleX,
-                    y*scaleY,
-                    w*scaleX,
-                    h*scaleY,
-
-                    dx,
-                    dy,
-                    dw,
-                    dh
-
-                );
-
-            }catch(error){}
-
-
-            ctx.restore();
-
-
-            /*
-            BOX
-            */
-
-            ctx.strokeStyle =
-            "rgba(255,255,255,.95)";
-
-
-            ctx.lineWidth =
-            Math.max(
-                1.5,
-                vw/800
-            );
-
-
-            ctx.strokeRect(
-                dx,
-                dy,
-                dw,
-                dh
-            );
-
-
-            /*
-            LABEL
-            */
-
-            const fontSize =
-            Math.max(
-                11,
-                vw/90
-            );
-
-
-            ctx.font =
-            `${fontSize}px monospace`;
-
-
-            const label =
-
-            object.class
-            .toUpperCase()
-
-            +
-
-            " "
-
-            +
-
-            Math.round(
-                object.score*100
-            )
-
-            +
-
-            "%";
-
-
-            const tw =
-            ctx.measureText(
-                label
-            ).width;
-
-
-            const labelY =
-            Math.max(
-                fontSize+8,
-                dy
-            );
-
-
-            ctx.fillStyle =
-            "rgba(0,0,0,.8)";
-
-
-            ctx.fillRect(
-                dx,
-                labelY-fontSize-8,
-                tw+12,
-                fontSize+8
-            );
-
-
-            ctx.fillStyle =
-            "white";
-
-
-            ctx.fillText(
-                label,
-                dx+6,
-                labelY-5
-            );
-        }
-    );
-
-
-    /*
-    DETECTION BAR
-    */
-
-    ctx.filter =
-    "none";
-
-
-    ctx.fillStyle =
-    "#050505";
-
-
-    ctx.fillRect(
-        0,
-        vh,
-        visualCanvas.width,
-        barHeight
-    );
-
-
-    ctx.fillStyle =
-    "#252525";
-
-
-    ctx.fillRect(
-        0,
-        vh,
-        visualCanvas.width,
-        Math.max(
-            1,
-            vw/1200
-        )
-    );
-
-
-    const fontSize =
-    Math.max(
-        12,
-        Math.round(
-            vw/75
-        )
-    );
-
-
-    ctx.font =
-    `${fontSize}px monospace`;
-
-
-    ctx.fillStyle =
-    "#ddd";
-
-
-    ctx.textBaseline =
-    "middle";
-
-
-    ctx.save();
-
-
-    ctx.beginPath();
-
-
-    ctx.rect(
-        0,
-        vh,
-        visualCanvas.width,
-        barHeight
-    );
-
-
-    ctx.clip();
-
-
-    ctx.fillText(
-        getDetectionText(),
-        Math.max(
-            15,
-            vw*.015
-        ),
-        vh+barHeight/2
-    );
-
-
-    ctx.restore();
+    ctx.strokeStyle="rgba(255,255,255,.9)";ctx.lineWidth=Math.max(1.5,vw/900);
+    ctx.strokeRect(dx,dy,dw,dh);
+    const fontSize=Math.max(11,vw/90);
+    ctx.font=`${fontSize}px monospace`;
+    const label=o.class.toUpperCase()+" "+Math.round(o.score*100)+"%";
+    const tw=ctx.measureText(label).width,labelY=Math.max(fontSize+8,dy);
+    ctx.fillStyle="rgba(0,0,0,.8)";ctx.fillRect(dx,labelY-fontSize-8,tw+12,fontSize+8);
+    ctx.fillStyle="white";ctx.fillText(label,dx+6,labelY-5);
+  });
+  ctx.filter="none";ctx.fillStyle="#050505";ctx.fillRect(0,vh,visualCanvas.width,barHeight);
+  ctx.fillStyle="#252525";ctx.fillRect(0,vh,visualCanvas.width,Math.max(1,vw/1200));
+  const fontSize=Math.max(12,Math.round(vw/75));
+  ctx.font=`${fontSize}px monospace`;ctx.fillStyle="#ddd";ctx.textBaseline="middle";
+  ctx.save();ctx.beginPath();ctx.rect(0,vh,visualCanvas.width,barHeight);ctx.clip();
+  ctx.fillText(getDetectionText(),Math.max(15,vw*.015),vh+barHeight/2);ctx.restore();
 }
-
-
-/* =========================================================
-TIME
-========================================================= */
-
-function formatTime(seconds){
-
-    if(
-        !Number.isFinite(seconds)
-    )
-        return "00:00";
-
-
-    const min =
-    Math.floor(
-        seconds/60
-    );
-
-
-    const sec =
-    Math.floor(
-        seconds%60
-    );
-
-
-    return (
-        String(min)
-        .padStart(2,"0")
-        +
-        ":"
-        +
-        String(sec)
-        .padStart(2,"0")
-    );
+function formatTime(sec){
+  if(!Number.isFinite(sec))return "00:00";
+  return String(Math.floor(sec/60)).padStart(2,"0")+":"+String(Math.floor(sec%60)).padStart(2,"0");
 }
-
-
 function updateTimeDisplay(){
-
-    sourceMeter.textContent =
-
-    formatTime(
-        video.currentTime
-    )
-
-    +
-
-    " / "
-
-    +
-
-    formatTime(
-        video.duration
-    );
-
-
-    if(exporting){
-
-        const progress =
-
-        Number.isFinite(
-            video.duration
-        )
-        &&
-        video.duration>0
-
-        ?
-
-        video.currentTime /
-        video.duration
-
-        :
-
-        0;
-
-
-        exportProgress.textContent =
-
-        "RECORDING "
-
-        +
-
-        Math.min(
-            100,
-            Math.floor(
-                progress*100
-            )
-        )
-
-        +
-
-        "% · "
-
-        +
-
-        formatTime(
-            video.currentTime
-        )
-
-        +
-
-        " / "
-
-        +
-
-        formatTime(
-            video.duration
-        );
-    }
+  sourceMeter.textContent=formatTime(video.currentTime)+" / "+formatTime(video.duration);
+  if(exporting){
+    const p=video.duration>0?video.currentTime/video.duration:0;
+    exportProgress.textContent="RECORDING "+Math.min(100,Math.floor(p*100))+"% · "+formatTime(video.currentTime)+" / "+formatTime(video.duration);
+  }
 }
-
-
-/* =========================================================
-RENDER LOOP
-========================================================= */
-
 function renderLoop(){
-
-    if(!running)
-        return;
-
-
-    drawFrame();
-
-    runDetection();
-
-    updateTimeDisplay();
-
-
-    renderRAF =
-    requestAnimationFrame(
-        renderLoop
-    );
+  if(!running)return;
+  safeDraw();runDetection();updateTimeDisplay();
+  renderRAF=requestAnimationFrame(renderLoop);
 }
-
-
-/* =========================================================
-RESET
-========================================================= */
-
-function resetSession(){
-
-    predictions = [];
-    previousObjects = [];
-
-
-    detectionBusy =
-    false;
-
-
-    lastDetectionVideoTime =
-    -1;
-
-
-    lastObjectNote =
-    -999;
-
-    lastSoftKey =
-    -999;
-
-    lastBowl =
-    -999;
-
-    lastGlitch =
-    -999;
-
-
-    melodyIndex =
-    0;
-
-    melodyCycle =
-    0;
-
-    lastMelodyMidi =
-    null;
-
-
-    objectMeter.textContent =
-    "0";
-
-    motionMeter.textContent =
-    "0.00";
-
-    eventMeter.textContent =
-    "—";
-
-    melodyMeter.textContent =
-    "—";
-
-    objectsElement.textContent =
-    "NO OBJECTS";
-}
-
-
-/* =========================================================
-SEEK
-========================================================= */
-
 function waitForSeek(){
-
-    return new Promise(resolve=>{
-
-        if(
-            video.readyState>=2 &&
-            Math.abs(
-                video.currentTime
-            )<.05
-        ){
-
-            resolve();
-            return;
-        }
-
-
-        let finished =
-        false;
-
-
-        const done = ()=>{
-
-            if(finished)
-                return;
-
-
-            finished =
-            true;
-
-
-            video.removeEventListener(
-                "seeked",
-                done
-            );
-
-
-            resolve();
-        };
-
-
-        video.addEventListener(
-            "seeked",
-            done
-        );
-
-
-        setTimeout(
-            done,
-            1500
-        );
-    });
+  return new Promise(resolve=>{
+    if(video.readyState>=2&&Math.abs(video.currentTime)<.05){resolve();return}
+    let finished=false;
+    const done=()=>{if(finished)return;finished=true;video.removeEventListener("seeked",done);resolve()};
+    video.addEventListener("seeked",done,{once:true});
+    setTimeout(done,1500);
+  });
 }
 
-
-/* =========================================================
-GENERATE
-========================================================= */
-
-playButton.addEventListener(
-    "click",
-    async ()=>{
-
-        if(
-            running ||
-            exporting
-        )
-            return;
-
-
-        try{
-
-            exporting =
-            false;
-
-            exportSettings =
-            null;
-
-
-            initAudio();
-
-
-            if(
-                AC.state==="suspended"
-            ){
-
-                await AC.resume();
-            }
-
-
-            video.defaultPlaybackRate =
-            1;
-
-            video.playbackRate =
-            1;
-
-
-            applyAudioSettings();
-
-            resetSession();
-
-
-            video.pause();
-
-            video.currentTime =
-            0;
-
-
-            await waitForSeek();
-
-
-            running =
-            true;
-
-
-            await video.play();
-
-
-            statusElement.textContent =
-            "GENERATING";
-
-
-            updateButtons();
-
-            renderLoop();
-
-        }catch(error){
-
-            console.error(error);
-
-
-            running =
-            false;
-
-
-            statusElement.textContent =
-            "PLAYBACK ERROR";
-
-
-            statusElement.classList.add(
-                "error"
-            );
-
-
-            updateButtons();
-        }
-    }
-);
-
-
-/* =========================================================
-MIME
-========================================================= */
+playButton.addEventListener("click",async()=>{
+  if(running||!videoReady||!modelReady)return;
+  try{
+    initAudio();if(AC.state==="suspended")await AC.resume();
+    exporting=false;exportSettings=null;applyAudioSettings();resetSession();
+    video.pause();video.currentTime=0;await waitForSeek();
+    running=true;statusElement.textContent="GENERATING";updateButtons();
+    await video.play();renderLoop();
+  }catch(err){
+    console.error(err);stopPlaybackOnly();statusElement.textContent="PLAY ERROR — TRY AGAIN";updateButtons();
+  }
+});
 
 function chooseMime(){
-
-    const candidates = [
-
-        "video/webm;codecs=vp9,opus",
-        "video/webm;codecs=vp8,opus",
-        "video/webm",
-        "video/mp4"
-
-    ];
-
-
-    for(const type of candidates){
-
-        if(
-            typeof MediaRecorder!=="undefined" &&
-            MediaRecorder.isTypeSupported(type)
-        ){
-
-            return type;
-        }
-    }
-
-
-    return "";
+  if(typeof MediaRecorder==="undefined")return "";
+  const types=["video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm","video/mp4"];
+  return types.find(t=>MediaRecorder.isTypeSupported(t))||"";
 }
-
-
-/* =========================================================
-EXPORT
-========================================================= */
-
-exportButton.addEventListener(
-    "click",
-    startExport
-);
-
-
+exportButton.addEventListener("click",startExport);
 async function startExport(){
-
-    if(
-        running ||
-        exporting
-    )
-        return;
-
-
-    if(
-        typeof MediaRecorder==="undefined" ||
-        !visualCanvas.captureStream
-    ){
-
-        alert(
-            "이 브라우저에서는 영상 Export를 지원하지 않습니다."
-        );
-
-        return;
-    }
-
-
-    try{
-
-        /*
-        FREEZE SETTINGS
-        */
-
-        exportSettings =
-        getSettings();
-
-
-        exporting =
-        true;
-
-
-        initAudio();
-
-
-        if(
-            AC.state==="suspended"
-        ){
-
-            await AC.resume();
-        }
-
-
-        video.defaultPlaybackRate =
-        1;
-
-        video.playbackRate =
-        1;
-
-
-        if(recordedURL){
-
-            URL.revokeObjectURL(
-                recordedURL
-            );
-
-            recordedURL =
-            null;
-        }
-
-
-        recordedBlob =
-        null;
-
-
-        downloadButton.disabled =
-        true;
-
-
-        resetSession();
-
-
-        video.pause();
-
-        video.currentTime =
-        0;
-
-
-        await waitForSeek();
-
-
-        drawFrame();
-
-        applyAudioSettings();
-
-
-        /*
-        CANVAS VIDEO
-        */
-
-        const canvasStream =
-        visualCanvas.captureStream(30);
-
-
-        /*
-        AUDIO
-        */
-
-        const combined =
-        new MediaStream([
-
-            ...canvasStream
-            .getVideoTracks(),
-
-            ...recordDestination
-            .stream
-            .getAudioTracks()
-
-        ]);
-
-
-        const mime =
-        chooseMime();
-
-
-        const options = {
-
-            videoBitsPerSecond:
-            12000000,
-
-            audioBitsPerSecond:
-            192000
-
-        };
-
-
-        if(mime){
-
-            options.mimeType =
-            mime;
-        }
-
-
-        mediaRecorder =
-        new MediaRecorder(
-            combined,
-            options
-        );
-
-
-        chunks =
-        [];
-
-
-        mediaRecorder.ondataavailable =
-        event=>{
-
-            if(
-                event.data &&
-                event.data.size>0
-            ){
-
-                chunks.push(
-                    event.data
-                );
-            }
-        };
-
-
-        mediaRecorder.onerror =
-        event=>{
-
-            console.error(
-                "RECORDER ERROR:",
-                event
-            );
-        };
-
-
-        mediaRecorder.onstop =
-        ()=>{
-
-            const type =
-
-            mediaRecorder.mimeType
-            ||
-            mime
-            ||
-            "video/webm";
-
-
-            recordedBlob =
-            new Blob(
-                chunks,
-                {type}
-            );
-
-
-            recordedURL =
-            URL.createObjectURL(
-                recordedBlob
-            );
-
-
-            exporting =
-            false;
-
-
-            exportSettings =
-            null;
-
-
-            exportButton.classList.remove(
-                "recording"
-            );
-
-
-            exportProgress.textContent =
-            "READY TO DOWNLOAD";
-
-
-            statusElement.textContent =
-            "EXPORT COMPLETE";
-
-
-            applyAudioSettings();
-
-            updateButtons();
-        };
-
-
-        /*
-        IMPORTANT:
-        recorder starts before video.
-        */
-
-        mediaRecorder.start(
-            1000
-        );
-
-
-        exportButton.classList.add(
-            "recording"
-        );
-
-
-        statusElement.textContent =
-        "EXPORTING";
-
-
-        exportProgress.textContent =
-        "RECORDING 0%";
-
-
-        await new Promise(
-            resolve=>
-            setTimeout(
-                resolve,
-                120
-            )
-        );
-
-
-        running =
-        true;
-
-
-        updateButtons();
-
-        renderLoop();
-
-
-        await video.play();
-
-    }catch(error){
-
-        console.error(error);
-
-
-        running =
-        false;
-
-
-        exporting =
-        false;
-
-
-        exportSettings =
-        null;
-
-
-        exportButton.classList.remove(
-            "recording"
-        );
-
-
-        statusElement.textContent =
-        "EXPORT ERROR";
-
-
-        statusElement.classList.add(
-            "error"
-        );
-
-
-        if(
-            mediaRecorder &&
-            mediaRecorder.state!=="inactive"
-        ){
-
-            try{
-                mediaRecorder.stop();
-            }catch(e){}
-        }
-
-
-        updateButtons();
-    }
+  if(running||!videoReady||!modelReady)return;
+  if(typeof MediaRecorder==="undefined"||!visualCanvas.captureStream){
+    statusElement.textContent="EXPORT NOT SUPPORTED IN THIS BROWSER";return;
+  }
+  try{
+    initAudio();if(AC.state==="suspended")await AC.resume();
+  }catch(err){console.error(err);statusElement.textContent="AUDIO INIT ERROR";return}
+  exportSettings=getSettings();exporting=true;exportStopping=false;
+  if(recordedURL){URL.revokeObjectURL(recordedURL);recordedURL=null}
+  recordedBlob=null;downloadButton.disabled=true;
+  resetSession();video.pause();video.currentTime=0;video.playbackRate=1;
+  await waitForSeek();safeDraw();applyAudioSettings();
+  const canvasStream=visualCanvas.captureStream(30);
+  const combined=new MediaStream([...canvasStream.getVideoTracks(),...recordDestination.stream.getAudioTracks()]);
+  const mime=chooseMime();
+  const options={videoBitsPerSecond:10000000,audioBitsPerSecond:192000};
+  if(mime)options.mimeType=mime;
+  try{mediaRecorder=new MediaRecorder(combined,options)}
+  catch(err){
+    console.error(err);exporting=false;exportSettings=null;statusElement.textContent="RECORDER ERROR";updateButtons();return;
+  }
+  chunks=[];
+  mediaRecorder.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
+  mediaRecorder.onerror=e=>{console.error("Recorder error",e);statusElement.textContent="RECORDING ERROR"};
+  mediaRecorder.onstop=()=>{
+    const type=mediaRecorder.mimeType||mime||"video/webm";
+    recordedBlob=new Blob(chunks,{type});
+    recordedURL=URL.createObjectURL(recordedBlob);
+    canvasStream.getTracks().forEach(t=>t.stop());
+    combined.getTracks().forEach(t=>{if(t!==recordDestination.stream.getAudioTracks()[0])t.stop()});
+    exporting=false;exportSettings=null;exportStopping=false;
+    exportButton.classList.remove("recording");
+    exportProgress.textContent="READY TO DOWNLOAD";
+    statusElement.textContent="EXPORT COMPLETE";
+    applyAudioSettings();updateButtons();
+  };
+  try{
+    mediaRecorder.start(1000);
+    exportButton.classList.add("recording");
+    statusElement.textContent="EXPORTING";
+    exportProgress.textContent="RECORDING 0%";
+    await new Promise(resolve=>setTimeout(resolve,150));
+    running=true;updateButtons();
+    await video.play();renderLoop();
+  }catch(err){
+    console.error(err);stopPlaybackOnly();
+    if(mediaRecorder&&mediaRecorder.state!=="inactive")mediaRecorder.stop();
+    else{exporting=false;exportSettings=null;updateButtons()}
+  }
 }
-
-
-/* =========================================================
-VIDEO ENDED
-========================================================= */
-
-video.addEventListener(
-    "ended",
-    ()=>{
-
-        if(!running)
-            return;
-
-
-        running =
-        false;
-
-
-        if(renderRAF){
-
-            cancelAnimationFrame(
-                renderRAF
-            );
-        }
-
-
-        drawFrame();
-
-
-        if(
-            AC &&
-            radioGain
-        ){
-
-            radioGain.gain.setTargetAtTime(
-                0,
-                AC.currentTime,
-                .05
-            );
-        }
-
-
-        if(exporting){
-
-            exportProgress.textContent =
-            "FINALIZING";
-
-
-            /*
-            Let generated sound leave
-            a very short final tail.
-            */
-
-            setTimeout(
-                ()=>{
-
-                    if(
-                        mediaRecorder &&
-                        mediaRecorder.state!=="inactive"
-                    ){
-
-                        try{
-
-                            mediaRecorder.requestData();
-
-                        }catch(error){}
-
-
-                        mediaRecorder.stop();
-                    }
-
-                },
-                800
-            );
-
-        }else{
-
-            statusElement.textContent =
-            "FINISHED";
-
-
-            updateButtons();
-        }
-    }
-);
-
-
-/* =========================================================
-STOP
-========================================================= */
-
-stopButton.addEventListener(
-    "click",
-    stopEverything
-);
-
-
-function stopEverything(){
-
-    if(
-        !running &&
-        !exporting
-    )
-        return;
-
-
-    running =
-    false;
-
-
-    if(renderRAF){
-
-        cancelAnimationFrame(
-            renderRAF
-        );
-    }
-
-
-    video.pause();
-
-
-    if(
-        AC &&
-        radioGain
-    ){
-
-        radioGain.gain.setTargetAtTime(
-            0,
-            AC.currentTime,
-            .05
-        );
-    }
-
-
-    if(
-        exporting &&
-        mediaRecorder &&
-        mediaRecorder.state!=="inactive"
-    ){
-
-        exportProgress.textContent =
-        "FINALIZING";
-
-
-        try{
-
-            mediaRecorder.requestData();
-
-        }catch(error){}
-
-
-        mediaRecorder.stop();
-
+function finishExport(){
+  if(!exporting||exportStopping)return;
+  exportStopping=true;
+  exportProgress.textContent="FINALIZING";
+  safeDraw();updateTimeDisplay();
+  setTimeout(()=>{
+    stopPlaybackOnly();
+    if(mediaRecorder&&mediaRecorder.state!=="inactive"){
+      try{mediaRecorder.requestData()}catch(e){}
+      mediaRecorder.stop();
     }else{
-
-        statusElement.textContent =
-        "STOPPED";
-
-
-        updateButtons();
+      exporting=false;exportSettings=null;updateButtons();
     }
+  },650);
 }
-
-
-/* =========================================================
-DOWNLOAD
-========================================================= */
-
-downloadButton.addEventListener(
-    "click",
-    ()=>{
-
-        if(
-            !recordedBlob ||
-            !recordedURL
-        )
-            return;
-
-
-        const extension =
-
-        recordedBlob.type
-        .includes("mp4")
-
-        ?
-
-        "mp4"
-
-        :
-
-        "webm";
-
-
-        const date =
-
-        new Date()
-        .toISOString()
-        .replace(
-            /[:.]/g,
-            "-"
-        );
-
-
-        const a =
-        document.createElement(
-            "a"
-        );
-
-
-        a.href =
-        recordedURL;
-
-
-        a.download =
-        `presence-synth-${date}.${extension}`;
-
-
-        document.body.appendChild(
-            a
-        );
-
-
-        a.click();
-
-        a.remove();
-    }
-);
-
-
-/* =========================================================
-OTHER EVENTS
-========================================================= */
-
-video.addEventListener(
-    "seeked",
-    ()=>{
-
-        if(!running){
-
-            drawFrame();
-        }
-    }
-);
-
-
-video.addEventListener(
-    "timeupdate",
-    updateTimeDisplay
-);
-
-
-window.addEventListener(
-    "beforeunload",
-    ()=>{
-
-        if(objectURL){
-
-            URL.revokeObjectURL(
-                objectURL
-            );
-        }
-
-
-        if(recordedURL){
-
-            URL.revokeObjectURL(
-                recordedURL
-            );
-        }
-    }
-);
-
+video.addEventListener("ended",()=>{
+  if(exporting){finishExport();return}
+  if(!running)return;
+  stopPlaybackOnly();safeDraw();statusElement.textContent="FINISHED";updateButtons();
+});
+stopButton.addEventListener("click",()=>{
+  if(exporting){
+    finishExport();
+  }else{
+    stopPlaybackOnly();statusElement.textContent="STOPPED";updateButtons();
+  }
+});
+downloadButton.addEventListener("click",()=>{
+  if(!recordedBlob||!recordedURL)return;
+  const ext=recordedBlob.type.includes("mp4")?"mp4":"webm";
+  const a=document.createElement("a");a.href=recordedURL;
+  a.download="presence-synth-"+new Date().toISOString().replace(/[:.]/g,"-")+"."+ext;
+  document.body.appendChild(a);a.click();a.remove();
+});
+video.addEventListener("seeked",()=>{if(!running)safeDraw()});
+video.addEventListener("timeupdate",updateTimeDisplay);
+window.addEventListener("beforeunload",()=>{
+  if(objectURL)URL.revokeObjectURL(objectURL);
+  if(recordedURL)URL.revokeObjectURL(recordedURL);
+});
+window.addEventListener("error",e=>console.error("App error:",e.message));
+window.addEventListener("unhandledrejection",e=>console.error("Async error:",e.reason));
 </script>
-
 </body>
 </html>
