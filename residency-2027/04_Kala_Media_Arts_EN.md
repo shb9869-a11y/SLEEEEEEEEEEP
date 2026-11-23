@@ -1,65 +1,61 @@
 # Kala Art Institute — Media Arts Fellowship 2027–2028
 
 > Open call: December 2026 · **Deadline: March 1, 2027** · via kala.slideroom.com
-> **$25 application fee from Jan 16, 2027 → submit by Jan 15 if possible**
-> Open to local, national and international artists · 4 Media Arts residencies · residency window July 2027 – June 2028
-> Past stipend (2023): $3,000; Kala mentions housing for artists from outside the Bay Area — **confirm current terms**
-> Check the 2027 SlideRoom form for exact word limits and trim the texts below to fit.
-> Questions: kalaair@kala.org
+> **$25 fee from Jan 16, 2027 → submit by Jan 15 if possible**
+> Open to local, national and international artists · 4 Media Arts residencies · July 2027 – June 2028
+> Past stipend (2023): $3,000; Kala mentions housing for artists from outside the Bay Area. **Confirm the current terms.**
+> Trim to the 2027 SlideRoom word limits. Questions: kalaair@kala.org
+> Exhibition texts below were translated in an earlier session and are **awaiting review by 수민**. Update them if they change.
+> 영문 텍스트는 대명사(he/she/they) 없이 이름으로만 썼어요. 원하시는 대명사가 있으면 넣으세요.
 
 ---
 
 ## Artist Statement (~250 words)
 
-My work begins at the moment a machine notices a person.
+Objects hold the presence that people leave behind. Just as an echo cannot return to the original voice, the presence left in an object cannot bring back the person who has gone. I give these fading presences new bodies and new movements.
 
-Cameras, microphones and location sensors cover our cities. They detect us constantly, and that detection almost always becomes identification: a face matched, a plate read, a route logged. I use the same tools (real-time object detection, pose tracking, web audio synthesis, GPS) but cut the link between detecting and identifying. When a model decides "person," I do not store who or where. I turn that instant into a ripple that fades, a synth tone that decays, or an ink stroke that dries and disappears.
+I began in theater and puppetry, and I still think of my objects as actors. I gather the faces of people around me, scans of my own hands, and voices and sounds of places I have recorded, then shape them into machines and choreograph how they move: their rhythm, when they fall into unison, when one of them stands still.
 
-In Korean we have a word for this kind of signal: *ingijeok* (인기척), the faint sense that someone is nearby: a footstep behind a door, a shift in the air. It carries no information except *you are not alone*. My series *Ingijeok* and *PRESENCE SYNTH* try to build machines that listen for exactly that.
+In my solo exhibition *The Morning Things Without People* (bin.bang, Seoul, 2026), thirty-two heads hanging from the ceiling crane their necks and look around while no one is there. The moment a visitor's presence is detected, they stop. A small egg-shaped device holds old voices that fade into the live sound of the room as you turn its knob. Scanned hands type sixty-eight greetings onto an LCD screen and knock three times on the wall, with no reply.
 
-I write everything myself as open web code that runs in a browser. Anyone can try it from a link on their phone. Data is not collected. It is spent immediately as sound and image. This lightness matters to me: it lets surveillance technology be used as a way of sensing one another, not watching one another.
-
-Alongside these instruments I make small narrative works such as *SLEEP CITY*, a pixel game in which the lights of a city switch off one by one and a lone figure walks the same street until a red door appears. Both strands ask what is left of us when we are detected but not known.
+I use cameras, microphones, servo and BLDC motors, and real-time detection models. These tools usually identify and record people. In my work the machine never asks *who* has come, only *that* someone has, and it answers with stillness, sound, or a knock. I want to know whether the technology of detection can become a language of waiting and welcome rather than surveillance.
 
 ---
 
 ## Project Proposal (~400 words)
 
-**Working title: *Listening Station* — a presence-to-sound instrument for public space**
+**Working title: *Receivers*: objects that wait for a signal**
 
-During the fellowship I will develop *PRESENCE SYNTH*, my browser-based system that converts detected people, objects and motion into electronic tones, radio static, glitch and resonant bowl sounds, into a site-responsive multichannel installation and a public workshop toolkit.
+At Kala I will develop a new ensemble of sound-and-motion objects that act as *receivers*: machines that listen for faint signals, whether a voice in radio static or a person's presence in a room, and change their behavior when something finally arrives.
 
-**Current state.** *PRESENCE SYNTH* already analyses video with an object-detection model, maps each detected object's position to pitch and stereo placement, maps motion intensity to noise and glitch density, and exports the combined video and audio. It is a single-screen stereo tool used at a desk.
+**Starting point.** Two works from my 2026 solo exhibition: *You-Sensing Device*, an egg-shaped sound object where turning a knob tunes through noise toward recorded voices and finally the live sound of the room; and *Craning Necks*, thirty-two motorized heads that move restlessly until a visitor is detected, then freeze.
 
-**What I will build at Kala:**
+**What I will make:**
 
-1. **Multichannel spatial version.** Map the camera frame to a 4–8 speaker layout so a passer-by's movement through a room is heard moving through the room. I will use Kala's media lab for sound design and testing.
-2. **Live camera input from the street.** A camera aimed at a doorway or window turns real foot traffic into a continuous, ever-changing composition. No frames or identities are stored; only momentary numbers (position, size, motion) are used, then discarded. This privacy rule is part of the work.
-3. **The "tuner."** Building on my *RF & Sound Decoder Simulator*, visitors turn physical knobs to "lock onto" one kind of presence (people, vehicles, wind-moved objects) inside the static, like searching for a radio station.
-4. **Open workshop toolkit.** A free web version and a 2-hour workshop in which participants record their own neighborhood on their phones and hear it turned into sound. I would like to offer this through Kala's community programs.
+1. **A Bay Area *You-Sensing Device*.** I will record voices and places around Kala and the East Bay and build a new set of eggs. Visitors can carry them on short walks through the neighborhood, as they did around bin.bang in Seoul.
+2. **Larger, quieter bodies.** I am developing robotic joints with BLDC motors and cycloidal gearboxes (moteus controllers) that can move heavy objects slowly and almost silently. At Kala I will build two or three large receiver objects that turn toward and away from the room with these joints.
+3. **A timed "performance without people."** Drawing on my theater work, including directing *History of Nightmare* (La MaMa Spoleto Open Festival, 2025) and the direction and interactive system design of *eat* (CultureHub, New York, 2026), I will compose the ensemble's movement, sound and light as a scene that runs on its own and changes when visitors enter.
+4. **A public workshop**, "Tuning In," where participants record a sound from their own lives and hear it inside a receiver.
 
-**Outcome.** An installation for Kala's exhibition, a public web version anyone can use, and documented workshop materials.
+**Why Kala.** Kala's media arts program, digital media lab and tradition of community workshops support exactly the move I need to make: from a self-built storefront space to a production environment where I can refine audio, fabrication and electronics, and share the process with a new public. Working in the Bay Area also lets me continue the US connections I began with CultureHub.
 
-**Why Kala.** Kala's long commitment to media arts and its combination of production facilities, community education and exhibition are exactly what this project needs to move from screen prototype to physical, public work. As an artist based in Korea, a residency in the Bay Area, where many of these detection technologies were developed, would let me test the work in the context where those tools were made.
-
-**Timeline (flexible within July 2027 – June 2028):**
-Month 1: site study, equipment tests · Month 2: multichannel engine and live input · Month 3: tuner interface and workshops · Final: installation and documentation.
+**Timeline (within July 2027 – June 2028):** Month 1: field recording and fabrication · Month 2: robotic joints and sound system · Month 3: choreography, workshop, and presentation.
 
 ---
 
 ## Short Bio (~100 words)
 
-[Name] is a media artist based in [City], Korea, who builds browser-based instruments that turn machine detection into sound, ripple and ink. Working with real-time object detection, body tracking, web audio synthesis and location-based collaborative drawing, [he/she/they] explores how surveillance technologies might sense presence without identifying anyone. Recent works include *PRESENCE SYNTH* (2026), a video-to-sound detection synthesizer; the *Ingijeok (Presence)* series (2026); *Geo Ink* (2026), a GPS-based collaborative ink drawing; and *SLEEP CITY* (2026), a pixel narrative web game. [Education / exhibitions.]
+Hee-beom Son is a director and media artist based in Seoul who began in theater and has expanded into puppetry, video, sound, robotics and interactive systems. In 2025 Son directed *History of Nightmare* at La MaMa Spoleto Open Festival in Italy, and in 2026 was responsible for the direction and interactive system design of *eat* at CultureHub in New York. Son's first solo exhibition, *The Morning Things Without People* (bin.bang, Seoul, 2026), presented motorized objects that hold the presence of those who have left and wait for new visitors, stopping still when someone arrives. [Education.]
 
 ---
 
-## Work Sample Descriptions (for SlideRoom media)
+## Work Samples
 
-1. ***PRESENCE SYNTH*, 2026.** Browser software (JavaScript, TensorFlow.js, Web Audio API); video with stereo sound. Detected people and objects in video become electronic tones, radio static, glitch and resonant bowl sounds; position sets pitch and panning, motion sets noise density.
-2. ***Ingijeok (Presence)* series, 2026.** Real-time camera installation. Passers-by are detected and numbered but leave only fading ripples, slow drones, or a binary trace. Presence is never recorded as identity.
-3. ***Geo Ink*, 2026.** Mobile web, GPS, shared database. Participants leave ink strokes pinned to real coordinates; later visitors to the same spot can see and redraw them.
-4. ***Virtual Ink Body World*, 2026.** Body-tracking virtual space. Leaning and walking in place moves an avatar through an ink-wash landscape; waving the right hand draws ink lines in 3D that slowly fade.
-5. ***SLEEP CITY*, 2026.** Pixel narrative web game with generative sound and text-to-speech. City lights go out one by one; a lone figure walks a looping street until a red door appears.
-6. ***RF & Sound Decoder Simulator*, 2026.** Live microphone instrument. The voice is scrambled by ring modulation and glitch until three knobs are tuned to "LOCKED," restoring the clean original voice.
+1. ***Craning Necks*, 2026.** 3D printing, aluminum profiles, servo motors, electronic control devices; approx. 1,800 × 600 × 1,500 mm. Thirty-two heads reconstructed from images of people nearby, sunflowers and everyday objects hang from the ceiling and crane their necks, each to its own beat, at times forming a single ensemble dance. When a visitor's presence is detected, they stop.
+2. ***You-Sensing Device*, 2026.** 3D printing, electronic control device, audio device; 250 × 200 × 180 mm. Voices and sounds of places gathered in the past are held inside a smooth egg. Turning the knob, as if tuning a radio, brings faint sounds through the noise until the sound of the present place comes through.
+3. ***Knock*, 2026.** 3D printing, LCD monitor, LED lighting, servo motors, electronic control devices. Text co-written with So-min Lee. Sixty-eight greetings are typed letter by letter on an LCD; hands scanned from the artist's own move as if about to knock, then knock three times as the light returns. With no reply, the next greeting begins.
+4. ***The Table*, 2026** (with Jae-hee Park). A long table for sixteen with hollows holding *You-Sensing Device*; a place for viewing becomes a place where people face one another.
+5. **Installation view / documentary video**, *The Morning Things Without People*, bin.bang, Seoul, 2026.
+6. ***History of Nightmare*** (2025) or ***eat*** (2026): production photo or excerpt.
 
-> Tip: Upload 1–2 minute screen-plus-room recordings with sound. Jurors need to see a body in front of the camera and hear the result.
+> Tip: For *Craning Necks*, upload a 60-second clip that shows the heads moving and then freezing as someone walks in.
